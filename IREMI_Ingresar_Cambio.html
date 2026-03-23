@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IREMI — Registro de Cambios</title>
+
+<script>
+// Solo mostrar advertencia si el proxy NO responde tras 2 segundos
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    fetch('http://localhost:8765/ping', {signal: AbortSignal.timeout(1500)})
+      .then(r => {
+        if (!r.ok) throw new Error();
+        // Proxy OK — ocultar banner si existe
+        const b = document.getElementById('warn_banner');
+        if (b) b.remove();
+      })
+      .catch(() => {
+        // Proxy no responde — mostrar instrucciones
+        if (!document.getElementById('warn_banner')) {
+          document.body.insertAdjacentHTML('afterbegin', `
+            <div id="warn_banner" style="width:100%;background:#7f1d1d;border-bottom:2px solid #ef4444;
+                padding:12px 20px;text-align:center;font-family:'Barlow Condensed',sans-serif;
+                font-size:13px;font-weight:800;color:#fff;letter-spacing:.05em;line-height:1.6">
+              ⚠️ PROXY NO DETECTADO — ejecuta EJECUTAR_PROXY.bat antes de abrir este archivo<br>
+              <span style="font-size:11px;font-weight:600">
+              Carpeta con los archivos: ${location.href.replace(/[^/]*$/, '')}
+              </span>
+            </div>`);
+        }
+      });
+  }, 1000);
+});
+</script>
+
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0a1628;--navy2:#0d1f3c;--blue:#0039A6;--gold:#f5c518;
+  --white:#fff;--silver:#c8d6e5;--green:#4ade80;--red:#ef4444;--dark:#060e1a;
+  --orange:#f97316;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Barlow',sans-serif;background:#060e1a;color:var(--white);
+     min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:18px 14px 60px}
+
+.header{width:100%;max-width:720px;display:flex;align-items:center;gap:14px;
+        background:var(--navy2);border:1px solid #1e3256;border-radius:14px;
+        padding:14px 20px;margin-bottom:14px}
+.header h1{font-family:'Barlow Condensed',sans-serif;font-size:21px;font-weight:900;
+           color:var(--gold);letter-spacing:.07em;text-transform:uppercase}
+.header p{font-size:10px;color:var(--silver);margin-top:2px}
+
+.panel{width:100%;max-width:720px;background:#111d30;border:1px solid #1e3256;
+       border-radius:14px;padding:18px 20px;margin-bottom:12px}
+.ptitle{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;
+        letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;
+        display:flex;align-items:center;gap:8px}
+.ptitle .badge{background:var(--gold);color:var(--navy);border-radius:4px;
+               padding:1px 7px;font-size:10px;font-weight:800}
+.ptitle .dot{width:8px;height:8px;border-radius:50%}
+.dot.ok{background:var(--green);animation:blink 2s infinite}
+.dot.err{background:var(--red)}
+.dot.idle{background:#374151}
+.dot.connecting{background:var(--gold);animation:blink .6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── API CONFIG ── */
+.api-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--silver)}
+.field label em{color:var(--gold);font-style:normal}
+.field input,.field select{background:#0d1a2e;border:1.5px solid #2a4070;border-radius:8px;
+  color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;
+  padding:9px 12px;outline:none;transition:all .2s;width:100%}
+.field input:focus,.field select:focus{border-color:var(--gold);background:#0f2240}
+.field input.pw{font-family:monospace;font-size:12px;letter-spacing:.05em}
+.field .hint{font-size:9px;color:#4a6080;margin-top:2px;line-height:1.4}
+
+/* ── BTN ── */
+.btn{padding:10px 18px;border-radius:9px;border:none;font-family:'Barlow Condensed',sans-serif;
+     font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+     transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-blue:hover:not(:disabled){background:#2563a8}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-gold:hover:not(:disabled){background:#e8a800}
+.btn-green{background:#166534;color:#fff}
+.btn-green:hover:not(:disabled){background:#15803d}
+.btn-red{background:#7f1d1d;color:#fff}
+
+/* ── ESTADO API ── */
+.api-status{display:flex;align-items:center;gap:8px;background:#0d1a2e;border:1.5px solid #1e3256;
+            border-radius:8px;padding:8px 14px;margin-top:10px;transition:border-color .3s}
+.api-status.ok{border-color:#166534}
+.api-status.err{border-color:#7f1d1d}
+.api-status.connecting{border-color:var(--gold)}
+.api-status-text{font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--white)}
+.api-balance{margin-left:auto;font-family:'Barlow Condensed',sans-serif;
+             font-size:14px;font-weight:800;color:var(--gold)}
+
+/* ── MES ── */
+.mes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px}
+.mes-btn{padding:9px 4px;border-radius:7px;border:1.5px solid #2a4070;background:#0d1a2e;
+         color:var(--silver);font-family:'Barlow Condensed',sans-serif;font-size:11px;
+         font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;
+         transition:all .15s;text-align:center}
+.mes-btn:hover{border-color:var(--gold);color:var(--gold)}
+.mes-btn.active{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+
+/* ── FORM GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+.gfull{grid-column:1/-1}
+.field input.auto{border-color:#1e4020;background:#050e08;color:var(--green)}
+
+/* ── PREVIEW ── */
+.preview{background:#0d1a2e;border:1.5px solid #2a4070;border-radius:9px;
+         padding:11px 14px;margin:10px 0}
+.preview-title{font-size:9px;font-weight:700;color:var(--silver);text-transform:uppercase;
+               letter-spacing:.1em;margin-bottom:8px}
+.prev-row{display:flex;justify-content:space-between;align-items:center;
+          padding:4px 0;border-bottom:1px solid #1e3256}
+.prev-row:last-child{border:none}
+.prev-lbl{font-size:10px;color:var(--silver)}
+.prev-val{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--white)}
+.prev-val.gold{color:var(--gold)}
+.prev-val.green{color:var(--green)}
+.prev-val.red{color:var(--red)}
+
+/* ── BTNS ROW ── */
+.btn-row{display:flex;gap:8px;margin-top:12px}
+.btn-row .btn{flex:1;padding:13px 4px;font-size:12px}
+
+/* ── STATUS ── */
+.status-msg{width:100%;max-width:720px;border-radius:9px;padding:11px 16px;
+            font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;
+            text-align:center;margin:6px 0;display:none}
+.status-msg.ok{background:#052e0a;border:1.5px solid var(--green);color:var(--green);display:block}
+.status-msg.err{background:#2e0505;border:1.5px solid var(--red);color:var(--red);display:block}
+.status-msg.info{background:#0d1f3c;border:1.5px solid var(--gold);color:var(--gold);display:block}
+
+/* ── P2P OPERACIONES DETECTADAS ── */
+.ops-list{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;margin-top:8px}
+.op-card{background:#0d1a2e;border:1.5px solid #1e3256;border-radius:9px;
+         padding:10px 14px;cursor:pointer;transition:all .15s;display:flex;
+         align-items:center;gap:12px}
+.op-card:hover{border-color:var(--gold);background:#0f2240}
+.op-card.selected{border-color:var(--green);background:#050e08}
+.op-card.imported{border-color:#374151;opacity:.5;cursor:default}
+.op-date{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--silver);
+         white-space:nowrap;min-width:70px}
+.op-fiat{font-size:9px;font-weight:700;text-transform:uppercase;
+         background:#1e3256;border-radius:3px;padding:1px 5px;color:var(--silver);min-width:30px;text-align:center}
+.op-main{flex:1}
+.op-monto{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--white)}
+.op-det{font-size:9px;color:var(--silver);margin-top:1px}
+.op-precio{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--gold);text-align:right}
+.op-usdt{font-size:9px;color:var(--silver);text-align:right;margin-top:1px}
+.op-tag{font-size:9px;font-weight:700;border-radius:4px;padding:2px 6px;margin-left:4px}
+.tag-done{background:#052e0a;color:var(--green)}
+.tag-imp{background:#374151;color:#9ca3af}
+
+/* ── HISTORIAL ── */
+.hist-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:11px}
+.hist-table th{background:#0d1a2e;color:var(--silver);font-size:9px;font-weight:700;
+               letter-spacing:.07em;text-transform:uppercase;padding:6px 8px;text-align:center}
+.hist-table td{padding:5px 8px;text-align:center;font-family:'Barlow Condensed',sans-serif;
+               font-size:13px;border-bottom:1px solid #1e3256;color:var(--white)}
+.hist-table tr:nth-child(even) td{background:#0d1a2e}
+
+/* ── MODAL SCRIPT ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:999;
+               display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.on{display:flex}
+.modal-box{background:#111d30;border:1.5px solid var(--gold);border-radius:14px;
+           padding:22px;max-width:660px;width:100%;max-height:85vh;overflow-y:auto}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;
+             color:var(--gold);text-transform:uppercase;margin-bottom:12px}
+pre{background:#060e1a;border:1px solid #2a4070;border-radius:8px;padding:14px;
+    font-size:11px;color:var(--green);overflow-x:auto;white-space:pre-wrap;
+    line-height:1.6;max-height:340px;overflow-y:auto}
+
+.spin{animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sep{height:1px;background:linear-gradient(90deg,transparent,#2a4070,transparent);margin:12px 0}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div style="font-size:30px">📋</div>
+  <div>
+    <h1>IREMI Remesas — Registro de Cambios</h1>
+    <p>1️⃣ Extrae el ZIP · 2️⃣ Ejecuta <strong style="color:var(--gold)">python iremi_proxy.py</strong> · 3️⃣ Abre este HTML</p>
+  </div>
+</div>
+
+<!-- CONFIG API -->
+<div class="panel">
+  <div class="ptitle">
+    🔑 Configuración API Binance
+    <div class="dot idle" id="api_dot"></div>
+    <span id="api_dot_lbl" style="font-size:10px;color:var(--silver);font-weight:400">Sin conectar</span>
+  </div>
+
+  <div class="api-row">
+    <div class="field">
+      <label>API Key <em>*</em></label>
+      <input type="text" id="api_key" placeholder="Tu API Key de Binance" autocomplete="off">
+      <div class="hint">Solo permiso "Leer informacion" — nunca marques Trading ni Retiros</div>
+    </div>
+    <div class="field">
+      <label>Secret Key <em>*</em></label>
+      <input type="password" id="api_secret" class="pw" placeholder="Tu Secret Key" autocomplete="off">
+      <div class="hint">Se guarda solo en tu PC en archivo .iremi_creds — nunca en internet</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;min-width:120px">
+      <button class="btn btn-blue" onclick="conectarBinance()" id="btn_conectar" style="flex:1">
+        🔌 Conectar
+      </button>
+      <button class="btn" onclick="guardarCredenciales()" id="btn_guardar"
+        style="background:#166534;color:#fff;font-size:10px;padding:7px 4px">
+        💾 Guardar claves
+      </button>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;margin-top:6px" id="creds_status_row">
+    <div id="creds_dot" class="dot idle" style="width:8px;height:8px;border-radius:50%"></div>
+    <span id="creds_status_txt" style="font-size:10px;color:var(--silver)">
+      Verificando credenciales guardadas...
+    </span>
+    <button onclick="eliminarCredenciales()" id="btn_del_creds"
+      style="display:none;margin-left:auto;background:#7f1d1d;color:#fff;border:none;
+             border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700">
+      🗑 Olvidar claves
+    </button>
+  </div>
+
+  <div style="background:#0d1a2e;border:1.5px solid #2a4070;border-radius:8px;
+       padding:8px 14px;margin-top:8px;display:flex;align-items:center;gap:8px" id="proxy_status_box">
+    <div class="dot idle" id="proxy_dot"></div>
+    <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--silver)"
+          id="proxy_status_text">Proxy: Sin verificar</span>
+    <button onclick="verificarProxy()" class="btn btn-blue"
+      style="margin-left:auto;padding:5px 10px;font-size:10px">🔍 Verificar proxy</button>
+  </div>
+  <div class="api-status idle" id="api_status_box">
+    <div class="dot idle" id="api_dot2"></div>
+    <span class="api-status-text" id="api_status_text">Ingresa tus credenciales y presiona Conectar</span>
+    <span class="api-balance" id="api_balance"></span>
+  </div>
+</div>
+
+<!-- OPERACIONES P2P DETECTADAS -->
+<div class="panel" id="panel_p2p" style="display:none">
+  <div class="ptitle">
+    🔄 Operaciones P2P detectadas
+    <div class="badge" id="p2p_count">0</div>
+    <button class="btn btn-blue" style="margin-left:auto;padding:6px 12px;font-size:10px"
+      onclick="cargarP2P()">↻ Actualizar</button>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+    <select id="p2p_fiat" onchange="filtrarP2P()" style="background:#0d1a2e;border:1.5px solid #2a4070;
+      border-radius:7px;color:var(--white);font-family:'Barlow Condensed',sans-serif;
+      font-size:12px;font-weight:700;padding:6px 10px;outline:none">
+      <option value="">Todos los destinos</option>
+      <option value="VES">🇻🇪 VES</option>
+      <option value="COP">🇨🇴 COP</option>
+      <option value="PEN">🇵🇪 PEN</option>
+      <option value="ARS">🇦🇷 ARS</option>
+      <option value="MXN">🇲🇽 MXN</option>
+    </select>
+    <select id="p2p_days" onchange="cargarP2P()" style="background:#0d1a2e;border:1.5px solid #2a4070;
+      border-radius:7px;color:var(--white);font-family:'Barlow Condensed',sans-serif;
+      font-size:12px;font-weight:700;padding:6px 10px;outline:none">
+      <option value="1">Hoy</option>
+      <option value="7" selected>Últimos 7 días</option>
+      <option value="30">Últimos 30 días</option>
+    </select>
+    <div style="font-size:10px;color:var(--silver);display:flex;align-items:center">
+      👆 Clic en una operación para precargar el formulario
+    </div>
+  </div>
+
+  <div class="ops-list" id="ops_list">
+    <div style="text-align:center;color:#4a6080;font-size:11px;padding:20px">
+      Sin operaciones cargadas
+    </div>
+  </div>
+</div>
+
+<!-- SELECTOR MES -->
+<div class="panel">
+  <div class="ptitle">📅 Mes destino <span class="badge" id="mes_badge">Abril 2026</span></div>
+  <div class="mes-grid">
+    <button class="mes-btn" onclick="selMes(this,'Agosto 2025')">Ago 2025</button>
+    <button class="mes-btn" onclick="selMes(this,'Septiembre 2025')">Sep 2025</button>
+    <button class="mes-btn" onclick="selMes(this,'Octubre 2025')">Oct 2025</button>
+    <button class="mes-btn" onclick="selMes(this,'Noviembre 2025')">Nov 2025</button>
+    <button class="mes-btn" onclick="selMes(this,'Diciembre 2025')">Dic 2025</button>
+    <button class="mes-btn" onclick="selMes(this,'Enero 2026')">Ene 2026</button>
+    <button class="mes-btn" onclick="selMes(this,'Febrero 2026')">Feb 2026</button>
+    <button class="mes-btn active" onclick="selMes(this,'Marzo 2026')">Mar 2026 &#9733;</button>
+    <button class="mes-btn active" onclick="selMes(this,'Abril 2026')">Abr 2026 ★</button>
+  </div>
+</div>
+
+<!-- FORMULARIO -->
+<div class="panel">
+  <div class="ptitle">✏️ Nueva Operación
+    <span id="form_source" style="font-size:9px;color:var(--silver);font-weight:400;
+          background:#1e3256;border-radius:3px;padding:1px 6px">manual</span>
+  </div>
+
+  <div class="g3">
+    <div class="field">
+      <label>📅 Fecha <em>*</em></label>
+      <input type="date" id="f_fecha" oninput="calcPreview()">
+    </div>
+    <div class="field">
+      <label>💰 Monto CLP <em>*</em></label>
+      <input type="number" id="f_monto" placeholder="50000" oninput="calcPreview()">
+    </div>
+    <div class="field">
+      <label>🌍 Destino</label>
+      <select id="f_fiat" onchange="calcPreview()">
+        <option value="VES">🇻🇪 VES</option>
+        <option value="COP">🇨🇴 COP</option>
+        <option value="PEN">🇵🇪 PEN</option>
+        <option value="ARS">🇦🇷 ARS</option>
+        <option value="MXN">🇲🇽 MXN</option>
+        <option value="USD">🇺🇸 USD</option>
+        <option value="EUR">🇪🇸 EUR</option>
+        <option value="DOP">🇩🇴 DOP</option>
+        <option value="BOB">🇧🇴 BOB</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="field">
+      <label>📈 USDT/CLP Compra <em>*</em></label>
+      <input type="number" id="f_dc" value="914" placeholder="914" step="0.01" oninput="calcPreview()">
+    </div>
+    <div class="field">
+      <label>📉 USDT/CLP Venta <em>*</em></label>
+      <input type="number" id="f_dv" value="914" placeholder="914" step="0.01" oninput="calcPreview()">
+    </div>
+    <div class="field">
+      <label>🔄 USDT Mov <em>*</em></label>
+      <input type="number" id="f_usdt" placeholder="-54.72" step="0.001" oninput="calcPreview()">
+      <div class="hint">Negativo = vendiste USDT</div>
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="field">
+      <label>🏦 Tax Binance</label>
+      <input type="number" id="f_tax" value="0.06" step="0.001" oninput="calcPreview()">
+    </div>
+    <div class="field">
+      <label>🌍 Tasa Destino</label>
+      <input type="number" id="f_dest" placeholder="657000" step="0.001" oninput="calcPreview()">
+      <div class="hint">Precio VES/COP/etc por USDT</div>
+    </div>
+    <div class="field">
+      <label>💱 Tasa IREMI</label>
+      <input type="number" id="f_tiremi" placeholder="0.651" step="0.000001" oninput="calcPreview()">
+    </div>
+  </div>
+
+  <div class="field" style="margin-bottom:10px">
+    <label>💬 Comentario</label>
+    <input type="text" id="f_comentario" placeholder="ej: Cambio María García">
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="preview" id="preview_box" style="display:none">
+    <div class="preview-title">⚡ Cálculo automático</div>
+    <div class="prev-row">
+      <span class="prev-lbl">Ganancia USDT = (C/D) + F</span>
+      <span class="prev-val" id="pv_gusdt">—</span>
+    </div>
+    <div class="prev-row">
+      <span class="prev-lbl">Ganancia CLP = Gan.USDT × Venta</span>
+      <span class="prev-val green" id="pv_gclp">—</span>
+    </div>
+    <div class="prev-row">
+      <span class="prev-lbl">% Ganancia CLP</span>
+      <span class="prev-val gold" id="pv_pct">—</span>
+    </div>
+    <div class="prev-row">
+      <span class="prev-lbl">Valor entregado cliente</span>
+      <span class="prev-val" id="pv_dest">—</span>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-blue" onclick="calcPreview()">🔢 Calcular</button>
+    <button class="btn btn-green" id="btn_save" onclick="guardarCambio()">💾 Guardar en Excel</button>
+    <button class="btn btn-red" onclick="resetForm()" style="flex:0;padding:13px 14px">🗑</button>
+  </div>
+</div>
+
+<!-- STATUS -->
+<div class="status-msg" id="status_box"></div>
+
+<!-- HISTORIAL SESIÓN -->
+<div class="panel">
+  <div class="ptitle">📜 Guardados esta sesión <span class="badge" id="hist_count">0</span>
+    <button onclick="borrarUltima()" id="btn_borrar"
+      style="margin-left:auto;background:#7f1d1d;color:#fff;border:none;border-radius:7px;
+             padding:5px 12px;font-family:'Barlow Condensed',sans-serif;font-size:11px;
+             font-weight:800;text-transform:uppercase;cursor:pointer;letter-spacing:.05em">
+      🗑 Borrar última
+    </button>
+  </div>
+  <table class="hist-table" id="hist_table">
+    <thead>
+      <tr>
+        <th>Fecha</th><th>Mes</th><th>Monto CLP</th><th>USDT</th>
+        <th>Gan. CLP</th><th>Destino</th><th>Comentario</th>
+      </tr>
+    </thead>
+    <tbody id="hist_body">
+      <tr><td colspan="7" style="color:#4a6080;font-size:10px">Sin operaciones aún</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- MODAL SCRIPT PYTHON -->
+<div class="modal-overlay" id="modal_py">
+  <div class="modal-box">
+    <div class="modal-title">✅ Script Python generado</div>
+    <p style="font-size:11px;color:var(--silver);margin-bottom:10px">
+      Ejecuta este script en la misma carpeta del Excel para insertar la operación:
+    </p>
+    <pre id="py_code_content"></pre>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button onclick="copiarScript()"
+        style="flex:1;padding:11px;background:var(--blue);color:#fff;border:none;
+               border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:12px;
+               font-weight:800;text-transform:uppercase;cursor:pointer">📋 Copiar</button>
+      <button onclick="document.getElementById('modal_py').classList.remove('on')"
+        style="flex:1;padding:11px;background:var(--gold);color:var(--navy);border:none;
+               border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:12px;
+               font-weight:800;text-transform:uppercase;cursor:pointer">✓ Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  ESTADO GLOBAL
+// ══════════════════════════════════════════════════════════
+let selectedMes = 'Marzo 2026';
+let sessionOps  = [];
+let p2pOps      = [];     // operaciones cargadas de Binance
+let importedIds = new Set(); // IDs ya importados
+
+// Init fecha
+document.getElementById('f_fecha').value = new Date().toISOString().split('T')[0];
+
+// ══════════════════════════════════════════════════════════
+//  PROXY LOCAL — todas las llamadas van a localhost:8765
+//  El proxy Python firma con HMAC y llama a Binance
+//  Nunca hay CORS porque es localhost → localhost
+// ══════════════════════════════════════════════════════════
+const PROXY = 'http://localhost:8765';
+
+async function proxyPost(path, body={}) {
+  const res = await fetch(PROXY + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(()=>({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+async function checkProxy() {
+  const res = await fetch(PROXY + '/ping');
+  if (!res.ok) throw new Error('Proxy no disponible');
+  return res.json();
+}
+
+// ══════════════════════════════════════════════════════════
+//  CONECTAR BINANCE
+// ══════════════════════════════════════════════════════════
+// ── Gestión de credenciales guardadas ────────────────────
+async function checkSavedCreds() {
+  try {
+    const res = await fetch('http://localhost:8765/ping');
+    if (!res.ok) {
+      document.getElementById('creds_status_txt').textContent = 'Proxy no activo — ejecuta iremi_proxy.py';
+      document.getElementById('creds_dot').className = 'dot err';
+      return;
+    }
+    // Ping OK — check if creds are loaded by trying balance
+    // We'll know creds are saved if proxy auto-connected
+    const dot = document.getElementById('creds_dot');
+    const txt = document.getElementById('creds_status_txt');
+    const delBtn = document.getElementById('btn_del_creds');
+
+    // Try a lightweight call to see if API_KEY is set in proxy
+    const res2 = await fetch('http://localhost:8765/creds_status', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body:'{}'});
+    if (res2.ok) {
+      const data = await res2.json();
+      if (data.has_creds) {
+        dot.className = 'dot ok';
+        txt.textContent = '✓ Claves guardadas (...' + data.key_suffix + ') — listas para usar';
+        delBtn.style.display = 'block';
+        // Auto-fill masked placeholders
+        document.getElementById('api_key').placeholder = '••••••••' + data.key_suffix;
+        document.getElementById('api_secret').placeholder = '•••••••••••••••••••••';
+      } else {
+        dot.className = 'dot idle';
+        txt.textContent = 'Sin claves guardadas — ingresa y presiona Guardar claves';
+        delBtn.style.display = 'none';
+      }
+    }
+  } catch(e) {
+    document.getElementById('creds_status_txt').textContent = 'Proxy no detectado';
+    document.getElementById('creds_dot').className = 'dot idle';
+  }
+}
+
+async function guardarCredenciales() {
+  const apiKey = document.getElementById('api_key').value.trim();
+  const secret = document.getElementById('api_secret').value.trim();
+  if (!apiKey || !secret) {
+    showStatus('⚠ Ingresa API Key y Secret antes de guardar', 'err'); return;
+  }
+  try {
+    const res = await fetch('http://localhost:8765/config', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ apiKey, secret, save: true })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showStatus('✅ Claves guardadas en tu PC — la proxima vez no necesitas ingresarlas', 'ok');
+      document.getElementById('creds_dot').className = 'dot ok';
+      document.getElementById('creds_status_txt').textContent = '✓ Claves guardadas permanentemente en tu PC';
+      document.getElementById('btn_del_creds').style.display = 'block';
+    }
+  } catch(e) {
+    showStatus('✗ Proxy no disponible para guardar — ejecuta iremi_proxy.py primero', 'err');
+  }
+}
+
+async function eliminarCredenciales() {
+  if (!confirm('¿Eliminar las claves guardadas? Tendras que ingresarlas nuevamente.')) return;
+  try {
+    const res = await fetch('http://localhost:8765/delete_creds', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showStatus('✓ Claves eliminadas de tu PC', 'ok');
+      document.getElementById('creds_dot').className = 'dot idle';
+      document.getElementById('creds_status_txt').textContent = 'Sin claves guardadas';
+      document.getElementById('btn_del_creds').style.display = 'none';
+      document.getElementById('api_key').value = '';
+      document.getElementById('api_secret').value = '';
+      document.getElementById('api_key').placeholder = 'Tu API Key de Binance';
+    }
+  } catch(e) { showStatus('✗ Error eliminando claves', 'err'); }
+}
+
+async function verificarProxy() {
+  const dot = document.getElementById('proxy_dot');
+  const txt = document.getElementById('proxy_status_text');
+  try {
+    dot.className = 'dot connecting';
+    txt.textContent = 'Verificando...';
+    await checkProxy();
+    dot.className = 'dot ok';
+    txt.textContent = '✓ Proxy activo en localhost:8765';
+    showStatus('✓ Proxy corriendo — puedes conectar', 'ok');
+  } catch(e) {
+    dot.className = 'dot err';
+    txt.textContent = '✗ Proxy no activo — ejecuta: python iremi_proxy.py';
+    showStatus('✗ Proxy no activo · Abre una terminal: python iremi_proxy.py', 'err');
+  }
+}
+
+async function conectarBinance() {
+  const btn    = document.getElementById('btn_conectar');
+  let apiKey = document.getElementById('api_key').value.trim();
+  let secret = document.getElementById('api_secret').value.trim();
+
+  btn.disabled = true; btn.innerHTML = '<span class="spin">⏳</span> Conectando...';
+  setApiStatus('connecting', 'Verificando proxy local...');
+
+  try {
+    // 1. Verificar que el proxy está corriendo
+    await checkProxy();
+
+    // 2. Si no hay creds en el form, verificar si el proxy ya las tiene guardadas
+    if (!apiKey || !secret) {
+      const sc = await fetch('http://localhost:8765/creds_status', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'
+      });
+      const sd = await sc.json();
+      if (sd.has_creds) {
+        setApiStatus('connecting', 'Usando claves guardadas...');
+        // Creds already in proxy memory — skip /config call
+      } else {
+        btn.disabled = false; btn.innerHTML = '🔌 Conectar';
+        showStatus('⚠ Ingresa API Key y Secret Key', 'err'); return;
+      }
+    } else {
+      setApiStatus('connecting', 'Enviando credenciales al proxy...');
+      // 3. Enviar credenciales al proxy
+      await proxyPost('/config', { apiKey, secret });
+    }
+
+    // 3. Consultar saldo USDT
+    setApiStatus('connecting', 'Consultando Binance...');
+    const acct = await proxyPost('/balance');
+
+    let usdtBal = '0';
+    if (Array.isArray(acct)) {
+      const usdt = acct.find(a => a.asset === 'USDT');
+      if (usdt) usdtBal = parseFloat(usdt.free).toFixed(2);
+    }
+
+    setApiStatus('ok', '✓ Conectado · USDT:', usdtBal);
+    showStatus(`✓ Conectado a Binance · ${usdtBal} USDT disponibles`, 'ok');
+
+    document.getElementById('panel_p2p').style.display = 'block';
+    await fetchAndCacheRates();
+    await cargarP2P();
+
+  } catch(e) {
+    console.error(e);
+    if (e.message.includes('fetch') || e.message.includes('ERR_CONNECTION_REFUSED')) {
+      setApiStatus('err', '✗ Proxy no activo');
+      showStatus('✗ El proxy no está corriendo · Abre una terminal y ejecuta: python iremi_proxy.py', 'err');
+    } else {
+      setApiStatus('err', `✗ ${e.message}`);
+      showStatus(`✗ ${e.message}`, 'err');
+    }
+  }
+
+  btn.disabled = false; btn.innerHTML = '🔌 Conectar';
+}
+
+function setApiStatus(state, text, balance='') {
+  const box  = document.getElementById('api_status_box');
+  const dot  = document.getElementById('api_dot2');
+  const dot1 = document.getElementById('api_dot');
+  const txt  = document.getElementById('api_status_text');
+  const bal  = document.getElementById('api_balance');
+  const lbl  = document.getElementById('api_dot_lbl');
+
+  box.className  = `api-status ${state}`;
+  dot.className  = `dot ${state}`;
+  dot1.className = `dot ${state === 'ok' ? 'ok' : state === 'connecting' ? 'connecting' : 'err'}`;
+  txt.textContent = text;
+  bal.textContent = balance ? `${balance} USDT` : '';
+  lbl.textContent = state === 'ok' ? 'Conectado' : state === 'connecting' ? 'Conectando...' : 'Error';
+}
+
+// ══════════════════════════════════════════════════════════
+//  CARGAR OPERACIONES P2P
+//  GET /sapi/v1/c2c/orderMatch/listUserOrderHistory
+//  tradeType: SELL = tú vendiste USDT (recibiste fiat)
+// ══════════════════════════════════════════════════════════
+async function cargarP2P() {
+  const listEl = document.getElementById('ops_list');
+  listEl.innerHTML = '<div style="text-align:center;color:var(--gold);padding:16px"><span class="spin">⏳</span> Cargando operaciones P2P...</div>';
+
+  const days  = parseInt(document.getElementById('p2p_days').value);
+  const start = Date.now() - days * 24 * 60 * 60 * 1000;
+
+  try {
+    const data = await proxyPost('/p2p', {
+      tradeType: 'SELL', startTimestamp: start, page: 1, rows: 100
+    });
+    const ops = (data.data || []).filter(op => op.orderStatus === 'COMPLETED');
+
+    let buyOps = [];
+    try {
+      const dataB = await proxyPost('/p2p', {
+        tradeType: 'BUY', startTimestamp: start, page: 1, rows: 100
+      });
+      buyOps = (dataB.data || []).filter(op => op.orderStatus === 'COMPLETED');
+    } catch(e) { console.warn('BUY ops:', e); }
+
+    p2pOps = [...ops.map(o=>({...o,_side:'SELL'})), ...buyOps.map(o=>({...o,_side:'BUY'}))]
+              .sort((a,b) => b.createTime - a.createTime);
+
+    document.getElementById('p2p_count').textContent = p2pOps.length;
+    renderP2POps(p2pOps);
+
+  } catch(e) {
+    listEl.innerHTML = `<div style="text-align:center;color:var(--red);padding:16px">✗ ${e.message}</div>`;
+  }
+}
+
+function filtrarP2P() {
+  const fiat = document.getElementById('p2p_fiat').value;
+  const filtered = fiat ? p2pOps.filter(o => o.fiat === fiat) : p2pOps;
+  renderP2POps(filtered);
+}
+
+function renderP2POps(ops) {
+  const listEl = document.getElementById('ops_list');
+  if (!ops.length) {
+    listEl.innerHTML = '<div style="text-align:center;color:#4a6080;font-size:11px;padding:20px">Sin operaciones en este período</div>';
+    return;
+  }
+
+  const fmt = n => new Intl.NumberFormat('es-CL').format(Math.round(parseFloat(n)));
+
+  listEl.innerHTML = ops.map(op => {
+    const dt      = new Date(op.createTime);
+    const dateStr = `${dt.getDate().toString().padStart(2,'0')}/${(dt.getMonth()+1).toString().padStart(2,'0')} ${dt.getHours().toString().padStart(2,'0')}:${dt.getMinutes().toString().padStart(2,'0')}`;
+    const isSell  = op._side === 'SELL';
+    const imp     = importedIds.has(op.orderNumber);
+    const fiatFlags = {VES:'🇻🇪',COP:'🇨🇴',PEN:'🇵🇪',ARS:'🇦🇷',MXN:'🇲🇽',USD:'🇺🇸',CLP:'🇨🇱'};
+    const flag = fiatFlags[op.fiat] || '🌍';
+
+    return `<div class="op-card${imp?' imported':''}" 
+                 onclick="${imp?'':(`precargarOp('${op.orderNumber}')`)}"
+                 id="op_${op.orderNumber}">
+      <div>
+        <div class="op-date">${dateStr}</div>
+        <div class="op-fiat">${flag} ${op.fiat}</div>
+      </div>
+      <div class="op-main">
+        <div class="op-monto">${isSell?'-':'+'} ${parseFloat(op.amount).toFixed(3)} USDT</div>
+        <div class="op-det">${op.counterPartNickName || '—'} · 
+          ${isSell?'Venta USDT':'Compra USDT'}</div>
+      </div>
+      <div>
+        <div class="op-precio">${fmt(op.unitPrice)} ${op.fiat}/USDT</div>
+        <div class="op-usdt">Total: ${fmt(op.totalPrice)} ${op.fiat}</div>
+      </div>
+      ${imp
+        ? '<span class="op-tag tag-imp">Importado</span>'
+        : '<span class="op-tag tag-done">✓ P2P</span>'}
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+//  PRECARGAR OPERACIÓN EN FORMULARIO
+// ══════════════════════════════════════════════════════════
+function precargarOp(orderId) {
+  const op = p2pOps.find(o => o.orderNumber === orderId);
+  if (!op) return;
+
+  const dt = new Date(op.createTime);
+  const dateStr = `${dt.getFullYear()}-${(dt.getMonth()+1).toString().padStart(2,'0')}-${dt.getDate().toString().padStart(2,'0')}`;
+  const isSell  = op._side === 'SELL';
+
+  document.getElementById('f_fecha').value   = dateStr;
+  document.getElementById('f_fiat').value    = op.fiat;
+  document.getElementById('f_dest').value    = parseFloat(op.unitPrice).toFixed(3);
+  document.getElementById('f_usdt').value    = isSell
+    ? (-parseFloat(op.amount)).toFixed(3)
+    :   parseFloat(op.amount).toFixed(3);
+  document.getElementById('f_tax').value = op.commission && parseFloat(op.commission) > 0
+    ? parseFloat(op.commission).toFixed(3) : '0.06';
+  document.getElementById('f_comentario').value = op.counterPartNickName || '';
+
+  // Detectar mes automáticamente
+  const mesMap = {
+    '2025-8':'Agosto 2025','2025-9':'Septiembre 2025','2025-10':'Octubre 2025',
+    '2025-11':'Noviembre 2025','2025-12':'Diciembre 2025','2026-1':'Enero 2026',
+    '2026-2':'Febrero 2026','2026-3':'Marzo 2026','2026-4':'Abril 2026',
+    '2026-5':'Mayo 2026','2026-6':'Junio 2026',
+  };
+  const mesKey = `${dt.getFullYear()}-${dt.getMonth()+1}`;
+  if (mesMap[mesKey]) {
+    const mesBtn = [...document.querySelectorAll('.mes-btn')]
+      .find(b => b.textContent.includes(mesMap[mesKey].split(' ')[0]));
+    if (mesBtn) selMes(mesBtn, mesMap[mesKey]);
+  }
+
+  // Marcar card como seleccionada
+  document.querySelectorAll('.op-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById(`op_${orderId}`)?.classList.add('selected');
+
+  // Marcar fuente
+  document.getElementById('form_source').textContent = `Binance P2P · ${op.orderNumber.slice(-8)}`;
+  document.getElementById('form_source').style.color = 'var(--green)';
+  document.getElementById('form_source').dataset.orderId = orderId;
+
+  // USDT/CLP necesita ser ingresado manualmente (no viene del P2P)
+  document.getElementById('f_dc').value = '';
+  document.getElementById('f_dv').value = '';
+  document.getElementById('f_monto').value = '';
+
+  showStatus(`✓ Operación ${orderId.slice(-8)} precargada · Completa USDT/CLP y Monto CLP`, 'info');
+  calcPreview();
+
+  // Scroll al formulario
+  document.querySelector('.panel:nth-child(5)').scrollIntoView({behavior:'smooth'});
+}
+
+// ══════════════════════════════════════════════════════════
+//  SELECTOR MES
+// ══════════════════════════════════════════════════════════
+function selMes(btn, mes) {
+  document.querySelectorAll('.mes-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedMes = mes;
+  document.getElementById('mes_badge').textContent = mes;
+}
+
+// ══════════════════════════════════════════════════════════
+//  PREVIEW CÁLCULO
+// ══════════════════════════════════════════════════════════
+function calcPreview() {
+  const monto  = parseFloat(document.getElementById('f_monto').value)  || 0;
+  const dc     = parseFloat(document.getElementById('f_dc').value)     || 0;
+  const dv     = parseFloat(document.getElementById('f_dv').value)     || 0;
+  const usdt   = parseFloat(document.getElementById('f_usdt').value)   || 0;
+  const tiremi = parseFloat(document.getElementById('f_tiremi').value) || 0;
+  const dest   = parseFloat(document.getElementById('f_dest').value)   || 0;
+
+  if (!monto || !dc || !dv || !usdt) {
+    document.getElementById('preview_box').style.display = 'none';
+    return;
+  }
+
+  const ganU   = (monto / dc) + usdt;
+  const ganC   = ganU * dv;
+  const pct    = monto > 0 ? (ganC / monto) * 100 : 0;
+  const valD   = tiremi > 0 ? monto * tiremi : (dest > 0 && dc > 0 ? monto * (dest / dc) : 0);
+  const fmt    = n => new Intl.NumberFormat('es-CL').format(Math.round(n));
+
+  document.getElementById('pv_gusdt').textContent = (ganU >= 0 ? '+' : '') + ganU.toFixed(6) + ' USDT';
+  document.getElementById('pv_gclp').textContent  = '$' + fmt(ganC) + ' CLP';
+  document.getElementById('pv_pct').textContent   = pct.toFixed(2) + '%';
+  document.getElementById('pv_dest').textContent  = fmt(valD) + ' ' + document.getElementById('f_fiat').value;
+  document.getElementById('pv_gclp').className    = 'prev-val ' + (ganC >= 0 ? 'green' : 'red');
+  document.getElementById('preview_box').style.display = 'block';
+}
+
+// ══════════════════════════════════════════════════════════
+//  GUARDAR — genera script Python + muestra modal
+// ══════════════════════════════════════════════════════════
+async function guardarCambio() {
+  const btn    = document.getElementById('btn_save');
+  const fecha  = document.getElementById('f_fecha').value;
+  const monto  = parseFloat(document.getElementById('f_monto').value);
+  const dc     = parseFloat(document.getElementById('f_dc').value);
+  const dv     = parseFloat(document.getElementById('f_dv').value);
+  const usdt   = parseFloat(document.getElementById('f_usdt').value);
+  const tax    = parseFloat(document.getElementById('f_tax').value) || -0.06;
+  const dest   = parseFloat(document.getElementById('f_dest').value) || null;
+  const tiremi = parseFloat(document.getElementById('f_tiremi').value) || null;
+  const coment = document.getElementById('f_comentario').value.trim() || null;
+  const fiat   = document.getElementById('f_fiat').value;
+
+  if (!fecha)               return showStatus('⚠ Ingresa la fecha', 'err');
+  if (!monto || monto <= 0) return showStatus('⚠ Ingresa el monto CLP', 'err');
+  if (!dc || dc <= 0)       return showStatus('⚠ Ingresa USDT/CLP Compra', 'err');
+  if (!dv || dv <= 0)       return showStatus('⚠ Ingresa USDT/CLP Venta', 'err');
+  if (isNaN(usdt))          return showStatus('⚠ Ingresa USDT Mov', 'err');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">⏳</span> Guardando...';
+  showStatus('Guardando en Excel...', 'info');
+
+  try {
+    // Intentar guardar directo via proxy
+    const result = await proxyPost('/insertar', {
+      mes: selectedMes, fecha, monto, dc, dv, usdt, tax, dest, tiremi, coment
+    });
+
+    const fmt = n => new Intl.NumberFormat('es-CL').format(Math.round(n));
+    const ganC = result.gan_clp || 0;
+
+    // Agregar al historial
+    sessionOps.push({ fecha, mes: selectedMes, monto, usdt, ganC, fiat, coment: coment||'—' });
+    updateHistorial();
+
+    // Marcar como importado si vino de P2P
+    const orderId = document.getElementById('form_source').dataset?.orderId;
+    if (orderId) { importedIds.add(orderId); filtrarP2P(); }
+
+    showStatus(
+      `✅ Guardado en Excel · ${selectedMes} · Fila ${result.fila} · Ganancia: $${fmt(ganC)} CLP`,
+      'ok'
+    );
+    if (sessionOps.length > 0) sessionOps[sessionOps.length-1].excelRow = result.fila;
+    resetForm();
+
+  } catch(e) {
+    // Proxy no disponible — mostrar script Python como fallback
+    console.warn('Proxy no disponible, mostrando script:', e.message);
+    const py = generarScript({ fecha, monto, dc, dv, usdt, tax, dest, tiremi, coment });
+    document.getElementById('py_code_content').textContent = py;
+    document.getElementById('modal_py').classList.add('on');
+    showStatus('⚠ Proxy no disponible · Se generó el script Python para insertar manualmente', 'err');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '💾 Guardar en Excel';
+}
+
+function generarScript(d) {
+  const dc  = d.dc.toFixed(2);
+  const dv  = d.dv.toFixed(2);
+  const tax = d.tax.toFixed(3);
+  return `# IREMI Remesas — Insertar operación en Excel
+# Ejecutar: python insertar_op.py
+from openpyxl import load_workbook
+from datetime import datetime
+
+EXCEL = 'IREMI_Sistema_Completo.xlsx'
+MES   = '${selectedMes}'
+
+datos = {
+    'fecha':  datetime.strptime('${d.fecha}', '%Y-%m-%d'),
+    'monto':  ${d.monto},        # Monto CLP
+    'dc':     ${dc},             # USDT/CLP Compra
+    'dv':     ${dv},             # USDT/CLP Venta
+    'usdt':   ${d.usdt.toFixed(3)},    # USDT Movimiento
+    'tax':    ${tax},            # Tax Binance
+    'dest':   ${d.dest ?? 'None'},     # Tasa Destino
+    'tiremi': ${d.tiremi ?? 'None'},   # Tasa IREMI
+    'coment': ${d.coment ? "'" + d.coment + "'" : 'None'},
+}
+
+wb = load_workbook(EXCEL)
+ws = wb[MES]
+
+# Primera fila vacía en columna C
+insert_row = next(r for r in range(2, 500) if not ws.cell(r, 4).value)  # col D=Monto
+print(f"Insertando en fila {insert_row} de '{MES}'...")
+
+# Excel v4: A=N° B=Tipo C=Fecha D=Monto E=Compra F=Venta G=USDT H=Tax
+#            I=Capital(auto) J=TasaDest K=TasaReal(auto) L=TasaIREMI
+#            M=ValorDest(auto) N=Comentario O-S=formulas
+tipo = 'SELL' if datos['usdt'] < 0 else 'BUY'
+ws.cell(insert_row, 1).value  = insert_row - 1        # A: N°
+ws.cell(insert_row, 2).value  = tipo                   # B: Tipo
+ws.cell(insert_row, 3).value  = datos['fecha']         # C: Fecha
+ws.cell(insert_row, 3).number_format = 'DD/MM/YY'
+ws.cell(insert_row, 4).value  = datos['monto']         # D: Monto CLP
+ws.cell(insert_row, 4).number_format = '$#,##0'
+ws.cell(insert_row, 5).value  = datos['dc']            # E: USDT/CLP Compra
+ws.cell(insert_row, 6).value  = datos['dv']            # F: USDT/CLP Venta
+ws.cell(insert_row, 7).value  = datos['usdt']          # G: USDT Mov
+ws.cell(insert_row, 8).value  = datos['tax']           # H: Tax Binance
+if datos['dest']:   ws.cell(insert_row, 10).value = datos['dest']   # J: Tasa Destino
+if datos['tiremi']: ws.cell(insert_row, 12).value = datos['tiremi'] # L: Tasa IREMI
+if datos['coment']: ws.cell(insert_row, 14).value = datos['coment'] # N: Comentario
+
+wb.save(EXCEL)
+gan_usdt = (datos['monto']/datos['dc']) + datos['usdt']
+gan_clp  = gan_usdt * datos['dv']
+print("OK fila " + str(insert_row) + " en " + MES)
+print("  Gan. USDT = " + str(round(gan_usdt, 4)))
+print("  Gan. CLP  = $" + "{:,.0f}".format(gan_clp))
+`;
+}
+
+function copiarScript() {
+  navigator.clipboard.writeText(document.getElementById('py_code_content').textContent)
+    .then(() => showStatus('✓ Script copiado', 'ok'));
+}
+
+// ══════════════════════════════════════════════════════════
+//  HISTORIAL
+// ══════════════════════════════════════════════════════════
+function updateHistorial() {
+  document.getElementById('hist_count').textContent = sessionOps.length;
+  const fmt = n => new Intl.NumberFormat('es-CL').format(Math.round(n));
+  const tbody = document.getElementById('hist_body');
+  tbody.innerHTML = sessionOps.slice().reverse().map(op => `
+    <tr>
+      <td>${op.fecha}</td>
+      <td style="font-size:10px">${op.mes}</td>
+      <td>$${fmt(op.monto)}</td>
+      <td style="color:${op.usdt<0?'#ef4444':'#4ade80'}">${op.usdt}</td>
+      <td style="color:var(--gold)">$${fmt(op.ganC||0)}</td>
+      <td style="font-size:10px">${op.fiat}</td>
+      <td style="font-size:10px;color:var(--silver)">${op.coment}</td>
+    </tr>`).join('');
+}
+
+// ── Borrar última operación ──────────────────────────────
+async function borrarUltima() {
+  if (sessionOps.length === 0) {
+    showStatus('⚠ No hay operaciones guardadas en esta sesión', 'err'); return;
+  }
+  const last = sessionOps[sessionOps.length - 1];
+  if (!confirm(`¿Borrar la operación del ${last.fecha} por $${new Intl.NumberFormat('es-CL').format(last.monto)} CLP en ${last.mes}?`)) return;
+
+  try {
+    const result = await proxyPost('/borrar', {
+      mes:  last.mes,
+      fila: last.excelRow  // si tenemos la fila guardada
+    });
+    if (result.ok) {
+      showStatus(`✓ Fila ${result.fila} borrada en ${result.mes}`, 'ok');
+      sessionOps.pop();
+      updateHistorial();
+    }
+  } catch(e) {
+    showStatus('✗ Error al borrar: ' + e.message, 'err');
+  }
+}
+
+// ── Utils ─────────────────────────────────────────────────
+function showStatus(msg, type='ok') {
+  const el = document.getElementById('status_box');
+  el.textContent = msg; el.className = 'status-msg ' + type;
+  if (type === 'ok') setTimeout(() => el.style.display='none', 5000);
+}
+
+// Cache de valores frecuentes actualizados desde proxy
+let cachedCLP = '914';
+let cachedTax = '0.06';
+
+function resetForm() {
+  ['f_monto','f_usdt','f_dest','f_tiremi','f_comentario'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f_tax').value   = cachedTax;
+  document.getElementById('f_dc').value    = cachedCLP;
+  document.getElementById('f_dv').value    = cachedCLP;
+  document.getElementById('f_fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('f_fiat').value  = 'VES';
+  document.getElementById('preview_box').style.display = 'none';
+  document.querySelectorAll('.op-card').forEach(c => c.classList.remove('selected'));
+  const src = document.getElementById('form_source');
+  src.textContent = 'manual'; src.style.color = 'var(--silver)';
+  delete src.dataset.orderId;
+}
+
+async function fetchAndCacheRates() {
+  try {
+    const res = await fetch('http://localhost:8765/tasas', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.tasas && data.tasas.CLP && parseFloat(data.tasas.CLP) > 0) {
+      cachedCLP = parseFloat(data.tasas.CLP).toFixed(2);
+      document.getElementById('f_dc').value = cachedCLP;
+      document.getElementById('f_dv').value = cachedCLP;
+      console.log('USDT/CLP actualizado:', cachedCLP);
+    }
+    cachedTax = '0.06';
+    document.getElementById('f_tax').value = cachedTax;
+  } catch(e) { console.log('fetchAndCacheRates: proxy no activo, usando defaults'); }
+}
+</script>
+</body>
+</html>
