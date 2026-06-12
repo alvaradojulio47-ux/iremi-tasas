@@ -1148,8 +1148,15 @@ async function fetchAllRates() {
     const d=await r.json();
     if(d.rates){
       setV('i_mxn',d.rates.MXN,'src_mxn','rate-src src-spot');setV('i_pen',d.rates.PEN,'src_pen','rate-src src-spot');
-      setV('i_dop',d.rates.DOP,'src_dop','rate-src src-spot');
-      setV('i_bob',d.rates.BOB,'src_bob','rate-src src-spot');ok++;
+      setV('i_dop',d.rates.DOP,'src_dop','rate-src src-spot');ok++;
+    }
+  }catch{}
+  try{
+    const bobAds=await diagP2PFetch('BOB','SELL',10);
+    if(bobAds&&bobAds.length){
+      const bobNorm=bobAds.filter(a=>a.classify!=='promoted');
+      const bobVal=(bobNorm[1]||bobNorm[0])?.price;
+      if(bobVal) {setV('i_bob',bobVal,'src_bob','rate-src src-p2p');ok++;}
     }
   }catch{}
 
