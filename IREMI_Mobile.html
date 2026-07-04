@@ -984,6 +984,42 @@ async function diagP2PFetch(fiat, side, rows=10, publisherType=null){
   throw new Error('Sin conexión — todos los proxies fallaron');
 }
 
+function cargarTasasGuardadas(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('iremi_tasas')||'{}');
+    if(Object.keys(saved).length===0) return;
+    const hace=id=>{
+      const t=saved[id]?.ts;
+      if(!t) return '';
+      const mins=Math.round((Date.now()-t)/60000);
+      return mins<60?mins+'min':Math.round(mins/60)+'h';
+    };
+    const ids=['i_ves','i_clp','i_cop','i_pen','i_ars','i_eur','i_dop','i_mxn','i_bob'];
+    let cargadas=0;
+    ids.forEach(id=>{
+      const entry=saved[id];
+      if(!entry||!entry.val) return;
+      const el=document.getElementById(id);
+      if(el&&parseFloat(el.value)===parseFloat(el.defaultValue)){
+        // Solo sobreescribir si todavía tiene el valor por defecto
+        const decimals={i_ves:2,i_clp:2,i_cop:2,i_pen:4,i_ars:2,i_eur:4,
+                         i_dop:2,i_mxn:2,i_pab:5,i_bob:4};
+        el.value=parseFloat(entry.val).toFixed(decimals[id]||2);
+        el.style.borderColor='#d97706';
+        el.style.color='#fbbf24';
+        cargadas++;
+      }
+    });
+    if(cargadas>0){
+      const hm=new Date(saved['i_clp']?.ts||Date.now()).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+      const txm=document.getElementById('upd_time');
+      if(txm) txm.textContent='↺ Última actualización: '+hm+' (proxy inactivo)';
+      const dot=document.getElementById('status_dot');
+      if(dot) dot.className='sdot spin';
+    }
+  }catch(e){console.warn('Error cargando tasas guardadas:',e);}
+}
+
 async function fetchAllRates() {
   const dot=document.getElementById('sdot');
   const dotm=document.getElementById('sdot_mob');
@@ -995,6 +1031,12 @@ async function fetchAllRates() {
   const setV=(id,val,srcId,srcType)=>{
     const el=document.getElementById(id);
     if(el&&val&&parseFloat(val)>0){
+      // Guardar en localStorage para recordar la última tasa obtenida
+      try{
+        const saved=JSON.parse(localStorage.getItem('iremi_tasas')||'{}');
+        saved[id]={val:parseFloat(val),ts:Date.now()};
+        localStorage.setItem('iremi_tasas',JSON.stringify(saved));
+      }catch{}
       const decimals={i_ves:2,i_clp:2,i_cop:2,i_pen:4,i_ars:2,i_eur:4,
                        i_dop:2,i_mxn:2,i_pab:5,i_bob:4,i_usd:4,i_ppfee:1};
       el.value=parseFloat(val).toFixed(decimals[id]||2);
@@ -1958,6 +2000,7 @@ document.getElementById('rf_fecha').value=new Date().toISOString().split('T')[0]
 // Action bar visible by default (starts on tasas)
 const _bar=document.getElementById('action_bar');
 if(_bar) _bar.style.display='flex';
+cargarTasasGuardadas();
 setTimeout(fetchAllRates,800);
 </script>
 </body>
