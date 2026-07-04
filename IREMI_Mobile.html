@@ -1140,16 +1140,22 @@ async function fetchAllRates() {
     document.getElementById('rf_dv').value=clpVal; ok++;
   }catch{}
   try{
-    const r=await fetch('https://api.binance.com/api/v3/ticker/bookTicker?symbol=EURUSDT');
-    const d=await r.json();setV('i_eur',d.askPrice,'src_eur','rate-src src-spot');ok++;
+    const eurAds=await diagP2PFetch('EUR','SELL',10);
+    const eurNorm=eurAds.filter(a=>a.classify!=='promoted');
+    const eurVal=(eurNorm[1]||eurNorm[0])?.price;
+    if(eurVal){setV('i_eur',eurVal,'src_eur','rate-src src-p2p');ok++;}
   }catch{}
   try{
-    const r=await fetch('https://open.er-api.com/v6/latest/USDT');
-    const d=await r.json();
-    if(d.rates){
-      setV('i_mxn',d.rates.MXN,'src_mxn','rate-src src-spot');setV('i_pen',d.rates.PEN,'src_pen','rate-src src-spot');
-      setV('i_dop',d.rates.DOP,'src_dop','rate-src src-spot');ok++;
-    }
+    const penAds=await diagP2PFetch('PEN','SELL',10);
+    const penNorm=penAds.filter(a=>a.classify!=='promoted');
+    const penVal=(penNorm[1]||penNorm[0])?.price;
+    if(penVal){setV('i_pen',penVal,'src_pen','rate-src src-p2p');ok++;}
+  }catch{}
+  try{
+    const dopAds=await diagP2PFetch('DOP','SELL',10);
+    const dopNorm=dopAds.filter(a=>a.classify!=='promoted');
+    const dopVal=(dopNorm[1]||dopNorm[0])?.price;
+    if(dopVal){setV('i_dop',dopVal,'src_dop','rate-src src-p2p');ok++;}
   }catch{}
   try{
     const bobAds=await diagP2PFetch('BOB','SELL',10);
