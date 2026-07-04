@@ -1002,8 +1002,8 @@ function cargarTasasGuardadas(){
       const el=document.getElementById(id);
       if(el&&parseFloat(el.value)===parseFloat(el.defaultValue)){
         // Solo sobreescribir si todavía tiene el valor por defecto
-        const decimals={i_ves:2,i_clp:2,i_cop:2,i_pen:4,i_ars:2,i_eur:4,
-                         i_dop:2,i_mxn:2,i_pab:5,i_bob:4};
+        const decimals={i_ves:2,i_clp:2,i_cop:2,i_pen:4,i_ars:2,i_eur:5,
+                         i_dop:5,i_mxn:2,i_pab:5,i_bob:5};
         el.value=parseFloat(entry.val).toFixed(decimals[id]||2);
         el.style.borderColor='#d97706';
         el.style.color='#fbbf24';
@@ -1037,8 +1037,8 @@ async function fetchAllRates() {
         saved[id]={val:parseFloat(val),ts:Date.now()};
         localStorage.setItem('iremi_tasas',JSON.stringify(saved));
       }catch{}
-      const decimals={i_ves:2,i_clp:2,i_cop:2,i_pen:4,i_ars:2,i_eur:4,
-                       i_dop:2,i_mxn:2,i_pab:5,i_bob:4,i_usd:4,i_ppfee:1};
+      const decimals={i_ves:2,i_clp:2,i_cop:2,i_pen:4,i_ars:2,i_eur:5,
+                       i_dop:5,i_mxn:2,i_pab:5,i_bob:5,i_usd:4,i_ppfee:1};
       el.value=parseFloat(val).toFixed(decimals[id]||2);
       // Double-flash then stay green (like local version)
       const isAuto = srcType&&srcType.includes('auto');
