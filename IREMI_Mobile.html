@@ -398,6 +398,28 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
   font-size:max(11px,2.5cqw);line-height:1.1;letter-spacing:.02em;cursor:pointer;text-transform:uppercase}
 .lg-ob svg{width:3.6cqw;height:3.6cqw;min-width:16px;min-height:16px;fill:#f7c325;flex:none}
 @media (min-aspect-ratio:941/1672){ .lg-poster{width:calc(100dvh * 941 / 1672)} }
+
+/* login claro (día) */
+html[data-theme="light"] #login{background:linear-gradient(180deg,#dcebfc 0 50%,#012762 50% 100%)}
+html[data-theme="light"] .lg-poster{background-image:url('login_fondo_claro.jpg')}
+html[data-theme="light"] #login .lbox{top:33.6%;left:13.2%;width:73.6%;min-height:41.4%;background:linear-gradient(180deg,#ffffff,#f6f8fc);
+  border:1.5px solid #e1e7f0;box-shadow:0 2cqw 6cqw rgba(15,31,75,.14);color:#0f1f4b}
+html[data-theme="light"] #login h2{color:#0f1f4b}
+html[data-theme="light"] #login #lg_txt{color:#34425c}
+html[data-theme="light"] .lg-in{background:#fff;border-color:#c8d1df}
+html[data-theme="light"] .lg-in:focus-within{border-color:#f2b705}
+html[data-theme="light"] .lg-in svg{stroke:#0f1f4b}
+html[data-theme="light"] .lg-in input{color:#0f1f4b}
+html[data-theme="light"] .lg-in input::placeholder{color:#7b879b}
+html[data-theme="light"] .lg-row label{color:#1f2a3f}
+html[data-theme="light"] .lg-row input:not(:checked){background:#fff;border-color:#b8c3d4}
+html[data-theme="light"] .lg-olv{color:#1d4ed8}
+html[data-theme="light"] #login_err{color:#dc2626}
+html[data-theme="light"] .lg-div{color:#34425c}
+html[data-theme="light"] .lg-div::before,html[data-theme="light"] .lg-div::after{background:#c8d1df}
+html[data-theme="light"] .lg-ob{background:#fff;border-color:#0f1f4b;color:#0f1f4b}
+html[data-theme="light"] .lg-ob svg{fill:#0f1f4b}
+html[data-theme="light"] .lg-ob svg path[stroke]{stroke:#0f1f4b}
 /* v4.2 login nuevo */
 /* v4.1 tema claro/oscuro */
 /* v4.0 etapa 4 */
