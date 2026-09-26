@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="IREMI">
 <title>IREMI Remesas</title>
-<meta name="version" content="4.7">
+<meta name="version" content="4.8">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -616,6 +616,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
   <button type="button" class="nb active" id="nb_i" onclick="showPg('pg_inicio','nb_i');cargarInicio()"><span class="ni">📊</span><span>Inicio</span></button>
   <button type="button" class="nb" id="nb_t" onclick="showPg('pg_tasas','nb_t')"><span class="ni">💱</span><span>Tasas</span></button>
   <button type="button" class="nb" id="nb_m" onclick="showPg('pg_mov','nb_m');cargarMov()"><span class="ni">🔄</span><span>Movim.</span></button>
+  <button type="button" class="nb" id="nb_h" onclick="showPg('pg_hist','nb_h');cargarHist()"><span class="ni">📜</span><span>Historial</span></button>
   <button type="button" class="nb" id="nb_g" onclick="showPg('pg_gastos','nb_g');cargarGastos()"><span class="ni">💸</span><span>Gastos</span></button>
   <button type="button" class="nb" id="nb_mas" onclick="showPg('pg_mas','nb_mas');pintarSesion()"><span class="ni">☰</span><span>Más</span></button>
 </nav>
@@ -969,7 +970,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
   <div class="lx-wrap"><table class="lx" id="lx_tabla"></table></div>
   <div style="font-size:11px;color:var(--mute);line-height:1.6;margin-top:8px">🔒 Solo el administrador ve esta pantalla. Es tu libro de cambios tal como quedó en el Excel (todas las hojas, fila por fila, con los resúmenes). Desliza hacia el lado para ver todas las columnas.</div>
 </div>
-<div class="pg" id="pg_hist" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
+<div class="pg" id="pg_hist" style="padding:12px 12px 90px">
   <div class="filtros">
     <select id="hf_mes" onchange="cargarHist()"><option value="">Cargando meses...</option></select>
     <select id="hf_tipo" onchange="pintarHistOps()"><option value="VENTA">Cambios</option><option value="COMPRA">Compras USDT</option><option value="AJUSTE">Ajustes</option><option value="">Todo</option></select>
@@ -2776,7 +2777,7 @@ const PERMISOS=[['inicio','📊 Inicio'],['tasas','💱 Tasas'],['movimientos','
 const PERM_UI={
   inicio:{nav:'nb_i',abrir:()=>{showPg('pg_inicio','nb_i');cargarInicio();}}, tasas:{nav:'nb_t',abrir:()=>showPg('pg_tasas','nb_t')},
   movimientos:{nav:'nb_m',abrir:()=>{showPg('pg_mov','nb_m');cargarMov();}}, gastos:{nav:'nb_g',abrir:()=>{showPg('pg_gastos','nb_g');cargarGastos();}},
-  cuadre:{pg:['pg_cuadre']}, historial:{pg:['pg_hmes','pg_hist']}, htasas:{pg:['pg_htasas']}, belkys:{pg:['pg_belkys']}, alertas:{pg:['pg_alertas']},
+  cuadre:{pg:['pg_cuadre']}, historial:{nav:'nb_h',pg:['pg_hmes','pg_hist']}, htasas:{pg:['pg_htasas']}, belkys:{pg:['pg_belkys']}, alertas:{pg:['pg_alertas']},
   banco:{pg:['pg_banco']}, reportes:{pg:['pg_rep']}, herramientas:{pg:['pg_reg','pg_exp','pg_p2p']}};
 function puede(p){ if(!YO) return false; if(p==='usuarios') return YO.rol==='admin'; return YO.rol==='admin'||!YO.permisos||YO.permisos.includes(p); }
 async function aplicarPermisos(){
