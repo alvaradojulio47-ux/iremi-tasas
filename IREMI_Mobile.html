@@ -8,23 +8,49 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="IREMI">
 <title>IREMI Remesas</title>
-<meta name="version" content="3.1">
+<meta name="version" content="4.1">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{
+:root,#flyer{
   --navy:#0a1628;--navy2:#0d1f3c;--dark:#060e1a;
-  --gold:#f5c518;--blue:#0039A6;
-  --white:#fff;--silver:#c8d6e5;
-  --green:#4ade80;--red:#ef4444;--orange:#f97316;
+  --gold:#f5c518;--blue:#0039A6;--on-gold:#0a1628;
+  --white:#fff;--tx:#fff;--silver:#c8d6e5;--mute:#6b85a8;--mute2:#4a6080;
+  --card:#0d1f3c;--modal:#111d30;--hover:#0f1f3a;--line:#1e3256;--line2:#16294a;--bord:#2a4070;--bord2:#1e3a6a;--glow:#123061;
+  --green:#4ade80;--green2:#86efac;--red:#ef4444;--red2:#f87171;--orange:#f97316;--amber:#fbbf24;--sky:#60a5fa;
+  --ok-bg:#052e0a;--err-bg:#2e0505;--warn-bg:#1a1000;--zebra:rgba(13,31,60,.5);color-scheme:dark;
 }
+html[data-theme="light"]{
+  --navy:#ffffff;--navy2:#ffffff;--dark:#eef2f7;
+  --gold:#d4a000;--blue:#0039A6;--on-gold:#0a1628;
+  --white:#0f1b2d;--tx:#0f1b2d;--silver:#3d4c61;--mute:#5d6e85;--mute2:#7a889c;
+  --card:#ffffff;--modal:#ffffff;--hover:#f3f6fb;--line:#dde4ee;--line2:#e8edf4;--bord:#bfcadb;--bord2:#cfd9e8;--glow:#dbe6f7;
+  --green:#15803d;--green2:#166534;--red:#dc2626;--red2:#dc2626;--orange:#ea580c;--amber:#b45309;--sky:#1d4ed8;
+  --ok-bg:#dcfce7;--err-bg:#fee2e2;--warn-bg:#fef3c7;--zebra:#f3f6fb;color-scheme:light;
+}
+/* el flyer que se comparte se ve igual en los dos temas */
+html[data-theme="light"] #flyer{
+  --navy:#0a1628;--navy2:#0d1f3c;--dark:#060e1a;
+  --gold:#f5c518;--blue:#0039A6;--on-gold:#0a1628;
+  --white:#fff;--tx:#fff;--silver:#c8d6e5;--mute:#6b85a8;--mute2:#4a6080;
+  --card:#0d1f3c;--modal:#111d30;--hover:#0f1f3a;--line:#1e3256;--line2:#16294a;--bord:#2a4070;--bord2:#1e3a6a;--glow:#123061;
+  --green:#4ade80;--green2:#86efac;--red:#ef4444;--red2:#f87171;--orange:#f97316;--amber:#fbbf24;--sky:#60a5fa;
+  --ok-bg:#052e0a;--err-bg:#2e0505;--warn-bg:#1a1000;--zebra:rgba(13,31,60,.5);color-scheme:dark;
+}
+html[data-theme="light"] .panel,html[data-theme="light"] .kc,html[data-theme="light"] .mv,html[data-theme="light"] .masbtn{box-shadow:0 1px 3px rgba(15,27,45,.08)}
+html[data-theme="light"] .topbar,html[data-theme="light"] .nav{box-shadow:0 1px 4px rgba(15,27,45,.08)}
+html[data-theme="light"] #login{background:radial-gradient(circle at 50% 20%,#dbe6f7,#eef2f7 70%)}
+html[data-theme="light"] .modal{background:rgba(15,27,45,.55)}
+html[data-theme="light"] .tt{color:#b38600}
+body{transition:background .3s,color .3s}
+#login .lbox button.lnk{background:none;color:var(--gold);width:auto;padding:6px 2px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;text-decoration:underline;border-radius:0}
 html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Barlow Condensed',sans-serif;overflow-x:hidden}
 
 /* ── TOPBAR ── */
 .topbar{
   position:sticky;top:0;z-index:100;
   display:flex;align-items:center;justify-content:space-between;
-  padding:8px 14px;background:var(--navy);border-bottom:1px solid #1e3256;
+  padding:8px 14px;background:var(--navy);border-bottom:1px solid var(--line);
   height:52px;
 }
 .tl{display:flex;align-items:center;gap:8px}
@@ -37,7 +63,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 .sdot.spin{background:var(--gold);animation:blink .4s infinite}
 .sdot.err{background:var(--red)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.tbtn{background:none;border:1px solid #2a4070;border-radius:6px;color:var(--silver);
+.tbtn{background:none;border:1px solid var(--bord);border-radius:6px;color:var(--silver);
        font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;
        padding:5px 9px;cursor:pointer;white-space:nowrap}
 .tbtn:hover{border-color:var(--gold);color:var(--gold)}
@@ -45,7 +71,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 /* ── NAV TABS ── */
 .nav{
   display:flex;background:var(--navy2);
-  border-bottom:2px solid #1e3256;
+  border-bottom:2px solid var(--line);
   position:sticky;top:52px;z-index:99;
 }
 .nb{
@@ -84,7 +110,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
     gap:0;align-items:start;
   }
   #pg_reg .reg-left{
-    border-right:1px solid #1e3256;padding:16px;
+    border-right:1px solid var(--line);padding:16px;
     min-height:calc(100vh - 94px);
   }
   #pg_reg .reg-right{
@@ -111,7 +137,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 
 /* ── FLYER ── */
 .fw{position:relative;border-radius:14px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.6);margin-bottom:10px}
-.fbg{position:absolute;inset:0;background-size:cover;background-position:center;background:linear-gradient(135deg,#0a1628,#1a3a6a)}
+.fbg{position:absolute;inset:0;background-size:cover;background-position:center;background:linear-gradient(135deg,var(--navy),var(--bord2))}
 .fov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,14,26,.72)0%,rgba(6,14,26,.5)50%,rgba(6,14,26,.8)100%)}
 .fhx{position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='64.62'%3E%3Cpolygon points='28,0 56,16.16 56,48.47 28,64.62 0,48.47 0,16.16' fill='none' stroke='%23ffffff' stroke-width='0.6'/%3E%3C/svg%3E");background-size:56px 64.62px;opacity:.1}
 .fc{position:relative;z-index:2;padding:10px 12px 8px}
@@ -120,7 +146,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 .fh{display:flex;align-items:center;gap:8px;margin-bottom:5px}
 .fh img{width:48px;height:50px;border-radius:7px;object-fit:cover}
 .fh-m{flex:1;text-align:center}
-.fh-t{font-size:16px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#fff;line-height:1}
+.fh-t{font-size:16px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--tx);line-height:1}
 .fh-s{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--silver);margin-top:1px}
 .fh-d{text-align:right;min-width:60px}
 .fd{font-size:12px;font-weight:800;color:var(--red);line-height:1}
@@ -136,28 +162,28 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
        padding:7px 10px 5px;margin-bottom:4px;box-shadow:0 0 16px rgba(245,197,24,.2)}
 .ht{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:2px}
 .hf{width:48px;height:32px;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.4)}
-.hl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#fff;text-align:center;margin-bottom:3px}
+.hl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--tx);text-align:center;margin-bottom:3px}
 .hrates{display:flex;align-items:stretch}
 .hc{flex:1;display:flex;flex-direction:column;align-items:center;padding:3px 5px}
 .hn{font-size:50px;font-weight:900;color:var(--gold);line-height:1}
-.hn2{font-size:44px;font-weight:900;color:#fff;line-height:1}
+.hn2{font-size:44px;font-weight:900;color:var(--tx);line-height:1}
 .hlb{font-size:7px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--silver);text-align:center;margin-top:2px}
 .hm{font-size:7px;color:rgba(245,197,24,.6);text-transform:uppercase;margin-top:1px}
 .hdiv{width:1px;background:linear-gradient(180deg,transparent,var(--gold),transparent);margin:3px 0;flex-shrink:0}
 
 /* Grid */
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:4px}
-.rc{background:rgba(13,31,60,.84);border:1px solid #1e3a6a;border-radius:8px;padding:5px 7px;display:flex;align-items:center;gap:6px}
+.rc{background:rgba(13,31,60,.84);border:1px solid var(--bord2);border-radius:8px;padding:5px 7px;display:flex;align-items:center;gap:6px}
 .rc .fs{width:26px;height:17px;border-radius:3px;overflow:hidden;flex-shrink:0}
 .rc .fs img{width:100%;height:100%;object-fit:cover;display:block}
-.si{width:26px;height:26px;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:"Arial Black",sans-serif;font-size:12px;font-weight:900;color:#fff}
-.rn{font-size:14px;font-weight:900;color:#fff;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.si{width:26px;height:26px;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:"Arial Black",sans-serif;font-size:12px;font-weight:900;color:var(--tx)}
+.rn{font-size:14px;font-weight:900;color:var(--tx);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rl{font-size:7px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--silver);margin-top:1px}
 
 /* Digital */
 .dr{display:flex;gap:3px;margin-bottom:4px}
-.sc{flex:1;background:rgba(13,31,60,.84);border:1px solid #1e3a6a;border-radius:8px;padding:5px 7px;display:flex;align-items:center;gap:5px}
-.sn{font-size:13px;font-weight:900;color:#fff;line-height:1}
+.sc{flex:1;background:rgba(13,31,60,.84);border:1px solid var(--bord2);border-radius:8px;padding:5px 7px;display:flex;align-items:center;gap:5px}
+.sn{font-size:13px;font-weight:900;color:var(--tx);line-height:1}
 .sl{font-size:7px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--silver);margin-top:1px}
 
 /* Divider, contacts, slogan */
@@ -178,79 +204,79 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 .pctitle .badge{background:var(--blue);color:#fff;border-radius:4px;padding:1px 7px;font-size:9px}
 .rate-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
 .rate-label{font-size:9px;font-weight:700;color:var(--silver);text-transform:uppercase;letter-spacing:.06em;width:80px;flex-shrink:0}
-.rate-input{flex:1;background:#0a1628;border:1.5px solid #2a4070;border-radius:7px;
-             color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;
+.rate-input{flex:1;background:var(--navy);border:1.5px solid var(--bord);border-radius:7px;
+             color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;
              padding:7px 10px;outline:none;width:100%}
 .rate-input:focus{border-color:var(--gold)}
 .rate-src{font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;white-space:nowrap;flex-shrink:0}
-.src-auto{background:#052e0a;color:var(--green)}
-.src-spot{background:#0d1f3c;color:#60a5fa}
-.src-manual{background:#1a0000;color:var(--red)}
+.src-auto{background:var(--ok-bg);color:var(--green)}
+.src-spot{background:var(--card);color:var(--sky)}
+.src-manual{background:var(--err-bg);color:var(--red)}
 .slider-wrap{margin:10px 0}
 .slider-wrap .slbl{font-size:9px;font-weight:700;color:var(--silver);text-transform:uppercase;
                     letter-spacing:.07em;display:flex;justify-content:space-between;margin-bottom:5px}
-.sep{height:1px;background:linear-gradient(90deg,transparent,#2a4070,transparent);margin:10px 0}
+.sep{height:1px;background:linear-gradient(90deg,transparent,var(--bord),transparent);margin:10px 0}
 
 /* ── FORMS ── */
 .field{margin-bottom:8px}
 .field label{font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
               color:var(--silver);display:block;margin-bottom:3px}
 .field input,.field select,.field textarea{
-  width:100%;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:8px;
-  color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;
+  width:100%;background:var(--card);border:1.5px solid var(--bord);border-radius:8px;
+  color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;
   padding:10px 12px;outline:none;
 }
 .field input:focus,.field select:focus{border-color:var(--gold)}
-.field .hint{font-size:8px;color:#4a6080;margin-top:2px}
+.field .hint{font-size:8px;color:var(--mute2);margin-top:2px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 
 /* Mes buttons */
 .mes-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px}
-.mb{padding:7px 3px;border-radius:7px;border:1.5px solid #2a4070;background:#0d1a2e;
+.mb{padding:7px 3px;border-radius:7px;border:1.5px solid var(--bord);background:var(--card);
      color:var(--silver);font-family:'Barlow Condensed',sans-serif;font-size:10px;
      font-weight:700;text-transform:uppercase;cursor:pointer;text-align:center}
-.mb.active{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+.mb.active{background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
 
 /* Preview box */
-.prev-box{background:#0d1a2e;border:1px solid #2a4070;border-radius:8px;padding:10px;margin-bottom:8px}
-.prev-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #1e3256}
+.prev-box{background:var(--card);border:1px solid var(--bord);border-radius:8px;padding:10px;margin-bottom:8px}
+.prev-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)}
 .prev-row:last-child{border:none}
 .pr-l{font-size:9px;color:var(--silver)}
-.pr-v{font-size:15px;font-weight:700;color:#fff}
+.pr-v{font-size:15px;font-weight:700;color:var(--tx)}
 
 /* Buttons */
 .btn{border:none;border-radius:9px;font-family:'Barlow Condensed',sans-serif;
       font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
       cursor:pointer;padding:12px 10px;display:flex;align-items:center;justify-content:center;gap:5px}
 .btn:active{opacity:.8;transform:scale(.97)}
-.b-gold{background:var(--gold);color:var(--navy)}
+.b-gold{background:var(--gold);color:var(--on-gold)}
 .b-blue{background:var(--blue);color:#fff}
 .b-green{background:#166534;color:#fff}
 .b-red{background:#7f1d1d;color:#fff}
-.b-gray{background:#1e3256;color:var(--silver)}
+.b-gray{background:var(--line);color:var(--silver)}
 .b-purple{background:#4c1d95;color:#fff}
 .brow{display:flex;gap:6px}
 
 /* Status bar */
 .sbar{border-radius:8px;padding:9px 12px;font-size:11px;font-weight:700;
        text-align:center;margin-bottom:8px;display:none;line-height:1.4}
-.sbar.ok{background:#052e0a;border:1px solid var(--green);color:var(--green);display:block}
-.sbar.err{background:#2e0505;border:1px solid var(--red);color:var(--red);display:block}
-.sbar.info{background:#0d1f3c;border:1px solid var(--gold);color:var(--gold);display:block}
+.sbar.ok{background:var(--ok-bg);border:1px solid var(--green);color:var(--green);display:block}
+.sbar.err{background:var(--err-bg);border:1px solid var(--red);color:var(--red);display:block}
+.sbar.info{background:var(--card);border:1px solid var(--gold);color:var(--gold);display:block}
 
 /* P2P cards */
-.p2p-card{background:#0d1a2e;border:1px solid #1e3256;border-radius:9px;padding:9px 11px;
+.p2p-card{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:9px 11px;
            margin-bottom:5px;cursor:pointer;transition:.15s}
-.p2p-card:hover,.p2p-card:active{border-color:var(--gold);background:#111d30}
-.p2p-card.selected{border-color:var(--gold);background:#111d30}
+.p2p-card:hover,.p2p-card:active{border-color:var(--gold);background:var(--modal)}
+.p2p-card.selected{border-color:var(--gold);background:var(--modal)}
 .pc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
 .pc-date{font-size:9px;color:var(--silver)}
 .pc-tipo{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px}
-.pc-tipo.sell{background:#052e0a;color:var(--green)}
-.pc-tipo.buy{background:#1a1000;color:var(--gold)}
+.pc-tipo.sell{background:var(--ok-bg);color:var(--green)}
+.pc-tipo.buy{background:var(--warn-bg);color:var(--gold)}
 .pc-mid{display:flex;justify-content:space-between;align-items:center}
-.pc-usdt{font-size:18px;font-weight:800;color:#fff}
+.pc-usdt{font-size:18px;font-weight:800;color:var(--tx)}
 .pc-rate{font-size:13px;font-weight:700;color:var(--gold);text-align:right}
 .pc-bot{font-size:8px;color:var(--silver);margin-top:2px}
 
@@ -258,18 +284,18 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 .hist-table{width:100%;border-collapse:collapse;font-size:10px}
 .hist-table th{background:var(--navy2);color:var(--gold);font-weight:700;font-size:9px;
                text-transform:uppercase;letter-spacing:.06em;padding:8px 6px;
-               border-bottom:2px solid #2a4070;text-align:left;white-space:nowrap}
-.hist-table td{padding:7px 6px;border-bottom:1px solid #1e3256;vertical-align:middle;white-space:nowrap}
-.hist-table tr:nth-child(even) td{background:rgba(13,31,60,.5)}
+               border-bottom:2px solid var(--bord);text-align:left;white-space:nowrap}
+.hist-table td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+.hist-table tr:nth-child(even) td{background:var(--zebra)}
 .hist-table tr:hover td{background:rgba(245,197,24,.06)}
 .pill{display:inline-block;padding:1px 6px;border-radius:3px;font-weight:700;font-size:9px}
-.pill.sell{background:#052e0a;color:var(--green)}
-.pill.buy{background:#1a1000;color:var(--gold)}
+.pill.sell{background:var(--ok-bg);color:var(--green)}
+.pill.buy{background:var(--warn-bg);color:var(--gold)}
 
 /* Stat cards */
 .stats4{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
 @media(min-width:600px){.stats4{grid-template-columns:repeat(4,1fr)}}
-.stat{background:#0d1a2e;border:1px solid #1e3256;border-radius:10px;padding:10px 12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .stat-v{font-size:20px;font-weight:900;color:var(--gold);line-height:1}
 .stat-l{font-size:8px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-top:3px}
 
@@ -278,22 +304,22 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
         display:none;padding:16px}
 .modal.on{display:flex;align-items:center;justify-content:center;}
 .modal.on{display:flex}
-.mbox{background:#111d30;border:1.5px solid var(--gold);border-radius:14px;
+.mbox{background:var(--modal);border:1.5px solid var(--gold);border-radius:14px;
         padding:18px;width:100%;max-width:440px}
 .mtit{font-size:14px;font-weight:800;color:var(--gold);text-transform:uppercase;
        letter-spacing:.07em;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
 .mcl{background:none;border:none;color:var(--silver);font-size:22px;cursor:pointer;padding:0 2px;line-height:1}
-.key-saved{display:none;background:#052e0a;border:1px solid var(--green);border-radius:6px;
+.key-saved{display:none;background:var(--ok-bg);border:1px solid var(--green);border-radius:6px;
             padding:6px 10px;font-size:10px;font-weight:700;color:var(--green);text-align:center;margin-bottom:8px}
 
 /* Section titles */
 .section{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
           color:var(--gold);margin:10px 0 8px;display:flex;align-items:center;gap:6px}
-.badge{background:var(--gold);color:var(--navy);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:800}
+.badge{background:var(--gold);color:var(--on-gold);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:800}
 
 /* Toast */
 .toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom));left:50%;
-        transform:translateX(-50%);background:#0d1f3c;border:1.5px solid var(--gold);
+        transform:translateX(-50%);background:var(--card);border:1.5px solid var(--gold);
         border-radius:10px;padding:9px 18px;font-size:12px;font-weight:700;color:var(--gold);
         white-space:nowrap;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;
         max-width:90vw;text-align:center}
@@ -304,8 +330,8 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 
 /* Scrollbar */
 ::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:#060e1a}
-::-webkit-scrollbar-thumb{background:#2a4070;border-radius:2px}
+::-webkit-scrollbar-track{background:var(--dark)}
+::-webkit-scrollbar-thumb{background:var(--bord);border-radius:2px}
 
 /* Mobile padding */
 @media(max-width:899px){
@@ -313,80 +339,81 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 }
 
 /* ══ v3.0: LOGIN + INICIO ══════════════════════════════════ */
-#login{position:fixed;inset:0;z-index:500;background:radial-gradient(circle at 50% 20%,#123061,#060e1a 70%);
+#login{position:fixed;inset:0;z-index:500;background:radial-gradient(circle at 50% 20%,var(--glow),var(--dark) 70%);
   display:none;align-items:center;justify-content:center;padding:20px}
 #login.on{display:flex}
-.lbox{width:100%;max-width:360px;background:#0d1f3c;border:1.5px solid #2a4070;border-radius:16px;padding:22px 20px;
+.lbox{width:100%;max-width:360px;background:var(--card);border:1.5px solid var(--bord);border-radius:16px;padding:22px 20px;
   box-shadow:0 10px 40px rgba(0,0,0,.6)}
 .lbox h1{font-size:22px;font-weight:900;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;text-align:center}
 .lbox p{font-size:11px;color:var(--silver);text-align:center;margin:4px 0 16px}
-.lbox input{width:100%;background:#060e1a;border:1.5px solid #2a4070;border-radius:9px;color:#fff;
+.lbox input{width:100%;background:var(--dark);border:1.5px solid var(--bord);border-radius:9px;color:var(--tx);
   font-family:'Barlow',sans-serif;font-size:15px;padding:11px 12px;outline:none;margin-bottom:10px}
 .lbox input:focus{border-color:var(--gold)}
-.lbox button{width:100%;padding:12px;border:none;border-radius:10px;background:var(--gold);color:var(--navy);
+.lbox button{width:100%;padding:12px;border:none;border-radius:10px;background:var(--gold);color:var(--on-gold);
   font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
-#login_err{font-size:11px;color:#f87171;text-align:center;min-height:16px;margin-top:8px}
+#login_err{font-size:11px;color:var(--red2);text-align:center;min-height:16px;margin-top:8px}
 .kgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 @media(min-width:700px){.kgrid{grid-template-columns:repeat(4,1fr)}}
-.kc{background:#0d1f3c;border:1px solid #1e3256;border-radius:12px;padding:10px 12px}
+.kc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 .kc .kl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--silver)}
-.kc .kv{font-size:22px;font-weight:900;color:#fff;line-height:1.15;margin-top:2px}
-.kc .ks{font-size:10px;color:#6b85a8;margin-top:1px}
-.kc.g .kv{color:var(--green)} .kc.y .kv{color:var(--gold)} .kc.r .kv{color:#f87171}
-.panel{background:#0d1f3c;border:1px solid #1e3256;border-radius:12px;padding:12px;margin-bottom:10px}
+.kc .kv{font-size:22px;font-weight:900;color:var(--tx);line-height:1.15;margin-top:2px}
+.kc .ks{font-size:10px;color:var(--mute);margin-top:1px}
+.kc.g .kv{color:var(--green)} .kc.y .kv{color:var(--gold)} .kc.r .kv{color:var(--red2)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
 .panel h3{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
-.fila{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:5px 0;border-bottom:1px solid #16294a}
+.fila{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:5px 0;border-bottom:1px solid var(--line2)}
 .fila:last-child{border-bottom:none}
 .fila span:first-child{color:var(--silver)}
-.masbtn{display:flex;align-items:center;gap:10px;width:100%;background:#0d1f3c;border:1px solid #1e3256;border-radius:12px;
-  padding:13px 14px;margin-bottom:8px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;
+.masbtn{display:flex;align-items:center;gap:10px;width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:13px 14px;margin-bottom:8px;color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;
   text-align:left;cursor:pointer}
-.masbtn small{display:block;font-size:10px;font-weight:500;color:#6b85a8}
-.pronto{text-align:center;color:#6b85a8;padding:40px 20px;font-size:13px;line-height:1.6}
-#tasa_estado{font-size:10px;text-align:center;color:#6b85a8;margin-top:4px}
+.masbtn small{display:block;font-size:10px;font-weight:500;color:var(--mute)}
+.pronto{text-align:center;color:var(--mute);padding:40px 20px;font-size:13px;line-height:1.6}
+#tasa_estado{font-size:10px;text-align:center;color:var(--mute);margin-top:4px}
+/* v4.1 tema claro/oscuro */
 /* v4.0 etapa 4 */
 /* v3.2 historial */
 /* v3.1 */
 .filtros{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.filtros select,.filtros input[type=month]{background:#0d1f3c;border:1px solid #2a4070;border-radius:8px;color:#fff;
+.filtros select,.filtros input[type=month]{background:var(--card);border:1px solid var(--bord);border-radius:8px;color:var(--tx);
   font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:7px 8px;outline:none}
 .filtros label{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--silver)}
-.mv{background:#0d1f3c;border:1px solid #1e3256;border-radius:11px;padding:9px 11px;margin-bottom:7px;cursor:pointer}
+.mv{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:9px 11px;margin-bottom:7px;cursor:pointer}
 .mv:active{border-color:var(--gold)}
-.mv .r1{display:flex;justify-content:space-between;font-size:10px;color:#6b85a8;gap:6px}
+.mv .r1{display:flex;justify-content:space-between;font-size:10px;color:var(--mute);gap:6px}
 .mv .r2{display:flex;justify-content:space-between;align-items:baseline;margin:2px 0}
 .mv .r2 .a{font-size:13px;color:var(--silver)} .mv .r2 .b{font-size:19px;font-weight:900}
-.mv .r3{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#6b85a8;gap:6px}
-.tag{display:inline-block;border-radius:5px;padding:1px 6px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:#1e3256;color:var(--silver)}
+.mv .r3{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--mute);gap:6px}
+.tag{display:inline-block;border-radius:5px;padding:1px 6px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:var(--line);color:var(--silver)}
 .tag.j{background:#1d4ed8;color:#fff} .tag.i{background:#7c3aed;color:#fff} .tag.w{background:#b45309;color:#fff}
 .tag.ok{background:#14532d;color:#86efac} .tag.m{background:#0e7490;color:#fff} .tag.buy{background:#166534;color:#fff}
 .resumen{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--silver);margin-bottom:8px}
-.resumen b{color:#fff}
+.resumen b{color:var(--tx)}
 .frm{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .frm .full{grid-column:1/-1}
 .frm label{display:block;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--silver);margin-bottom:3px}
-.frm input,.frm select{width:100%;background:#060e1a;border:1.5px solid #2a4070;border-radius:8px;color:#fff;
+.frm input,.frm select{width:100%;background:var(--dark);border:1.5px solid var(--bord);border-radius:8px;color:var(--tx);
   font-family:'Barlow',sans-serif;font-size:14px;padding:9px 10px;outline:none}
 .tabla{width:100%;border-collapse:collapse;font-size:12px}
-.tabla th{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--silver);text-align:right;padding:5px 4px;border-bottom:1px solid #1e3256}
-.tabla td{text-align:right;padding:6px 4px;border-bottom:1px solid #16294a}
+.tabla th{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--silver);text-align:right;padding:5px 4px;border-bottom:1px solid var(--line)}
+.tabla td{text-align:right;padding:6px 4px;border-bottom:1px solid var(--line2)}
 .tabla th:first-child,.tabla td:first-child{text-align:left}
-.mg-ok{color:var(--green)} .mg-med{color:var(--gold)} .mg-bad{color:#f87171}
-.cfg-row{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:end;padding:8px 0;border-bottom:1px solid #16294a}
-.cfg-row small{display:block;font-size:10px;color:#6b85a8;margin:2px 0 4px}
-.cfg-row input{width:100%;background:#060e1a;border:1.5px solid #2a4070;border-radius:8px;color:#fff;font-size:14px;padding:8px 9px;outline:none}
-.hs-row{cursor:pointer} #hs_tabla td:first-child{white-space:nowrap} @media(max-width:520px){#hs_tabla .hs-opt{display:none}} .hs-row:hover td{background:#0f1f3a} .hs-tot td{font-weight:700;color:var(--gold);border-top:2px solid #2a4070}
+.mg-ok{color:var(--green)} .mg-med{color:var(--gold)} .mg-bad{color:var(--red2)}
+.cfg-row{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:end;padding:8px 0;border-bottom:1px solid var(--line2)}
+.cfg-row small{display:block;font-size:10px;color:var(--mute);margin:2px 0 4px}
+.cfg-row input{width:100%;background:var(--dark);border:1.5px solid var(--bord);border-radius:8px;color:var(--tx);font-size:14px;padding:8px 9px;outline:none}
+.hs-row{cursor:pointer} #hs_tabla td:first-child{white-space:nowrap} @media(max-width:520px){#hs_tabla .hs-opt{display:none}} .hs-row:hover td{background:var(--hover)} .hs-tot td{font-weight:700;color:var(--gold);border-top:2px solid var(--bord)}
 .bk-row{display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:center}
-.bk-row select{background:#060e1a;border:1px solid #2a4070;border-radius:7px;color:#fff;font-size:12px;padding:5px 6px;max-width:150px}
-.bk-d{font-size:12px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bk-s{font-size:10px;color:#6b85a8}
-.m-in{color:var(--green);font-weight:700} .m-out{color:#f87171;font-weight:700}
-.chip{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px;background:#1e3256;color:var(--silver);margin:2px 3px 0 0}
+.bk-row select{background:var(--dark);border:1px solid var(--bord);border-radius:7px;color:var(--tx);font-size:12px;padding:5px 6px;max-width:150px}
+.bk-d{font-size:12px;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bk-s{font-size:10px;color:var(--mute)}
+.m-in{color:var(--green);font-weight:700} .m-out{color:var(--red2);font-weight:700}
+.chip{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px;background:var(--line);color:var(--silver);margin:2px 3px 0 0}
 #cq_banco td:first-child{white-space:nowrap} @media(max-width:520px){#cq_banco .hs-opt{display:none}}
-.salv{font-size:10.5px;color:#fbbf24;line-height:1.45;padding:2px 0 6px}
+.salv{font-size:10.5px;color:var(--amber);line-height:1.45;padding:2px 0 6px}
 .lnk{background:none;border:none;color:var(--gold);font-size:13px;cursor:pointer;padding:6px;text-decoration:underline}
-.perm-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:12px;color:#c8d6e5}
-.perm-grid label{display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:12px;font-weight:400;color:#c8d6e5}
+.perm-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:12px;color:var(--silver)}
+.perm-grid label{display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:12px;font-weight:400;color:var(--silver)}
 .perm-grid input{width:auto!important}
 .volver{background:none;border:none;color:var(--gold);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;padding:0 0 8px}
 @media(min-width:900px){#pg_cuadre.on,#pg_banco.on,#pg_rep.on,#pg_usu.on,#pg_hmes.on,#pg_htasas.on,#pg_belkys.on,#pg_alertas.on{display:block;max-width:980px;margin:0 auto}}
@@ -396,6 +423,23 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 #pg_mas.on > .masbtn{padding-bottom:13px}
 #pg_inicio .section{margin:14px 0 8px}
 </style>
+<script>
+// ── v4.1 · Tema claro/oscuro. Automático: claro de 07:00 a 19:59 (hora de Chile), oscuro de noche.
+const TEMA_KEY='iremi_tema';
+function temaPref(){ try{return localStorage.getItem(TEMA_KEY)||'auto';}catch{return 'auto';} }
+function temaEfectivo(p){ if(p==='light'||p==='dark') return p;
+  const h=+new Date().toLocaleString('en-US',{timeZone:'America/Santiago',hour:'numeric',hour12:false})%24; return (h>=7&&h<20)?'light':'dark'; }
+function aplicarTema(){ const p=temaPref(), t=temaEfectivo(p);
+  document.documentElement.setAttribute('data-theme',t);
+  const m=document.querySelector('meta[name=theme-color]'); if(m) m.setAttribute('content',t==='light'?'#ffffff':'#060e1a');
+  const b=document.getElementById('btn_tema'); if(b){ b.textContent=p==='auto'?'🕒':(t==='light'?'☀️':'🌙'); b.title='Tema: '+(p==='auto'?'automático':(t==='light'?'claro':'oscuro')); }
+  const sel=document.getElementById('sel_tema'); if(sel) sel.value=p; }
+function fijarTema(p){ try{localStorage.setItem(TEMA_KEY,p);}catch{} aplicarTema();
+  if(typeof toast==='function') toast(p==='auto'?'🕒 Tema automático: claro de día, oscuro de noche':(p==='light'?'☀️ Tema claro':'🌙 Tema oscuro')); }
+function ciclarTema(){ const p=temaPref(); fijarTema(p==='auto'?'light':(p==='light'?'dark':'auto')); }
+aplicarTema(); setInterval(aplicarTema,5*60*1000);
+document.addEventListener('DOMContentLoaded',aplicarTema);
+</script>
 </head>
 <body>
 <!-- ══ LOGIN (v3.0) ══════════════════════════════════════════ -->
@@ -425,6 +469,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
   </div>
   <div class="tr">
     <div id="sdot" class="sdot"></div>
+    <button type="button" class="tbtn" id="btn_tema" onclick="ciclarTema()" title="Tema">🌙</button>
     <button type="button" class="tbtn" onclick="showPg('pg_mas','nb_mas')">👤</button>
     <button type="button" class="tbtn" onclick="openModal('modal_cfg')">⚙️</button>
   </div>
@@ -446,21 +491,21 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
     </button>
   </div>
 
-  <div style="font-size:9px;color:#4a6080;margin-bottom:10px;line-height:1.5">
+  <div style="font-size:9px;color:var(--mute2);margin-bottom:10px;line-height:1.5">
     Valores directos de la API Binance P2P sin ningún procesamiento.<br>
     <b style="color:var(--green)">VENTA</b> = anunciantes vendiendo USDT (tú compras) → primer valor = más barato<br>
-    <b style="color:#f87171">COMPRA</b> = anunciantes comprando USDT (tú vendes) → primer valor = más caro
+    <b style="color:var(--red2)">COMPRA</b> = anunciantes comprando USDT (tú vendes) → primer valor = más caro
   </div>
 
   <div id="diag_grid" style="display:flex;flex-direction:column;gap:6px">
-    <div style="text-align:center;color:#4a6080;padding:20px">Presiona ↻ Actualizar</div>
+    <div style="text-align:center;color:var(--mute2);padding:20px">Presiona ↻ Actualizar</div>
   </div>
 
   <div id="diag_raw" style="margin-top:12px;display:none">
     <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:6px">
       📋 Log completo
     </div>
-    <pre id="diag_log" style="background:#060e1a;border:1px solid #1e3256;border-radius:8px;
+    <pre id="diag_log" style="background:var(--dark);border:1px solid var(--line);border-radius:8px;
       padding:10px;font-size:8px;color:var(--silver);overflow-x:auto;max-height:300px;
       overflow-y:auto;white-space:pre-wrap;word-break:break-all"></pre>
   </div>
@@ -470,7 +515,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 <div id="action_bar" style="
   position:fixed;bottom:64px;left:0;right:0;
   display:flex;gap:8px;padding:8px 12px;
-  background:linear-gradient(0deg,#060e1a 60%,transparent);
+  background:linear-gradient(0deg,var(--dark) 60%,transparent);
   z-index:90;
   padding-bottom:max(8px,env(safe-area-inset-bottom,8px))
 ">
@@ -566,12 +611,12 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 <div class="pg" id="pg_cuadre" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
   <div class="panel"><h3>⚖️ Cuadre de caja USDT</h3><div id="cq_body">Cargando...</div></div>
   <div class="panel" style="overflow-x:auto"><h3>🏦 Banco vs. libro, mes a mes (CLP)</h3><div id="cq_banco">Cargando...</div></div>
-  <div style="font-size:11px;color:#6b85a8;line-height:1.6">Se parte del saldo que el robot leyó la primera vez y se suman compras, restan ventas y comisiones, y se suman los Binance Pay con terceros. Si la diferencia no es 0, hay un movimiento que el libro no conoce.</div>
+  <div style="font-size:11px;color:var(--mute);line-height:1.6">Se parte del saldo que el robot leyó la primera vez y se suman compras, restan ventas y comisiones, y se suman los Binance Pay con terceros. Si la diferencia no es 0, hay un movimiento que el libro no conoce.</div>
 </div>
 <div class="pg" id="pg_banco" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
   <div class="panel"><h3>📤 Subir cartola</h3>
     <div style="font-size:12px;color:var(--silver);line-height:1.6;margin-bottom:8px">Descarga la <b>Cartola Histórica</b> de la Chequera Electrónica en Excel desde BancoEstado y súbela aquí (puedes elegir varias a la vez). La app clasifica cada movimiento y lo cruza con las órdenes del robot. Revisas y guardas.</div>
-    <input type="file" id="bk_file" accept=".xlsx,.xls" multiple onchange="leerCartolas(this.files)" style="width:100%;color:#c8d6e5;font-size:12px">
+    <input type="file" id="bk_file" accept=".xlsx,.xls" multiple onchange="leerCartolas(this.files)" style="width:100%;color:var(--silver);font-size:12px">
     <div id="bk_prev" style="margin-top:10px"></div>
   </div>
   <div class="panel"><h3>🔎 Por revisar</h3>
@@ -584,7 +629,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
     <div class="frm"><div class="full"><label>Mes</label><input type="month" id="rp_mes"></div></div>
     <button type="button" class="btn b-gold" id="rp_btn" style="width:100%;margin-top:10px;padding:12px" onclick="informeMes()">📥 Descargar informe del mes (.xlsx)</button>
     <div id="rp_res" style="margin-top:10px"></div>
-    <div style="font-size:11px;color:#6b85a8;line-height:1.6;margin-top:6px">Trae 6 hojas: Resumen (con el <b>monto para la boleta</b>), Operaciones, Gastos, Banco, Belkys y Cuadre. La boleta considera <b>solo la ganancia de los cambios por Binance</b>; tu 4% de Belkys va aparte.</div>
+    <div style="font-size:11px;color:var(--mute);line-height:1.6;margin-top:6px">Trae 6 hojas: Resumen (con el <b>monto para la boleta</b>), Operaciones, Gastos, Banco, Belkys y Cuadre. La boleta considera <b>solo la ganancia de los cambios por Binance</b>; tu 4% de Belkys va aparte.</div>
   </div>
   <div class="panel"><h3>📊 Todos los meses</h3>
     <button type="button" class="btn b-gray" id="rp_btn2" style="width:100%;padding:12px" onclick="informeTodo()">📥 Descargar resumen de todos los meses (.xlsx)</button></div>
@@ -592,14 +637,14 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 <div class="pg" id="pg_usu" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
   <div class="panel"><h3>👥 Usuarios de la app</h3><div id="us_lista">Cargando...</div>
     <button type="button" class="btn b-gold" style="width:100%;margin-top:10px;padding:11px" onclick="editarUsuario(null)">➕ Agregar usuario</button></div>
-  <div style="font-size:11px;color:#6b85a8;line-height:1.7"><b>Cómo se agrega a alguien:</b><br>1️⃣ Aquí tocas <b>Agregar usuario</b>, escribes su correo y marcas lo que puede ver.<br>2️⃣ Esa persona abre la app, toca <b>Crear cuenta</b> con ese mismo correo y elige su contraseña.<br>3️⃣ Si Supabase le pide confirmar, le llega un correo; lo abre y listo.<br>Si alguien olvida su contraseña, en la pantalla de entrada toca <b>Olvidé mi contraseña</b>.</div>
+  <div style="font-size:11px;color:var(--mute);line-height:1.7"><b>Cómo se agrega a alguien:</b><br>1️⃣ Aquí tocas <b>Agregar usuario</b>, escribes su correo y marcas lo que puede ver.<br>2️⃣ Esa persona abre la app, toca <b>Crear cuenta</b> con ese mismo correo y elige su contraseña.<br>3️⃣ Si Supabase le pide confirmar, le llega un correo; lo abre y listo.<br>Si alguien olvida su contraseña, en la pantalla de entrada toca <b>Olvidé mi contraseña</b>.</div>
 </div>
 <div class="pg" id="pg_hmes" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
   <div class="filtros"><select id="hs_anio" onchange="pintarHMes()"></select></div>
   <div class="panel"><h3>📚 Ganancia y utilidad por mes</h3><div id="hs_graf">Cargando...</div></div>
   <div class="panel" style="overflow-x:auto"><table class="tabla" id="hs_tabla"></table></div>
   <div class="panel" id="hs_det" style="display:none"></div>
-  <div style="font-size:11px;color:#6b85a8;line-height:1.6">Hasta agosto 2026 los datos vienen de tu <b>libro de cambios en Excel</b>; desde septiembre 2026, del <b>robot</b>. <b>Utilidad</b> = ganancia de los cambios + tu 4% de Belkys − gastos anotados. Toca un mes para ver el detalle por país.</div>
+  <div style="font-size:11px;color:var(--mute);line-height:1.6">Hasta agosto 2026 los datos vienen de tu <b>libro de cambios en Excel</b>; desde septiembre 2026, del <b>robot</b>. <b>Utilidad</b> = ganancia de los cambios + tu 4% de Belkys − gastos anotados. Toca un mes para ver el detalle por país.</div>
 </div>
 <div class="pg" id="pg_htasas" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
   <div class="filtros">
@@ -608,7 +653,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
   </div>
   <div class="panel"><h3 id="ht_tit">Tasa IREMI</h3><div id="ht_graf"></div></div>
   <div class="panel" style="overflow-x:auto"><table class="tabla" id="ht_tabla"></table></div>
-  <div style="font-size:11px;color:#6b85a8;line-height:1.6"><b>Margen teórico</b>: tu tasa vs. el mercado en el momento en que guardaste el flyer (disponible desde que usas la app nueva).<br><b>Margen real</b>: lo que ganaste de verdad ese día con los cambios de ese país (ganancia ÷ pesos recibidos). 🟢 ≥5% · 🟡 3–5% · 🔴 menos de 3%.</div>
+  <div style="font-size:11px;color:var(--mute);line-height:1.6"><b>Margen teórico</b>: tu tasa vs. el mercado en el momento en que guardaste el flyer (disponible desde que usas la app nueva).<br><b>Margen real</b>: lo que ganaste de verdad ese día con los cambios de ese país (ganancia ÷ pesos recibidos). 🟢 ≥5% · 🟡 3–5% · 🔴 menos de 3%.</div>
 </div>
 <div class="pg" id="pg_belkys" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
   <div class="filtros"><input type="month" id="bk_mes" onchange="cargarBelkys()"></div>
@@ -619,7 +664,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
     <div class="kc y"><div class="kl">Resto a Venezuela</div><div class="kv" id="bk_resto">—</div><div class="ks">por Binance</div></div>
   </div>
   <div class="panel" style="overflow-x:auto"><h3>Movimientos del banco</h3><table class="tabla" id="bk_tabla"></table></div>
-  <div style="font-size:11px;color:#6b85a8;line-height:1.6">Datos de las cartolas del banco. Cuando subas una cartola nueva (Etapa 4) se agregan solos.</div>
+  <div style="font-size:11px;color:var(--mute);line-height:1.6">Datos de las cartolas del banco. Cuando subas una cartola nueva (Etapa 4) se agregan solos.</div>
 </div>
 <div class="pg" id="pg_alertas" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
   <div class="panel"><h3>🔔 Configuración de alertas</h3><div id="al_cfg">Cargando...</div></div>
@@ -629,6 +674,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 <!-- ══ PAGE: MÁS ════════════════════════════════════════════ -->
 <div class="pg" id="pg_mas" style="padding:12px 12px 90px">
   <div class="panel"><h3>👤 Sesión</h3><div class="fila"><span>Usuario</span><b id="mas_email">—</b></div><div class="fila"><span>Rol</span><b id="mas_rol">—</b></div>
+    <div class="fila"><span>Apariencia</span><select id="sel_tema" onchange="fijarTema(this.value)" style="background:var(--dark);border:1px solid var(--bord);border-radius:7px;color:var(--tx);padding:5px 8px;font-size:13px"><option value="auto">🕒 Automático (día/noche)</option><option value="light">☀️ Claro</option><option value="dark">🌙 Oscuro</option></select></div>
     <button type="button" class="btn b-gray" style="width:100%;margin-top:8px" onclick="salir()">Cerrar sesión</button></div>
   <div class="section" data-perm="herramientas">Herramientas anteriores</div>
   <button type="button" class="masbtn" onclick="showPg('pg_reg','nb_mas')">📋 Registrar <small>Formulario manual antiguo</small></button>
@@ -747,16 +793,16 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
     </div>
     <!-- Filters -->
     <div style="display:flex;gap:6px;margin-bottom:8px">
-      <select id="p2p_dest" style="flex:1;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:7px;
-        color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;padding:7px 8px;outline:none">
+      <select id="p2p_dest" style="flex:1;background:var(--card);border:1.5px solid var(--bord);border-radius:7px;
+        color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;padding:7px 8px;outline:none">
         <option value="">Todos los destinos</option>
         <option value="VES">🇻🇪 VES</option>
         <option value="COP">🇨🇴 COP</option>
         <option value="PEN">🇵🇪 PEN</option>
         <option value="ARS">🇦🇷 ARS</option>
       </select>
-      <select id="p2p_period" style="flex:1;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:7px;
-        color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;padding:7px 8px;outline:none">
+      <select id="p2p_period" style="flex:1;background:var(--card);border:1.5px solid var(--bord);border-radius:7px;
+        color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;padding:7px 8px;outline:none">
         <option value="1">Últimas 24h</option>
         <option value="7" selected>Últimos 7 días</option>
         <option value="30">Últimos 30 días</option>
@@ -764,7 +810,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
     </div>
     <div style="font-size:9px;color:var(--silver);margin-bottom:6px">👆 Clic en una operación para precargar el formulario</div>
     <div id="p2p_list" style="max-height:60vh;overflow-y:auto">
-      <div style="text-align:center;color:#4a6080;font-size:10px;padding:20px">
+      <div style="text-align:center;color:var(--mute2);font-size:10px;padding:20px">
         Presiona "Actualizar" para cargar operaciones de Binance
       </div>
     </div>
@@ -839,7 +885,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
         🗑 Borrar última
       </button>
     </div>
-    <div id="hist_list"><div style="text-align:center;color:#4a6080;font-size:10px;padding:14px">Sin operaciones aún</div></div>
+    <div id="hist_list"><div style="text-align:center;color:var(--mute2);font-size:10px;padding:14px">Sin operaciones aún</div></div>
   </div>
 </div>
 
@@ -858,8 +904,8 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
   <div id="sbar_hist" class="sbar"></div>
   <!-- Filters -->
   <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-    <select id="hf_mes" style="flex:2;min-width:130px;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:8px;
-      color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:8px 10px;outline:none">
+    <select id="hf_mes" style="flex:2;min-width:130px;background:var(--card);border:1.5px solid var(--bord);border-radius:8px;
+      color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:8px 10px;outline:none">
       <option value="">Todos los meses</option>
       <option value="Agosto 2025">Agosto 2025</option>
       <option value="Septiembre 2025">Septiembre 2025</option>
@@ -872,14 +918,14 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
       <option value="Abril 2026">Abril 2026</option>
       <option value="Mayo 2026" selected>Mayo 2026 ★</option>
     </select>
-    <select id="hf_tipo" style="flex:1;min-width:90px;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:8px;
-      color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:8px 8px;outline:none">
+    <select id="hf_tipo" style="flex:1;min-width:90px;background:var(--card);border:1.5px solid var(--bord);border-radius:8px;
+      color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:8px 8px;outline:none">
       <option value="">SELL+BUY</option>
       <option value="SELL">Solo SELL</option>
       <option value="BUY">Solo BUY</option>
     </select>
-    <select id="hf_dias" style="flex:1;min-width:90px;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:8px;
-      color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;padding:8px 6px;outline:none">
+    <select id="hf_dias" style="flex:1;min-width:90px;background:var(--card);border:1.5px solid var(--bord);border-radius:8px;
+      color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;padding:8px 6px;outline:none">
       <option value="7" selected>Últ. 7d</option>
       <option value="30">Últ. 30d</option>
       <option value="0">Todo el mes</option>
@@ -904,7 +950,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
         </tr>
       </thead>
       <tbody id="hist_body">
-        <tr><td colspan="11" style="text-align:center;color:#4a6080;padding:20px">Selecciona un mes y presiona ↻</td></tr>
+        <tr><td colspan="11" style="text-align:center;color:var(--mute2);padding:20px">Selecciona un mes y presiona ↻</td></tr>
       </tbody>
     </table>
   </div>
@@ -915,10 +961,10 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 ════════════════════════════════════════════════════════════ -->
 <div class="pg" id="pg_exp" style="padding:12px">
   <div class="section">📤 Exportar Reporte .xlsx</div>
-  <div style="background:#111d30;border:1px solid #1e3256;border-radius:12px;padding:14px;margin-bottom:10px">
+  <div style="background:var(--modal);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px">
     <div class="g2" style="margin-bottom:10px">
       <div class="field"><label>Desde</label>
-        <select id="exp_mes_ini" style="width:100%;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:8px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:9px 10px;outline:none">
+        <select id="exp_mes_ini" style="width:100%;background:var(--card);border:1.5px solid var(--bord);border-radius:8px;color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:9px 10px;outline:none">
           <option value="Agosto 2025">Ago 2025</option><option value="Septiembre 2025">Sep 2025</option>
           <option value="Octubre 2025">Oct 2025</option><option value="Noviembre 2025">Nov 2025</option>
           <option value="Diciembre 2025">Dic 2025</option><option value="Enero 2026">Ene 2026</option>
@@ -926,7 +972,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
           <option value="Abril 2026" selected>Abr 2026</option>
         </select></div>
       <div class="field"><label>Hasta</label>
-        <select id="exp_mes_fin" style="width:100%;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:8px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:9px 10px;outline:none">
+        <select id="exp_mes_fin" style="width:100%;background:var(--card);border:1.5px solid var(--bord);border-radius:8px;color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:9px 10px;outline:none">
           <option value="Agosto 2025">Ago 2025</option><option value="Septiembre 2025">Sep 2025</option>
           <option value="Octubre 2025">Oct 2025</option><option value="Noviembre 2025">Nov 2025</option>
           <option value="Diciembre 2025">Dic 2025</option><option value="Enero 2026">Ene 2026</option>
@@ -940,11 +986,11 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
     </div>
   </div>
   <div id="exp_preview" style="display:none">
-    <div style="background:#111d30;border:1px solid #1e3256;border-radius:12px;padding:14px;margin-bottom:10px">
+    <div style="background:var(--modal);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px">
       <div class="section" style="margin-top:0">📊 Resumen del período</div>
       <div id="exp_stats_grid" class="stats4"></div>
     </div>
-    <div style="background:#111d30;border:1px solid #1e3256;border-radius:12px;padding:14px">
+    <div style="background:var(--modal);border:1px solid var(--line);border-radius:12px;padding:14px">
       <div class="section" style="margin-top:0">Detalle mensual</div>
       <div id="exp_table"></div>
     </div>
@@ -968,7 +1014,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
       <button type="button" class="btn b-gray" onclick="closeModal('modal_api')" style="flex:1">✕</button>
     </div>
     <div style="text-align:center;margin-top:8px">
-      <button type="button" onclick="clearKeys()" style="background:none;border:none;color:#4a6080;font-size:10px;cursor:pointer;font-family:'Barlow Condensed',sans-serif">🗑 Olvidar claves</button>
+      <button type="button" onclick="clearKeys()" style="background:none;border:none;color:var(--mute2);font-size:10px;cursor:pointer;font-family:'Barlow Condensed',sans-serif">🗑 Olvidar claves</button>
     </div>
   </div>
 </div>
@@ -982,12 +1028,12 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
     </div>
 
     <!-- VES en tiempo real -->
-    <div style="background:#0d1a2e;border:1px solid var(--gold);border-radius:10px;padding:10px 12px;margin-bottom:12px">
+    <div style="background:var(--card);border:1px solid var(--gold);border-radius:10px;padding:10px 12px;margin-bottom:12px">
       <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:6px">🇻🇪 USDT/VES — Binance P2P</div>
       <div style="display:flex;gap:8px;align-items:center">
         <input type="number" id="i_ves" value="625" step="0.01" oninput="recalc();document.getElementById('src_ves').textContent='✎ manual';document.getElementById('src_ves').className='rate-src';document.getElementById('src_ves').style.background='#374151'"
-          style="flex:1;background:#060e1a;border:1.5px solid #2a4070;border-radius:7px;
-          color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;
+          style="flex:1;background:var(--dark);border:1.5px solid var(--bord);border-radius:7px;
+          color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;
           padding:8px 10px;outline:none">
         <button type="button" onclick="fetchAllRates()" id="btn_upd"
           style="background:#166534;color:#fff;border:none;border-radius:7px;padding:8px 14px;
@@ -1005,57 +1051,57 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
     <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:8px">💱 Tasas de mercado</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
       <div>
-        <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:2px">USDT/CLP<br><span id="src_clp" style="color:#4a6080">⚙ manual</span></div>
+        <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:2px">USDT/CLP<br><span id="src_clp" style="color:var(--mute2)">⚙ manual</span></div>
         <input type="number" id="i_clp" value="914" step="0.01" oninput="markManual('src_clp');recalc()"
-          style="width:100%;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:7px;color:#fff;
+          style="width:100%;background:var(--card);border:1.5px solid var(--bord);border-radius:7px;color:var(--tx);
           font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;padding:7px 8px;outline:none">
       </div>
       <div>
-        <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:2px">USDT/COP<br><span id="src_cop" style="color:#4a6080">—</span></div>
+        <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:2px">USDT/COP<br><span id="src_cop" style="color:var(--mute2)">—</span></div>
         <input type="number" id="i_cop" value="4100" step="0.01" oninput="markManual('src_cop');recalc()"
-          style="width:100%;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:7px;color:#fff;
+          style="width:100%;background:var(--card);border:1.5px solid var(--bord);border-radius:7px;color:var(--tx);
           font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;padding:7px 8px;outline:none">
       </div>
       <div>
-        <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:2px">USDT/PEN<br><span id="src_pen" style="color:#4a6080">—</span></div>
+        <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:2px">USDT/PEN<br><span id="src_pen" style="color:var(--mute2)">—</span></div>
         <input type="number" id="i_pen" value="3.76" step="0.0001" oninput="markManual('src_pen');recalc()"
-          style="width:100%;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:7px;color:#fff;
+          style="width:100%;background:var(--card);border:1.5px solid var(--bord);border-radius:7px;color:var(--tx);
           font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;padding:7px 8px;outline:none">
       </div>
       <div>
-        <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:2px">USDT/ARS<br><span id="src_ars" style="color:#4a6080">—</span></div>
+        <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:2px">USDT/ARS<br><span id="src_ars" style="color:var(--mute2)">—</span></div>
         <input type="number" id="i_ars" value="1180" step="0.01" oninput="markManual('src_ars');recalc()"
-          style="width:100%;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:7px;color:#fff;
+          style="width:100%;background:var(--card);border:1.5px solid var(--bord);border-radius:7px;color:var(--tx);
           font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;padding:7px 8px;outline:none">
       </div>
       <div>
-        <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:2px">USDT/EUR<br><span id="src_eur" style="color:#4a6080">—</span></div>
+        <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:2px">USDT/EUR<br><span id="src_eur" style="color:var(--mute2)">—</span></div>
         <input type="number" id="i_eur" value="0.92" step="0.0001" oninput="markManual('src_eur');recalc()"
-          style="width:100%;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:7px;color:#fff;
+          style="width:100%;background:var(--card);border:1.5px solid var(--bord);border-radius:7px;color:var(--tx);
           font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;padding:7px 8px;outline:none">
       </div>
       <div>
         <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:2px;display:flex;justify-content:space-between">USDT/DOP <span id="src_dop" class="rate-src" style="background:#374151;color:#fff">—</span></div>
         <input type="number" id="i_dop" value="60.5" step="0.01" oninput="markManual('src_dop');recalc()"
-          style="width:100%;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:7px;color:#fff;
+          style="width:100%;background:var(--card);border:1.5px solid var(--bord);border-radius:7px;color:var(--tx);
           font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;padding:7px 8px;outline:none">
       </div>
       <div>
-        <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:2px">USDT/MXN<br><span id="src_mxn" style="color:#4a6080">—</span></div>
+        <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:2px">USDT/MXN<br><span id="src_mxn" style="color:var(--mute2)">—</span></div>
         <input type="number" id="i_mxn" value="17.20" step="0.01" oninput="markManual('src_mxn');recalc()"
-          style="width:100%;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:7px;color:#fff;
+          style="width:100%;background:var(--card);border:1.5px solid var(--bord);border-radius:7px;color:var(--tx);
           font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;padding:7px 8px;outline:none">
       </div>
       <div>
         <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:2px;display:flex;justify-content:space-between">USDT/BOB <span id="src_bob" class="rate-src" style="background:#374151;color:#fff">—</span></div>
         <input type="number" id="i_bob" value="6.92" step="0.0001" oninput="markManual('src_bob');recalc()"
-          style="width:100%;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:7px;color:#fff;
+          style="width:100%;background:var(--card);border:1.5px solid var(--bord);border-radius:7px;color:var(--tx);
           font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;padding:7px 8px;outline:none">
       </div>
       <div>
         <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:2px">PayPal Fee %</div>
         <input type="number" id="i_ppfee" value="5" step="0.5" oninput="recalc()"
-          style="width:100%;background:#0d1a2e;border:1.5px solid #2a4070;border-radius:7px;color:#fff;
+          style="width:100%;background:var(--card);border:1.5px solid var(--bord);border-radius:7px;color:var(--tx);
           font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;padding:7px 8px;outline:none">
       </div>
     </div>
@@ -1079,7 +1125,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
     </div>
 
     <!-- Leyenda fuentes -->
-    <div style="margin-top:10px;padding-top:8px;border-top:1px solid #1e3256;display:flex;gap:12px;flex-wrap:wrap">
+    <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--line);display:flex;gap:12px;flex-wrap:wrap">
       <span style="font-size:8px;color:var(--silver)"><span style="color:var(--green)">●</span> Binance P2P 2°</span>
       <span style="font-size:8px;color:var(--silver)"><span style="color:var(--gold)">●</span> Binance spot</span>
       <span style="font-size:8px;color:var(--silver)"><span style="color:#374151">●</span> Manual</span>
@@ -1408,7 +1454,7 @@ function cargarTasasGuardadas(){
                          i_dop:5,i_mxn:2,i_pab:5,i_bob:5};
         el.value=parseFloat(entry.val).toFixed(decimals[id]||2);
         el.style.borderColor='#d97706';
-        el.style.color='#fbbf24';
+        el.style.color='var(--amber)';
         cargadas++;
       }
     });
@@ -1446,23 +1492,23 @@ async function fetchAllRates() {
       const isAuto = srcType&&srcType.includes('auto');
       const isSpot = srcType&&srcType.includes('spot');
       const finalBg    = isAuto?'#0d2b1a':isSpot?'#0d1a2e':'';
-      const finalBdr   = isAuto?'#166534':isSpot?'#1d4ed8':'#2a4070';
-      const finalColor = isAuto?'#4ade80':isSpot?'#60a5fa':'#fff';
+      const finalBdr   = isAuto?'#166534':isSpot?'#1d4ed8':'var(--bord)';
+      const finalColor = isAuto?'var(--green)':isSpot?'var(--sky)':'var(--tx)';
       if(isAuto||isSpot){
         // Flash 1: bright green
         el.style.background='#166534';
-        el.style.borderColor='#4ade80';
-        el.style.color='#fff';
+        el.style.borderColor='var(--green)';
+        el.style.color='var(--tx)';
         setTimeout(()=>{
           // Flash 2: off
-          el.style.background='#060e1a';
-          el.style.borderColor='#2a4070';
-          el.style.color='#fff';
+          el.style.background='var(--dark)';
+          el.style.borderColor='var(--bord)';
+          el.style.color='var(--tx)';
           setTimeout(()=>{
             // Flash 3: bright again
             el.style.background='#166534';
-            el.style.borderColor='#4ade80';
-            el.style.color='#fff';
+            el.style.borderColor='var(--green)';
+            el.style.color='var(--tx)';
             setTimeout(()=>{
               // Final: settle into permanent color
               el.style.background=finalBg;
@@ -1730,7 +1776,7 @@ function loadBg(id){
 
 function markManual(srcId){
   const s=document.getElementById(srcId);
-  if(s){s.textContent='✎ manual';s.style.background='#374151';s.style.color='#9ca3af';}
+  if(s){s.textContent='✎ manual';s.style.background='#374151';s.style.color='var(--mute2)';}
   // Also reset the input colors to neutral
   const inputMap={
     'src_ves':'i_ves','src_clp':'i_clp','src_cop':'i_cop','src_pen':'i_pen',
@@ -1740,7 +1786,7 @@ function markManual(srcId){
   const inputId=inputMap[srcId];
   if(inputId){
     const el=document.getElementById(inputId);
-    if(el){el.style.background='#060e1a';el.style.borderColor='#2a4070';el.style.color='#fff';}
+    if(el){el.style.background='var(--dark)';el.style.borderColor='var(--bord)';el.style.color='var(--tx)';}
   }
 }
 function doChangeBg(){bgIdx=(bgIdx+1)%BG_IDS.length;loadBg(BG_IDS[bgIdx]);toast('🌄 Fondo actualizado');}
@@ -1772,7 +1818,7 @@ async function guardarTasaDelDia(){
     if(est){est.style.color='var(--green)';est.textContent='💾 Tasa del día guardada · VES '+ves+' · '+fila.hora;}
     return true;
   }catch(e){
-    if(est){est.style.color='#f87171';est.textContent='⚠ No se pudo guardar la tasa: '+e.message;}
+    if(est){est.style.color='var(--red2)';est.textContent='⚠ No se pudo guardar la tasa: '+e.message;}
     toast('⚠ Tasa no guardada: '+e.message); return false;
   }
 }
@@ -1872,7 +1918,7 @@ async function cargarP2P(){
 
         if(cnt) cnt.textContent=allP2POps.length;
         if(!allP2POps.length){
-          list.innerHTML='<div style="text-align:center;color:#4a6080;padding:20px">Sin operaciones completadas en los últimos '+days+' días</div>';
+          list.innerHTML='<div style="text-align:center;color:var(--mute2);padding:20px">Sin operaciones completadas en los últimos '+days+' días</div>';
         }else{
           renderP2PList(allP2POps);
         }
@@ -1892,11 +1938,11 @@ async function cargarP2P(){
     if(cnt) cnt.textContent=ops.length;
 
     if(!keys.apiKey){
-      list.innerHTML='<div style="background:#1a1000;border:1px solid #b45309;border-radius:8px;padding:10px;margin-bottom:8px;font-size:9px;color:#fbbf24">⚠ Sin API Key configurada — mostrando historial de la BD.<br>Las operaciones reales de Binance ahora las registra el robot (pantalla Movimientos).</div>';
+      list.innerHTML='<div style="background:var(--warn-bg);border:1px solid #b45309;border-radius:8px;padding:10px;margin-bottom:8px;font-size:9px;color:var(--amber)">⚠ Sin API Key configurada — mostrando historial de la BD.<br>Las operaciones reales de Binance ahora las registra el robot (pantalla Movimientos).</div>';
     }
 
     if(!ops.length && !keys.apiKey){
-      list.innerHTML+='<div style="text-align:center;color:#4a6080;padding:16px">Sin operaciones en la BD</div>';
+      list.innerHTML+='<div style="text-align:center;color:var(--mute2);padding:16px">Sin operaciones en la BD</div>';
     }else if(ops.length){
       const container=document.getElementById('p2p_list');
       const warning=container.innerHTML;
@@ -2109,7 +2155,7 @@ function showSbar(msg,type,id){
 function updateSesion(){
   document.getElementById('hist_n').textContent=sessionOps.length;
   const el=document.getElementById('hist_list');
-  if(!sessionOps.length){el.innerHTML='<div style="text-align:center;color:#4a6080;font-size:10px;padding:14px">Sin operaciones aún</div>';return;}
+  if(!sessionOps.length){el.innerHTML='<div style="text-align:center;color:var(--mute2);font-size:10px;padding:14px">Sin operaciones aún</div>';return;}
   const fmt=n=>new Intl.NumberFormat('es-CL').format(Math.round(n));
   el.innerHTML=sessionOps.slice().reverse().map(op=>`
     <div class="p2p-card">
@@ -2147,7 +2193,7 @@ async function cargarHist(){
     const ops=await sbPost(query);
     if(!ops.length){
       document.getElementById('hist_stats').style.display='none';
-      tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:#4a6080;padding:20px">Sin operaciones en este período</td></tr>';
+      tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--mute2);padding:20px">Sin operaciones en este período</td></tr>';
       return;
     }
 
@@ -2184,7 +2230,7 @@ async function cargarHist(){
       const isSell=op.tipo==='SELL';
       const flags={VES:'🇻🇪',COP:'🇨🇴',PEN:'🇵🇪',ARS:'🇦🇷',MXN:'🇲🇽',USD:'🇺🇸',EUR:'🇪🇸'};
       return `<tr>
-        <td style="color:#4a6080">#${op.id}</td>
+        <td style="color:var(--mute2)">#${op.id}</td>
         <td>${op.fecha}</td>
         <td><span class="pill ${op.tipo.toLowerCase()}">${op.tipo}</span></td>
         <td>${flags[op.fiat]||'🌍'} ${op.fiat||'—'}</td>
@@ -2276,28 +2322,28 @@ async function diagP2P(){
   // Render grid
   grid.innerHTML = results.map(r=>{
     if(!r.ok) return `
-      <div style="background:#111d30;border:1px solid #1e3256;border-radius:10px;padding:10px 12px">
+      <div style="background:var(--modal);border:1px solid var(--line);border-radius:10px;padding:10px 12px">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
           <span style="font-size:14px">${r.flag}</span>
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;color:#fff">${r.label}</span>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;color:var(--tx)">${r.label}</span>
           <span style="font-size:9px;color:#ef4444;margin-left:auto">✗ ${r.error}</span>
         </div>
       </div>`;
 
     return `
-      <div style="background:#111d30;border:1px solid #1e3256;border-radius:10px;padding:10px 12px">
+      <div style="background:var(--modal);border:1px solid var(--line);border-radius:10px;padding:10px 12px">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
           <span style="font-size:14px">${r.flag}</span>
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:#fff">${r.label}</span>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:var(--tx)">${r.label}</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
 
           <!-- VENTA = anunciantes vendiendo USDT → tú COMPRAS -->
-          <div style="background:#052e0a;border:1px solid #166534;border-radius:8px;padding:8px">
-            <div style="font-size:8px;font-weight:700;text-transform:uppercase;color:#4ade80;margin-bottom:5px">
+          <div style="background:var(--ok-bg);border:1px solid #166534;border-radius:8px;padding:8px">
+            <div style="font-size:8px;font-weight:700;text-transform:uppercase;color:var(--green);margin-bottom:5px">
               📗 VENTA (tú compras USDT)
             </div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:#4ade80">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--green)">
               ${fmt(r.sell1||0)}
             </div>
             <div style="font-size:8px;color:#166534;margin-top:2px">
@@ -2305,17 +2351,17 @@ async function diagP2P(){
             </div>
             <div style="font-size:8px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
               ${r.sellAds[0]?.classify==='promoted'?'<span style="color:#f59e0b;font-size:7px">★PROMO </span>':''}
-              <span style="color:#4a6080">${r.sellAds[0]?.nick||'—'}</span>
+              <span style="color:var(--mute2)">${r.sellAds[0]?.nick||'—'}</span>
             </div>
-            ${r.sellM1!=null?'<div style="margin-top:5px;padding-top:5px;border-top:1px solid #166534"><div style="font-size:7px;color:#86efac;font-weight:700">★ Merchants = Binance Compra:</div><div style="font-family:Barlow Condensed,sans-serif;font-size:16px;font-weight:800;color:#86efac">'+fmt(r.sellM1)+'</div><div style="font-size:7px;color:#4a6080">'+( r.sellMerchantAds[0]?.nick||'')+'</div></div>':''}
+            ${r.sellM1!=null?'<div style="margin-top:5px;padding-top:5px;border-top:1px solid #166534"><div style="font-size:7px;color:var(--green2);font-weight:700">★ Merchants = Binance Compra:</div><div style="font-family:Barlow Condensed,sans-serif;font-size:16px;font-weight:800;color:var(--green2)">'+fmt(r.sellM1)+'</div><div style="font-size:7px;color:var(--mute2)">'+( r.sellMerchantAds[0]?.nick||'')+'</div></div>':''}
           </div>
 
           <!-- COMPRA = anunciantes comprando USDT → tú VENDES -->
-          <div style="background:#2d0a0a;border:1px solid #7f1d1d;border-radius:8px;padding:8px">
-            <div style="font-size:8px;font-weight:700;text-transform:uppercase;color:#f87171;margin-bottom:5px">
+          <div style="background:var(--err-bg);border:1px solid #7f1d1d;border-radius:8px;padding:8px">
+            <div style="font-size:8px;font-weight:700;text-transform:uppercase;color:var(--red2);margin-bottom:5px">
               📕 COMPRA (tú vendes USDT)
             </div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:#f87171">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--red2)">
               ${fmt(r.buy1||0)}
             </div>
             <div style="font-size:8px;color:#7f1d1d;margin-top:2px">
@@ -2323,7 +2369,7 @@ async function diagP2P(){
             </div>
             <div style="font-size:8px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
               ${r.buyAds[0]?.classify==='promoted'?'<span style="color:#f59e0b;font-size:7px">★PROMO </span>':''}
-              <span style="color:#4a6080">${r.buyAds[0]?.nick||'—'}</span>
+              <span style="color:var(--mute2)">${r.buyAds[0]?.nick||'—'}</span>
             </div>
           </div>
 
@@ -2381,7 +2427,7 @@ async function previewReporte(){
     const mv=ms.reduce((s,o)=>s+(o.monto_clp||0),0);
     const mg=ms.reduce((s,o)=>s+(o.gan_clp||0),0);
     return `<div style="display:flex;justify-content:space-between;align-items:center;
-                         padding:7px 8px;background:#0d1a2e;border:1px solid #1e3256;
+                         padding:7px 8px;background:var(--card);border:1px solid var(--line);
                          border-radius:7px;margin-bottom:4px">
       <span style="font-size:11px;font-weight:700">${mes}</span>
       <span style="color:var(--silver);font-size:10px">${ms.length} ops</span>
@@ -2469,7 +2515,7 @@ async function cargarInicio(){
     const yo=await sbPost('app_usuarios?select=email&limit=1');
     if(!(yo&&yo.length)){
       const em=(sesion()||{}).email||'tu usuario';
-      if(aviso) aviso.innerHTML='<div class="panel" style="border-color:#7f1d1d;color:#f87171;font-size:12px">🔒 <b>'+em+'</b> inició sesión, pero no está autorizado para ver los datos. Agrégalo a la tabla <b>app_usuarios</b> en Supabase.</div>';
+      if(aviso) aviso.innerHTML='<div class="panel" style="border-color:#7f1d1d;color:var(--red2);font-size:12px">🔒 <b>'+em+'</b> inició sesión, pero no está autorizado para ver los datos. Agrégalo a la tabla <b>app_usuarios</b> en Supabase.</div>';
       return;
     }
     const ventas=(ords||[]).filter(o=>o.tipo==='SELL');
@@ -2487,7 +2533,7 @@ async function cargarInicio(){
     const t=(tas||[])[0];
     if(t){ set('k_hoy_tasa',Math.round(t.ves*1000)); set('k_hoy_tasa_s','guardada '+(t.hora||'')+(t.fuente==='app'?'':' ('+t.fuente+')')); }
     else { set('k_hoy_tasa','—'); set('k_hoy_tasa_s','sin tasa guardada hoy');
-           if(aviso) aviso.innerHTML='<div class="panel" style="border-color:#b45309;color:#fbbf24;font-size:12px">⚠ Todavía no hay tasa del día. Ve a <b>Tasas</b> → Actualizar → Compartir para guardarla. Sin tasa, el robot no puede calcular el CLP de los cambios de hoy.</div>'; }
+           if(aviso) aviso.innerHTML='<div class="panel" style="border-color:#b45309;color:var(--amber);font-size:12px">⚠ Todavía no hay tasa del día. Ve a <b>Tasas</b> → Actualizar → Compartir para guardarla. Sin tasa, el robot no puede calcular el CLP de los cambios de hoy.</div>'; }
     // capital: último saldo de cada cuenta
     const vistos={}; let cap=0; (sal||[]).forEach(r=>{ if(!vistos[r.cuenta]){vistos[r.cuenta]=r; cap+=parseFloat(r.total)||0;} });
     set('k_cap',cap.toLocaleString('es-CL',{maximumFractionDigits:2}));
@@ -2501,13 +2547,13 @@ async function cargarInicio(){
     const mins=ok?Math.round((Date.now()-new Date(ok.actualizado).getTime())/60000):null;
     const sano=mins!=null&&mins<=25;
     document.getElementById('ini_robot').innerHTML=
-      (sano?'<span style="color:var(--green)">● Funcionando</span>':'<span style="color:#f87171">● Sin actividad reciente</span>')+
+      (sano?'<span style="color:var(--green)">● Funcionando</span>':'<span style="color:var(--red2)">● Sin actividad reciente</span>')+
       ' · última revisión '+(ok?ok.valor:'—')+(mins!=null?' (hace '+mins+' min)':'')+
-      (E.ultimo_error&&!sano?'<br><span style="color:#f87171;font-size:11px">Último error: '+E.ultimo_error.valor+'</span>':'');
+      (E.ultimo_error&&!sano?'<br><span style="color:var(--red2);font-size:11px">Último error: '+E.ultimo_error.valor+'</span>':'');
     const a=(al||[])[0];
     set('ini_alerta',a?(new Date(a.fecha).toLocaleString('es-CL',{timeZone:'America/Santiago',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})+'\n'+a.mensaje):'Sin alertas todavía');
   }catch(e){
-    if(aviso) aviso.innerHTML='<div class="panel" style="border-color:#7f1d1d;color:#f87171;font-size:12px">✗ '+e.message+'</div>';
+    if(aviso) aviso.innerHTML='<div class="panel" style="border-color:#7f1d1d;color:var(--red2);font-size:12px">✗ '+e.message+'</div>';
   }
 }
 
@@ -2542,7 +2588,7 @@ async function cargarMov(){
   let q='v_ordenes?select=order_number,cuenta,tipo,fiat,monto_fiat,precio,usdt,comision,contraparte,creado,clp,clp_manual,clp_final,tasa_usada,metodo_clp,nota,costo_usdt'+
         '&estado=eq.COMPLETED&creado=gte.'+tz(ini)+'&creado=lt.'+tz(fin)+'&order=creado.desc&limit=3000';
   if(cta) q+='&cuenta=eq.'+cta; if(tipo) q+='&tipo=eq.'+tipo;
-  try{ _mov=await sbPost(q); pintarMov(); }catch(e){ lista.innerHTML='<div class="pronto" style="color:#f87171">✗ '+esc(e.message)+'</div>'; }
+  try{ _mov=await sbPost(q); pintarMov(); }catch(e){ lista.innerHTML='<div class="pronto" style="color:var(--red2)">✗ '+esc(e.message)+'</div>'; }
   cargarPay();
 }
 function pintarMov(){
@@ -2563,9 +2609,9 @@ function pintarMov(){
     const monto=o.fiat==='VES'?Math.round(o.monto_fiat).toLocaleString('es-CL'):(+o.monto_fiat).toLocaleString('es-CL',{maximumFractionDigits:2});
     return '<div class="mv" onclick="editarMov('+i+')">'+
       '<div class="r1"><span>'+fh(o.creado)+'</span><span><span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+(buy?'<span class="tag buy">Compra USDT</span>':'')+'</span></div>'+
-      '<div class="r2"><span class="a">'+(buy?'Pagaste':o.fiat+' '+monto)+'</span><span class="b">'+(o.clp_final==null?'<span style="color:#f87171">sin CLP</span>':$clp(o.clp_final))+'</span></div>'+
+      '<div class="r2"><span class="a">'+(buy?'Pagaste':o.fiat+' '+monto)+'</span><span class="b">'+(o.clp_final==null?'<span style="color:var(--red2)">sin CLP</span>':$clp(o.clp_final))+'</span></div>'+
       '<div class="r3"><span>'+num(o.usdt)+' USDT · '+esc((o.contraparte||'').slice(0,18))+(o.nota?' · 📝':'')+'</span><span>'+
-      (g!=null?'<b style="color:'+(g>=0?'var(--green)':'#f87171')+'">'+$clp(g)+'</b> ':'')+'<span class="tag '+met[1]+'">'+met[0]+'</span></span></div></div>';
+      (g!=null?'<b style="color:'+(g>=0?'var(--green)':'var(--red2)')+'">'+$clp(g)+'</b> ':'')+'<span class="tag '+met[1]+'">'+met[0]+'</span></span></div></div>';
   }).join('');
 }
 let _movSel=null;
@@ -2597,10 +2643,10 @@ async function cargarPay(){
   if(!document.getElementById('mv_int').checked) q+='&clasificacion_final=neq.traspaso_interno';
   try{ _pay=await sbPost(q);
     box.innerHTML=_pay.length?_pay.map((p,i)=>'<div class="mv" onclick="editarPay('+i+')"><div class="r1"><span>'+fh(p.fecha)+'</span><span class="tag '+(p.cuenta==='JULIO'?'j':'i')+'">'+p.cuenta+'</span></div>'+
-      '<div class="r2"><span class="a">'+esc(p.contraparte||'—')+'</span><span class="b" style="color:'+(p.monto<0?'#f87171':'var(--green)')+'">'+(p.monto>0?'+':'')+num(p.monto)+' '+esc(p.moneda)+'</span></div>'+
+      '<div class="r2"><span class="a">'+esc(p.contraparte||'—')+'</span><span class="b" style="color:'+(p.monto<0?'var(--red2)':'var(--green)')+'">'+(p.monto>0?'+':'')+num(p.monto)+' '+esc(p.moneda)+'</span></div>'+
       '<div class="r3"><span>'+esc(p.nota||'')+'</span><span class="tag '+(p.clasificacion_final==='tercero_revisar'?'w':'ok')+'">'+(PAYCLS[p.clasificacion_final]||p.clasificacion_final)+'</span></div></div>').join('')
-      :'<div style="font-size:12px;color:#6b85a8">Sin movimientos de Binance Pay con terceros en este período.</div>';
-  }catch(e){ box.innerHTML='<div style="color:#f87171;font-size:12px">✗ '+esc(e.message)+'</div>'; }
+      :'<div style="font-size:12px;color:var(--mute)">Sin movimientos de Binance Pay con terceros en este período.</div>';
+  }catch(e){ box.innerHTML='<div style="color:var(--red2);font-size:12px">✗ '+esc(e.message)+'</div>'; }
 }
 function editarPay(i){ const p=_pay[i]; _paySel=p;
   document.getElementById('mp_info').innerHTML=fh(p.fecha)+' · '+p.cuenta+'<br>'+(p.monto>0?'+':'')+num(p.monto)+' '+esc(p.moneda)+' · '+esc(p.contraparte||'');
@@ -2620,14 +2666,14 @@ async function cargarCuadreBanco(){
     const f=v=>v==null?'—':(v<0?'−'+$clp(-v):'+'+$clp(v));
     const incompleto=r=>r.movimientos&&r.banco_hasta&&r.banco_hasta<sumarDias(mesDe(r.mes,1),-3);
     box.innerHTML='<table class="tabla"><tr><th>Mes</th><th>Cambios libro</th><th>Plata en banco</th><th>Diferencia</th><th class="hs-opt">Compras dif.</th></tr>'+
-      L.map(r=>'<tr><td>'+mesTxt(r.mes)+'</td><td>'+$clp(r.ventas)+'</td><td>'+(r.movimientos?$clp(r.plata_clientes_banco):'<span style="color:#6b85a8">sin cartola</span>')+'</td>'+
+      L.map(r=>'<tr><td>'+mesTxt(r.mes)+'</td><td>'+$clp(r.ventas)+'</td><td>'+(r.movimientos?$clp(r.plata_clientes_banco):'<span style="color:var(--mute)">sin cartola</span>')+'</td>'+
         '<td class="'+cl(r.dif_ventas)+'">'+(r.movimientos?f(r.dif_ventas):'—')+'</td><td class="hs-opt '+cl(r.dif_compras)+'">'+(r.movimientos?f(r.dif_compras):'—')+'</td></tr>'+
         ((r.salvedad||incompleto(r)||r.por_revisar)?'<tr><td colspan="5" class="salv">'+
           (r.salvedad?'⚠ '+esc(r.salvedad)+'<br>':'')+(incompleto(r)?'Banco cargado solo hasta el '+r.banco_hasta.slice(8)+'/'+r.banco_hasta.slice(5,7)+'. ':'')+
           (r.por_revisar?r.por_revisar+' movimientos por revisar en Banco.':'')+'</td></tr>':'')).join('')+'</table>'+
-      '<div style="font-size:11px;color:#6b85a8;margin-top:6px;line-height:1.5"><b>Plata en banco</b> = depósitos de clientes + entradas Belkys − lo pagado a Belkys/Florelvis − tu 4%. '+
+      '<div style="font-size:11px;color:var(--mute);margin-top:6px;line-height:1.5"><b>Plata en banco</b> = depósitos de clientes + entradas Belkys − lo pagado a Belkys/Florelvis − tu 4%. '+
       '🟢 diferencia menor a $50.000 · 🟡 hasta $500.000 · 🔴 más. Lo importante es desde oct-2025; antes de la cuenta de la empresa (22/01/2026) no hay cartolas.</div>';
-  }catch(e){ box.innerHTML='<span style="color:#f87171">✗ '+esc(e.message)+'</span>'; }
+  }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
 async function cargarCuadre(){
   cargarCuadreBanco();
@@ -2643,9 +2689,9 @@ async function cargarCuadre(){
       '<div class="fila"><span>Binance Pay con terceros</span><b>'+(r.binance_pay_neto>=0?'+':'')+num(r.binance_pay_neto)+'</b></div>'+
       '<div class="fila"><span><b>Debería haber</b></span><b>'+num(r.esperado)+' USDT</b></div>'+
       '<div class="fila"><span><b>Hay en Binance</b> ('+fh(r.hasta)+')</span><b>'+num(r.saldo_real)+' USDT</b></div>'+
-      '<div class="fila"><span style="color:#fff"><b>Diferencia</b></span><b style="font-size:18px;color:'+(okc?'var(--green)':'#f87171')+'">'+(d>=0?'+':'')+num(d)+(okc?' ✅':' ⚠')+'</b></div>'+
-      '<div style="font-size:11px;color:#6b85a8;margin-top:6px">'+Object.keys(vistos).map(k=>k+': '+num(vistos[k].total)+' USDT').join(' · ')+'</div>';
-  }catch(e){ b.innerHTML='<span style="color:#f87171">✗ '+esc(e.message)+'</span>'; }
+      '<div class="fila"><span style="color:var(--tx)"><b>Diferencia</b></span><b style="font-size:18px;color:'+(okc?'var(--green)':'var(--red2)')+'">'+(d>=0?'+':'')+num(d)+(okc?' ✅':' ⚠')+'</b></div>'+
+      '<div style="font-size:11px;color:var(--mute);margin-top:6px">'+Object.keys(vistos).map(k=>k+': '+num(vistos[k].total)+' USDT').join(' · ')+'</div>';
+  }catch(e){ b.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2661,12 +2707,12 @@ async function cargarGastos(){
     _gastos=await sbPost('robot_gastos?select=*&fecha=gte.'+ini+'&fecha=lt.'+fin+'&order=fecha.desc,id.desc');
     const tot=_gastos.reduce((s,g)=>s+(+g.monto_clp||0),0);
     const iva=_gastos.filter(g=>g.con_factura).reduce((s,g)=>s+Math.round(g.monto_clp*19/119),0);
-    document.getElementById('gs_res').innerHTML='<span><b>'+_gastos.length+'</b> gastos</span><span>Total <b style="color:#f87171">'+$clp(tot)+'</b></span><span>IVA crédito <b>'+$clp(iva)+'</b></span>';
+    document.getElementById('gs_res').innerHTML='<span><b>'+_gastos.length+'</b> gastos</span><span>Total <b style="color:var(--red2)">'+$clp(tot)+'</b></span><span>IVA crédito <b>'+$clp(iva)+'</b></span>';
     lista.innerHTML=_gastos.length?_gastos.map((g,i)=>'<div class="mv" style="cursor:default"><div class="r1"><span>'+g.fecha.split('-').reverse().join('/')+'</span><span class="tag">'+esc(g.categoria)+'</span></div>'+
       '<div class="r2"><span class="a">'+esc(g.descripcion||'')+'</span><span class="b">'+$clp(g.monto_clp)+'</span></div>'+
       '<div class="r3"><span>'+(g.con_factura?'🧾 Con factura · IVA '+$clp(g.monto_clp*19/119):'Sin factura')+'</span><button type="button" class="tbtn" onclick="borrarGasto('+i+')">🗑 Borrar</button></div></div>').join('')
       :'<div class="pronto">Sin gastos este mes</div>';
-  }catch(e){ lista.innerHTML='<div class="pronto" style="color:#f87171">✗ '+esc(e.message)+'</div>'; }
+  }catch(e){ lista.innerHTML='<div class="pronto" style="color:var(--red2)">✗ '+esc(e.message)+'</div>'; }
 }
 async function guardarGasto(ev){
   ev.preventDefault(); const btn=document.getElementById('gs_btn'); btn.disabled=true;
@@ -2711,18 +2757,18 @@ async function cargarHTasas(){
       g.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto">'+
         '<polyline fill="none" stroke="#f5c518" stroke-width="2.5" points="'+filas.map((x,i)=>X(i)+','+Y(x.v)).join(' ')+'"/>'+
         (filas.length<=70?filas.map((x,i)=>'<circle cx="'+X(i)+'" cy="'+Y(x.v)+'" r="3" fill="#f5c518"/>').join(''):'')+
-        '<line x1="'+P+'" y1="'+Y(mx)+'" x2="'+(W-P)+'" y2="'+Y(mx)+'" stroke="#1e3256" stroke-dasharray="4 4"/>'+
-        '<line x1="'+P+'" y1="'+Y(mn)+'" x2="'+(W-P)+'" y2="'+Y(mn)+'" stroke="#1e3256" stroke-dasharray="4 4"/>'+
-        '<text x="'+P+'" y="'+(Y(mx)-5)+'" fill="#c8d6e5" font-size="12">máx '+fmtTasa(mx,col)+'</text>'+
-        '<text x="'+P+'" y="'+(Y(mn)+15)+'" fill="#c8d6e5" font-size="12">mín '+fmtTasa(mn,col)+'</text>'+
-        '<text x="'+P+'" y="'+(H-4)+'" fill="#6b85a8" font-size="12">'+dd(filas[0].f)+'</text>'+
-        '<text x="'+(W-P)+'" y="'+(H-4)+'" fill="#6b85a8" font-size="12" text-anchor="end">'+dd(filas[filas.length-1].f)+' (hoy: '+fmtTasa(filas[filas.length-1].v,col)+')</text></svg>';
-    } else g.innerHTML='<div style="font-size:12px;color:#6b85a8">Faltan datos para el gráfico en este período.</div>';
+        '<line x1="'+P+'" y1="'+Y(mx)+'" x2="'+(W-P)+'" y2="'+Y(mx)+'" style="stroke:var(--line)" stroke-dasharray="4 4"/>'+
+        '<line x1="'+P+'" y1="'+Y(mn)+'" x2="'+(W-P)+'" y2="'+Y(mn)+'" style="stroke:var(--line)" stroke-dasharray="4 4"/>'+
+        '<text x="'+P+'" y="'+(Y(mx)-5)+'" style="fill:var(--silver)" font-size="12">máx '+fmtTasa(mx,col)+'</text>'+
+        '<text x="'+P+'" y="'+(Y(mn)+15)+'" style="fill:var(--silver)" font-size="12">mín '+fmtTasa(mn,col)+'</text>'+
+        '<text x="'+P+'" y="'+(H-4)+'" style="fill:var(--mute)" font-size="12">'+dd(filas[0].f)+'</text>'+
+        '<text x="'+(W-P)+'" y="'+(H-4)+'" style="fill:var(--mute)" font-size="12" text-anchor="end">'+dd(filas[filas.length-1].f)+' (hoy: '+fmtTasa(filas[filas.length-1].v,col)+')</text></svg>';
+    } else g.innerHTML='<div style="font-size:12px;color:var(--mute)">Faltan datos para el gráfico en este período.</div>';
     tabla.innerHTML='<tr><th>Día</th><th>Tasa IREMI</th><th>Margen teórico</th><th>Margen real</th><th>Cambios</th></tr>'+
       (filas.length?filas.slice().reverse().map(x=>'<tr><td>'+x.f.slice(8)+'/'+x.f.slice(5,7)+(dias>60?'/'+x.f.slice(2,4):'')+'</td><td>'+fmtTasa(x.v,col)+'</td>'+
         '<td class="'+cls(x.mt)+'">'+(x.mt==null?'—':x.mt.toFixed(1)+'%')+'</td><td class="'+cls(x.mr)+'">'+(x.mr==null?'—':x.mr.toFixed(1)+'%')+'</td><td>'+(x.n||'—')+'</td></tr>').join('')
         :'<tr><td colspan="5">Sin tasas guardadas para este país en el período.</td></tr>');
-  }catch(e){ tabla.innerHTML='<tr><td style="color:#f87171">✗ '+esc(e.message)+'</td></tr>'; }
+  }catch(e){ tabla.innerHTML='<tr><td style="color:var(--red2)">✗ '+esc(e.message)+'</td></tr>'; }
 }
 
 
@@ -2846,18 +2892,18 @@ async function leerCartolas(files){
     const ctrl=carts.map(c=>{ const suma=c.saldoIni+c.movs.reduce((s,b)=>s+b.abono-b.cargo,0);
       return 'N° '+c.cartola+' ('+c.ini.slice(8)+'/'+c.ini.slice(5,7)+' → '+c.fin.slice(8)+'/'+c.fin.slice(5,7)+'): '+c.movs.length+' mov. '+(Math.abs(suma-c.saldoFin)<1?'✅ saldo cuadra':'⚠ saldo no cuadra ('+$clp(suma)+' vs '+$clp(c.saldoFin)+')'); });
     pintarPrev(avisos.concat(ctrl));
-  }catch(e){ box.innerHTML='<span style="color:#f87171">✗ '+esc(e.message)+'</span>'; }
+  }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
 function pintarPrev(avisos){
   const box=document.getElementById('bk_prev'), cnt={};
   _bkPrev.forEach(b=>cnt[b.categoria]=(cnt[b.categoria]||0)+1);
   const nG=_bkPrev.filter(b=>b.categoria==='gasto').length;
-  box.innerHTML='<div class="salv" style="color:#c8d6e5">'+avisos.join('<br>')+'</div>'+
+  box.innerHTML='<div class="salv" style="color:var(--silver)">'+avisos.join('<br>')+'</div>'+
     '<div style="margin:6px 0">'+Object.entries(cnt).map(([k,v])=>'<span class="chip">'+BK_CAT[k]+': '+v+'</span>').join('')+'</div>'+
     '<div style="max-height:420px;overflow-y:auto">'+_bkPrev.map((b,i)=>'<div class="mv bk-row" style="cursor:default"><div style="min-width:0"><div class="bk-d">'+esc(b.descripcion)+'</div>'+
       '<div class="bk-s">'+b.fecha.slice(8)+'/'+b.fecha.slice(5,7)+' · <span class="'+(b.abono?'m-in':'m-out')+'">'+(b.abono?'+'+$clp(b.abono):'−'+$clp(b.cargo))+'</span>'+(b.nota?' · '+esc(b.nota):'')+'</div></div>'+
       '<select onchange="_bkPrev['+i+'].categoria=this.value">'+catOpts(b.categoria)+'</select></div>').join('')+'</div>'+
-    (nG?'<label style="display:flex;gap:6px;align-items:center;font-size:12px;color:#c8d6e5;margin-top:8px"><input type="checkbox" id="bk_gastos" checked style="width:auto"> Pasar también los '+nG+' gastos a la pantalla Gastos (desmarca si ya los anotaste a mano)</label>':'')+
+    (nG?'<label style="display:flex;gap:6px;align-items:center;font-size:12px;color:var(--silver);margin-top:8px"><input type="checkbox" id="bk_gastos" checked style="width:auto"> Pasar también los '+nG+' gastos a la pantalla Gastos (desmarca si ya los anotaste a mano)</label>':'')+
     '<button type="button" class="btn b-gold" id="bk_guardar" style="width:100%;margin-top:10px;padding:12px" onclick="guardarCartolas()">💾 Guardar '+_bkPrev.length+' movimientos</button>';
 }
 async function guardarCartolas(){
@@ -2880,8 +2926,8 @@ async function cargarCartolas(){
   try{ const L=(await sbPost('v_cartolas?select=*&order=cartola.desc&limit=12'))||[];
     box.innerHTML=L.length?'<table class="tabla"><tr><th>N°</th><th>Desde</th><th>Hasta</th><th>Mov.</th><th>Por revisar</th></tr>'+
       L.map(c=>'<tr><td>'+c.cartola+'</td><td>'+c.desde.slice(8)+'/'+c.desde.slice(5,7)+'/'+c.desde.slice(2,4)+'</td><td>'+c.hasta.slice(8)+'/'+c.hasta.slice(5,7)+'/'+c.hasta.slice(2,4)+'</td><td>'+c.movimientos+'</td><td>'+(c.por_revisar||'—')+'</td></tr>').join('')+'</table>'+
-      '<div style="font-size:11px;color:#6b85a8;margin-top:6px">La próxima que debes subir es la N° '+(+L[0].cartola+1)+' (desde el '+L[0].hasta.slice(8)+'/'+L[0].hasta.slice(5,7)+').</div>':'Aún no hay cartolas.';
-  }catch(e){ box.innerHTML='<span style="color:#f87171">✗ '+esc(e.message)+'</span>'; }
+      '<div style="font-size:11px;color:var(--mute);margin-top:6px">La próxima que debes subir es la N° '+(+L[0].cartola+1)+' (desde el '+L[0].hasta.slice(8)+'/'+L[0].hasta.slice(5,7)+').</div>':'Aún no hay cartolas.';
+  }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
 async function cargarRevisar(){
   const box=document.getElementById('bk_rev'), c=document.getElementById('bk_cat').value;
@@ -2889,7 +2935,7 @@ async function cargarRevisar(){
     box.innerHTML=_bkRev.length?_bkRev.map((b,i)=>'<div class="mv" onclick="editarBk('+i+')"><div class="bk-d">'+esc(b.descripcion)+'</div><div class="bk-s">'+
       b.fecha.slice(8)+'/'+b.fecha.slice(5,7)+'/'+b.fecha.slice(2,4)+' · c.'+b.cartola+' · <span class="'+(+b.abono?'m-in':'m-out')+'">'+(+b.abono?'+'+$clp(b.abono):'−'+$clp(b.cargo))+'</span> · '+BK_CAT[b.categoria]+(b.nota?' · '+esc(b.nota):'')+'</div></div>').join('')
       :'<div style="font-size:12px;color:var(--green)">✓ Nada pendiente aquí</div>';
-  }catch(e){ box.innerHTML='<span style="color:#f87171">✗ '+esc(e.message)+'</span>'; }
+  }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
 function editarBk(i){ const b=_bkRev[i]; if(!b) return; _bkSel=b;
   document.getElementById('mb_info').innerHTML=b.fecha.split('-').reverse().join('/')+' · cartola '+b.cartola+'<br><b>'+esc(b.descripcion)+'</b><br>'+(+b.abono?'Depósito '+$clp(b.abono):'Cargo '+$clp(b.cargo))+(b.orden_binance?'<br>Orden: '+esc(b.orden_binance):'');
@@ -2966,7 +3012,7 @@ async function cargarUsuarios(){
   try{ _usus=(await sbPost('app_usuarios?select=email,nombre,rol,permisos,activo&order=rol.asc,email.asc'))||[];
     box.innerHTML=_usus.map((u,i)=>'<div class="mv" onclick="editarUsuario('+i+')"><div class="bk-d"><b>'+esc(u.nombre||u.email)+'</b> '+(u.activo===false?'<span class="chip" style="background:#7f1d1d;color:#fff">bloqueado</span>':'')+'</div>'+
       '<div class="bk-s">'+esc(u.email)+' · '+(u.rol==='admin'?'Administrador (todo)':(u.permisos?u.permisos.map(p=>(PERMISOS.find(x=>x[0]===p)||[p,p])[1]).join(', '):'Usuario con acceso a todo'))+'</div></div>').join('');
-  }catch(e){ box.innerHTML='<span style="color:#f87171">✗ '+esc(e.message)+'</span>'; }
+  }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
 function editarUsuario(i){
   const u=i==null?null:_usus[i]; _usuSel=u;
@@ -3014,7 +3060,7 @@ async function cargarHMes(){
     const sel=document.getElementById('hs_anio'), anios=[...new Set(_hmes.map(h=>h.mes.slice(0,4)))];
     const prev=sel.value; sel.innerHTML='<option value="">Todos los meses</option>'+anios.map(a=>'<option>'+a+'</option>').join(''); sel.value=prev||'';
     pintarHMes();
-  }catch(e){ document.getElementById('hs_graf').innerHTML='<span style="color:#f87171">✗ '+esc(e.message)+'</span>'; }
+  }catch(e){ document.getElementById('hs_graf').innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
 function pintarHMes(){
   const a=document.getElementById('hs_anio').value, L=_hmes.filter(h=>!a||h.mes.startsWith(a));
@@ -3025,10 +3071,10 @@ function pintarHMes(){
   g.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto">'+
     L.map((h,i)=>{const x=P+i*bw, gy=Y(+h.ganancia||0), u=+h.utilidad||0, uy=Y(u);
       return '<rect x="'+(x+bw*0.12)+'" y="'+gy+'" width="'+(bw*0.38)+'" height="'+Math.max(1,y0-gy)+'" fill="#f5c518" rx="2"/>'+
-        '<rect x="'+(x+bw*0.5)+'" y="'+Math.min(uy,y0)+'" width="'+(bw*0.38)+'" height="'+Math.max(1,Math.abs(y0-uy))+'" fill="'+(u>=0?'#22c55e':'#f87171')+'" rx="2"/>'+
-        '<text x="'+(x+bw/2)+'" y="'+(H-6)+'" fill="#6b85a8" font-size="'+(L.length>14?9:11)+'" text-anchor="middle">'+mesTxt(h.mes)+'</text>';}).join('')+
-    '<line x1="'+P+'" y1="'+y0+'" x2="'+(W-P)+'" y2="'+y0+'" stroke="#2a4070"/></svg>'+
-    '<div style="font-size:11px;color:#c8d6e5;margin-top:4px"><span style="color:#f5c518">■</span> Ganancia cambios &nbsp; <span style="color:#22c55e">■</span> Utilidad (− gastos)</div>';
+        '<rect x="'+(x+bw*0.5)+'" y="'+Math.min(uy,y0)+'" width="'+(bw*0.38)+'" height="'+Math.max(1,Math.abs(y0-uy))+'" fill="'+(u>=0?'#22c55e':'var(--red2)')+'" rx="2"/>'+
+        '<text x="'+(x+bw/2)+'" y="'+(H-6)+'" style="fill:var(--mute)" font-size="'+(L.length>14?9:11)+'" text-anchor="middle">'+mesTxt(h.mes)+'</text>';}).join('')+
+    '<line x1="'+P+'" y1="'+y0+'" x2="'+(W-P)+'" y2="'+y0+'" style="stroke:var(--bord)"/></svg>'+
+    '<div style="font-size:11px;color:var(--silver);margin-top:4px"><span style="color:#f5c518">■</span> Ganancia cambios &nbsp; <span style="color:#22c55e">■</span> Utilidad (− gastos)</div>';
   const T={c:0,clp:0,g:0,ga:0,u:0}; L.forEach(h=>{T.c+=+h.cambios||0;T.clp+=+h.clp_cambiado||0;T.g+=+h.ganancia||0;T.ga+=+h.gastos||0;T.u+=+h.utilidad||0;});
   document.getElementById('hs_tabla').innerHTML='<tr><th>Mes</th><th class="hs-opt">Cambios</th><th class="hs-opt">CLP cambiado</th><th>Ganancia</th><th>Margen</th><th>Gastos</th><th>Utilidad</th></tr>'+
     L.slice().reverse().map(h=>{const m=h.clp_cambiado?h.ganancia/h.clp_cambiado*100:null;
@@ -3048,10 +3094,10 @@ async function detalleMes(mes){
       rows.map(([k,r])=>'<tr><td>'+esc(k)+'</td><td>'+r.n+'</td><td>'+$clp(r.clp)+'</td><td>'+$clp(r.g)+'</td><td>'+(r.clp?(r.g/r.clp*100).toFixed(1)+'%':'—')+'</td></tr>').join('')+'</table>'+
       ((gas||[]).length?'<h3 style="margin-top:12px">💸 Gastos del mes</h3><table class="tabla">'+gas.map(g=>'<tr><td>'+esc(g.categoria)+' · '+esc(g.descripcion||'')+'</td><td>'+$clp(g.monto_clp)+'</td></tr>').join('')+'</table>':'')+
       (+h.comision_belkys?'<div style="font-size:12px;margin-top:8px">🤝 Tu 4% de Belkys este mes: <b>'+$clp(h.comision_belkys)+'</b> (incluido en la utilidad, no va en la boleta)</div>':'')+
-      (h.ganancia_libro?'<div style="font-size:11px;color:#6b85a8;margin-top:8px">En el pie de la hoja del Excel anotaste: ganancia '+$clp(h.ganancia_libro)+(h.boleta?' · boleta '+$clp(h.boleta):'')+(h.pendiente?' · pendiente '+$clp(h.pendiente):'')+'</div>':'')+
-      '<div style="font-size:11px;color:#6b85a8;margin-top:4px">El país de destino del libro es estimado a partir de la tasa usada.</div>';
+      (h.ganancia_libro?'<div style="font-size:11px;color:var(--mute);margin-top:8px">En el pie de la hoja del Excel anotaste: ganancia '+$clp(h.ganancia_libro)+(h.boleta?' · boleta '+$clp(h.boleta):'')+(h.pendiente?' · pendiente '+$clp(h.pendiente):'')+'</div>':'')+
+      '<div style="font-size:11px;color:var(--mute);margin-top:4px">El país de destino del libro es estimado a partir de la tasa usada.</div>';
     box.scrollIntoView({behavior:'smooth',block:'start'});
-  }catch(e){ box.innerHTML='<span style="color:#f87171">✗ '+esc(e.message)+'</span>'; }
+  }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3073,7 +3119,7 @@ async function cargarBelkys(){
         '<td>'+(v.categoria==='belkys_ingreso'?$clp(v.abono):'')+'</td><td>'+(v.categoria==='belkys_pago'?$clp(v.cargo):'')+'</td>'+
         '<td class="mg-ok">'+(v.categoria==='belkys_pago'?$clp(v.cargo/0.96*0.04):'')+'</td></tr>').join('')
         :'<tr><td colspan="5">Sin movimientos de Belkys este mes.</td></tr>');
-  }catch(e){ tabla.innerHTML='<tr><td style="color:#f87171">✗ '+esc(e.message)+'</td></tr>'; }
+  }catch(e){ tabla.innerHTML='<tr><td style="color:var(--red2)">✗ '+esc(e.message)+'</td></tr>'; }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3090,7 +3136,7 @@ async function cargarAlertas(){
         '<input id="cfg_'+c.clave+'" type="'+(secreto?'password':'text')+'" value="'+esc(c.valor||'')+'"></div>'+
         '<button type="button" class="btn b-gold" style="padding:9px 12px" onclick="guardarCfg(\''+c.clave+'\')">💾</button></div>';}).join('');
     document.getElementById('al_hist').innerHTML=(al||[]).length?al.map(a=>'<div class="fila" style="display:block"><b>'+fh(a.fecha)+'</b> · '+esc(a.enviado_por||'')+'<div style="white-space:pre-line;margin-top:2px">'+esc(a.mensaje)+'</div></div>').join(''):'Sin alertas todavía';
-  }catch(e){ box.innerHTML='<span style="color:#f87171">✗ '+esc(e.message)+'</span>'; }
+  }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
 async function guardarCfg(clave){
   const v=document.getElementById('cfg_'+clave).value.trim();
