@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="IREMI">
 <title>IREMI Remesas</title>
-<meta name="version" content="3.0">
+<meta name="version" content="2.8">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -311,58 +311,9 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 @media(max-width:899px){
   .pg.on > div{padding-bottom:20px}
 }
-
-/* ══ v3.0: LOGIN + INICIO ══════════════════════════════════ */
-#login{position:fixed;inset:0;z-index:500;background:radial-gradient(circle at 50% 20%,#123061,#060e1a 70%);
-  display:none;align-items:center;justify-content:center;padding:20px}
-#login.on{display:flex}
-.lbox{width:100%;max-width:360px;background:#0d1f3c;border:1.5px solid #2a4070;border-radius:16px;padding:22px 20px;
-  box-shadow:0 10px 40px rgba(0,0,0,.6)}
-.lbox h1{font-size:22px;font-weight:900;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;text-align:center}
-.lbox p{font-size:11px;color:var(--silver);text-align:center;margin:4px 0 16px}
-.lbox input{width:100%;background:#060e1a;border:1.5px solid #2a4070;border-radius:9px;color:#fff;
-  font-family:'Barlow',sans-serif;font-size:15px;padding:11px 12px;outline:none;margin-bottom:10px}
-.lbox input:focus{border-color:var(--gold)}
-.lbox button{width:100%;padding:12px;border:none;border-radius:10px;background:var(--gold);color:var(--navy);
-  font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
-#login_err{font-size:11px;color:#f87171;text-align:center;min-height:16px;margin-top:8px}
-.kgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-@media(min-width:700px){.kgrid{grid-template-columns:repeat(4,1fr)}}
-.kc{background:#0d1f3c;border:1px solid #1e3256;border-radius:12px;padding:10px 12px}
-.kc .kl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--silver)}
-.kc .kv{font-size:22px;font-weight:900;color:#fff;line-height:1.15;margin-top:2px}
-.kc .ks{font-size:10px;color:#6b85a8;margin-top:1px}
-.kc.g .kv{color:var(--green)} .kc.y .kv{color:var(--gold)} .kc.r .kv{color:#f87171}
-.panel{background:#0d1f3c;border:1px solid #1e3256;border-radius:12px;padding:12px;margin-bottom:10px}
-.panel h3{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
-.fila{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:5px 0;border-bottom:1px solid #16294a}
-.fila:last-child{border-bottom:none}
-.fila span:first-child{color:var(--silver)}
-.masbtn{display:flex;align-items:center;gap:10px;width:100%;background:#0d1f3c;border:1px solid #1e3256;border-radius:12px;
-  padding:13px 14px;margin-bottom:8px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;
-  text-align:left;cursor:pointer}
-.masbtn small{display:block;font-size:10px;font-weight:500;color:#6b85a8}
-.pronto{text-align:center;color:#6b85a8;padding:40px 20px;font-size:13px;line-height:1.6}
-#tasa_estado{font-size:10px;text-align:center;color:#6b85a8;margin-top:4px}
-@media(min-width:900px){#pg_inicio.on,#pg_mov.on,#pg_gastos.on,#pg_mas.on{display:block;max-width:980px;margin:0 auto}}
-#pg_inicio.on > .kgrid,#pg_inicio.on > .section,#pg_inicio.on > #ini_aviso,#pg_mas.on > .section{padding-bottom:0}
-#pg_inicio.on > .panel,#pg_mas.on > .panel{padding-bottom:12px}
-#pg_mas.on > .masbtn{padding-bottom:13px}
-#pg_inicio .section{margin:14px 0 8px}
 </style>
 </head>
 <body>
-<!-- ══ LOGIN (v3.0) ══════════════════════════════════════════ -->
-<div id="login">
-  <form class="lbox" onsubmit="entrar(event)">
-    <h1>IREMI Remesas</h1>
-    <p>Ingresa con tu correo y contraseña</p>
-    <input type="email" id="lg_email" placeholder="Correo" autocomplete="username" required>
-    <input type="password" id="lg_pass" placeholder="Contraseña" autocomplete="current-password" required>
-    <button type="submit" id="lg_btn">Entrar</button>
-    <div id="login_err"></div>
-  </form>
-</div>
 
 <!-- ══ TOPBAR ══════════════════════════════════════════════ -->
 <div class="topbar">
@@ -375,7 +326,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
   </div>
   <div class="tr">
     <div id="sdot" class="sdot"></div>
-    <button type="button" class="tbtn" onclick="showPg('pg_mas','nb_mas')">👤</button>
+    <button type="button" class="tbtn" onclick="openModal('modal_api')">🔑 API</button>
     <button type="button" class="tbtn" onclick="openModal('modal_cfg')">⚙️</button>
   </div>
 </div>
@@ -448,64 +399,17 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 </div>
 
 <nav class="nav">
-  <button type="button" class="nb active" id="nb_i" onclick="showPg('pg_inicio','nb_i');cargarInicio()"><span class="ni">📊</span><span>Inicio</span></button>
-  <button type="button" class="nb" id="nb_t" onclick="showPg('pg_tasas','nb_t')"><span class="ni">💱</span><span>Tasas</span></button>
-  <button type="button" class="nb" id="nb_m" onclick="showPg('pg_mov','nb_m')"><span class="ni">🔄</span><span>Movim.</span></button>
-  <button type="button" class="nb" id="nb_g" onclick="showPg('pg_gastos','nb_g')"><span class="ni">💸</span><span>Gastos</span></button>
-  <button type="button" class="nb" id="nb_mas" onclick="showPg('pg_mas','nb_mas');pintarSesion()"><span class="ni">☰</span><span>Más</span></button>
+  <button type="button" class="nb active" id="nb_t" onclick="showPg('pg_tasas','nb_t')"><span class="ni">📊</span><span>Tasas</span></button>
+  <button type="button" class="nb" id="nb_r" onclick="showPg('pg_reg','nb_r')"><span class="ni">📋</span><span>Registrar</span></button>
+  <button type="button" class="nb" id="nb_h" onclick="showPg('pg_hist','nb_h');setTimeout(cargarHist,100)"><span class="ni">📜</span><span>Historial</span></button>
+  <button type="button" class="nb" id="nb_e" onclick="showPg('pg_exp','nb_e')"><span class="ni">📤</span><span>Exportar</span></button>
+  <button type="button" class="nb" id="nb_p2p" onclick="showPg('pg_p2p','nb_p2p');diagP2P()"><span class="ni">🔬</span><span>P2P</span></button>
 </nav>
-
-<!-- ══ PAGE: INICIO (v3.0) ═══════════════════════════════════ -->
-<div class="pg on" id="pg_inicio" style="padding:12px 12px 90px">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-    <div class="section" style="margin:0">📊 Resumen <span id="ini_mes" class="badge"></span></div>
-    <button type="button" class="tbtn" onclick="cargarInicio()">↻ Actualizar</button>
-  </div>
-  <div id="ini_aviso"></div>
-  <div class="section">Hoy</div>
-  <div class="kgrid">
-    <div class="kc"><div class="kl">Cambios</div><div class="kv" id="k_hoy_n">—</div><div class="ks">órdenes completadas</div></div>
-    <div class="kc"><div class="kl">Recibido</div><div class="kv" id="k_hoy_clp">—</div><div class="ks">CLP de clientes</div></div>
-    <div class="kc g"><div class="kl">Ganancia</div><div class="kv" id="k_hoy_gan">—</div><div class="ks" id="k_hoy_mg">—</div></div>
-    <div class="kc y"><div class="kl">Tasa VES hoy</div><div class="kv" id="k_hoy_tasa">—</div><div class="ks" id="k_hoy_tasa_s">—</div></div>
-  </div>
-  <div class="section">Este mes</div>
-  <div class="kgrid">
-    <div class="kc"><div class="kl">Cambios</div><div class="kv" id="k_mes_n">—</div><div class="ks" id="k_mes_cta">—</div></div>
-    <div class="kc"><div class="kl">Recibido</div><div class="kv" id="k_mes_clp">—</div><div class="ks">CLP de clientes</div></div>
-    <div class="kc g"><div class="kl">Ganancia bruta</div><div class="kv" id="k_mes_gan">—</div><div class="ks" id="k_mes_mg">—</div></div>
-    <div class="kc"><div class="kl">Por revisar</div><div class="kv" id="k_mes_rev">—</div><div class="ks">CLP estimados</div></div>
-  </div>
-  <div class="section">Capital y mercado</div>
-  <div class="kgrid">
-    <div class="kc y"><div class="kl">Capital USDT</div><div class="kv" id="k_cap">—</div><div class="ks" id="k_cap_s">—</div></div>
-    <div class="kc"><div class="kl">USDT/CLP ahora</div><div class="kv" id="k_px">—</div><div class="ks" id="k_px_s">—</div></div>
-  </div>
-  <div class="panel"><h3>🤖 Robot</h3><div id="ini_robot" style="font-size:12px;color:var(--silver)">—</div></div>
-  <div class="panel"><h3>📲 Última alerta</h3><div id="ini_alerta" style="font-size:12px;color:var(--silver);white-space:pre-line">—</div></div>
-</div>
-
-<!-- ══ PAGE: MOVIMIENTOS / GASTOS (próximas etapas) ═════════ -->
-<div class="pg" id="pg_mov" style="padding:12px"><div class="pronto">🔄 <b>Movimientos</b><br>Llega en la Etapa 2: todas las órdenes de tus dos cuentas, filtros y corrección de montos estimados.<br><br>Mientras tanto, el robot ya las está guardando.</div></div>
-<div class="pg" id="pg_gastos" style="padding:12px"><div class="pronto">💸 <b>Gastos</b><br>Llega en la Etapa 3.</div></div>
-
-<!-- ══ PAGE: MÁS ════════════════════════════════════════════ -->
-<div class="pg" id="pg_mas" style="padding:12px 12px 90px">
-  <div class="panel"><h3>👤 Sesión</h3><div class="fila"><span>Usuario</span><b id="mas_email">—</b></div>
-    <button type="button" class="btn b-gray" style="width:100%;margin-top:8px" onclick="salir()">Cerrar sesión</button></div>
-  <div class="section">Herramientas anteriores</div>
-  <button type="button" class="masbtn" onclick="showPg('pg_reg','nb_mas')">📋 Registrar <small>Formulario manual antiguo</small></button>
-  <button type="button" class="masbtn" onclick="showPg('pg_hist','nb_mas');setTimeout(cargarHist,100)">📜 Historial <small>Operaciones registradas a mano (tabla antigua)</small></button>
-  <button type="button" class="masbtn" onclick="showPg('pg_exp','nb_mas')">📤 Exportar <small>Reporte antiguo</small></button>
-  <button type="button" class="masbtn" onclick="showPg('pg_p2p','nb_mas');diagP2P()">🔬 Diagnóstico P2P <small>Precios en vivo de Binance</small></button>
-  <div class="section">Próximamente</div>
-  <div style="font-size:11px;color:#6b85a8;line-height:1.7">⚖️ Cuadre de caja · 📈 Historial de tasas · 🤝 Belkys · 🏦 Subir cartola · 📄 Reportes Excel/boleta · 🔔 Configurar alertas</div>
-</div>
 
 <!-- ══════════════════════════════════════════════════════════
      PAGE: TASAS
 ════════════════════════════════════════════════════════════ -->
-<div class="pg" id="pg_tasas" style="padding-bottom:140px">
+<div class="pg on" id="pg_tasas" style="padding-bottom:140px">
 
   <!-- Flyer centered -->
   <div style="max-width:600px;margin:0 auto">
@@ -577,7 +481,6 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
         <div class="sig"><svg viewBox="0 0 24 24" fill="none" style="width:16px;height:16px;flex-shrink:0"><defs><radialGradient id="ig2" cx="30%" cy="107%" r="150%"><stop offset="0%" stop-color="#fdf497"/><stop offset="45%" stop-color="#fd5949"/><stop offset="60%" stop-color="#d6249f"/><stop offset="90%" stop-color="#285AEB"/></radialGradient></defs><rect x="2" y="2" width="20" height="20" rx="5" fill="url(#ig2)"/><circle cx="12" cy="12" r="4.5" fill="none" stroke="white" stroke-width="1.8"/><circle cx="17.5" cy="6.5" r="1.2" fill="white"/></svg><span>@iremiremesas</span></div>
       </div>
     </div>
-    <div id="tasa_estado">La tasa del día se guarda al compartir el flyer</div>
     <!-- Mobile share button -->
     <div style="display:flex;gap:6px;margin-top:6px">
   </div>
@@ -962,71 +865,21 @@ let allP2POps = []; // P2P ops loaded from Binance
 // ══════════════════════════════════════════════════════════
 //  SUPABASE
 // ══════════════════════════════════════════════════════════
-// ══════════════════════════════════════════════════════════
-//  SESIÓN (v3.0) — Supabase Auth, solo usuarios autorizados
-// ══════════════════════════════════════════════════════════
-const AUTH_KEY='iremi_sesion';
-function sesion(){try{return JSON.parse(localStorage.getItem(AUTH_KEY)||'null');}catch{return null;}}
-async function authReq(grant, body){
-  const r=await fetch(SB_URL+'/auth/v1/token?grant_type='+grant,{method:'POST',
-    headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
-  const d=await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(d.error_description||d.msg||d.message||('HTTP '+r.status));
-  const s={access_token:d.access_token,refresh_token:d.refresh_token,
-           expires_at:Date.now()+(d.expires_in||3600)*1000,email:(d.user&&d.user.email)||''};
-  try{localStorage.setItem(AUTH_KEY,JSON.stringify(s));}catch{}
-  return s;
-}
-let _refrescando=null;
-async function tokenValido(){
-  let s=sesion(); if(!s||!s.access_token) return null;
-  if(Date.now() > (s.expires_at||0)-60000){
-    if(!_refrescando) _refrescando=authReq('refresh_token',{refresh_token:s.refresh_token}).finally(()=>{_refrescando=null;});
-    try{ s=await _refrescando; }catch{ try{localStorage.removeItem(AUTH_KEY);}catch{} return null; }
-  }
-  return s.access_token;
-}
-function mostrarLogin(msg){
-  document.getElementById('login').classList.add('on');
-  if(msg) document.getElementById('login_err').textContent=msg;
-}
-async function entrar(ev){
-  if(ev) ev.preventDefault();
-  const btn=document.getElementById('lg_btn'), err=document.getElementById('login_err');
-  err.textContent=''; btn.disabled=true; btn.textContent='Entrando...';
-  try{
-    await authReq('password',{email:document.getElementById('lg_email').value.trim(),
-                              password:document.getElementById('lg_pass').value});
-    document.getElementById('lg_pass').value='';
-    document.getElementById('login').classList.remove('on');
-    iniciarApp();
-  }catch(e){
-    err.textContent=/invalid/i.test(e.message)?'Correo o contraseña incorrectos':('No se pudo entrar: '+e.message);
-  }finally{ btn.disabled=false; btn.textContent='Entrar'; }
-}
-function salir(){ try{localStorage.removeItem(AUTH_KEY);}catch{} location.reload(); }
-function pintarSesion(){ const s=sesion(); const e=document.getElementById('mas_email'); if(e) e.textContent=(s&&s.email)||'—'; }
-
-async function sbPost(path, method='GET', body=null, prefer=null) {
-  const tok = await tokenValido();
-  if(!tok){ mostrarLogin('Tu sesión expiró. Vuelve a entrar.'); throw new Error('Sesión expirada'); }
+async function sbPost(path, method='GET', body=null) {
   const headers = {
-    'apikey': SB_KEY, 'Authorization': 'Bearer '+tok, 'Content-Type': 'application/json'
+    'apikey': SB_KEY, 'Authorization': 'Bearer '+SB_KEY, 'Content-Type': 'application/json'
   };
   if(method==='POST')   headers['Prefer']='return=representation';
-  if(prefer)            headers['Prefer']=prefer;
   if(method==='DELETE') headers['Prefer']='return=representation';
   const opts = {method, headers};
   if(body) opts.body = JSON.stringify(body);
   const res = await fetch(SB_URL+'/rest/v1/'+path, opts);
-  if(res.status===401){ try{localStorage.removeItem(AUTH_KEY);}catch{} mostrarLogin('Tu sesión expiró. Vuelve a entrar.'); throw new Error('Sesión expirada'); }
   if(res.status===204) return [];
   if(!res.ok) {
     const err = await res.text();
     let msg; try{msg=JSON.parse(err).message||JSON.parse(err).hint||err;}catch{msg=err;}
     if(res.status===0||msg.includes('Failed')) msg='Sin conexión a Supabase — verifica tu internet';
     if(res.status===503) msg='Supabase pausado — actívalo en supabase.com/dashboard';
-    if(/permission denied/i.test(msg)) msg='Tu usuario no tiene permiso para ver estos datos';
     throw new Error('Supabase '+res.status+': '+msg);
   }
   const text = await res.text();
@@ -1048,9 +901,8 @@ async function saveKeys() {
   await fetchAllRates();
 }
 function loadKeys() {
-  // v3.0: las llaves de Binance ya no se guardan en el celular (el robot lee Binance de forma segura).
-  try{ localStorage.removeItem('iremi_key'); localStorage.removeItem('iremi_sec'); }catch{}
-  const k='', s='';
+  const k=localStorage.getItem('iremi_key')||'';
+  const s=localStorage.getItem('iremi_sec')||'';
   if(k){document.getElementById('k_api').value=k;document.getElementById('key_saved_msg').style.display='block';}
   if(s) document.getElementById('k_sec').value=s;
   return {apiKey:k,secret:s};
@@ -1098,10 +950,17 @@ async function diagP2PFetch(fiat, side, rows=10, publisherType=null){
   };
 
   // Proxies en cascada — se prueba uno por uno hasta que funcione
+  // 1. Proxy local IREMI (iremi_proxy.py + ngrok corriendo en el notebook)
+  // URL de Ngrok — funciona desde cualquier lugar (celular, casa, oficina)
+  const LOCAL = window.location.hostname === 'localhost'
+    ? 'http://localhost:8765'
+    : 'https://opulently-singer-gigolo.ngrok-free.dev';
 
   const proxies = [
-    // 1. Worker Cloudflare IREMI (Ngrok eliminado en v3.0: los precios vienen del robot)
-    ()=>fetch(IREMI_CF_WORKER,{method:'POST',headers:hdr,body}),
+    // 1. Proxy local/Ngrok — IP residencial, nunca bloqueado por Binance ✓
+    ()=>fetch(LOCAL,{method:'POST',
+      headers:{...hdr,'ngrok-skip-browser-warning':'true'},
+      body:JSON.stringify({fiat,side,rows})}),
     // 2. Directo (funciona solo si el browser tiene acceso directo a Binance)
     ()=>fetch(target,{method:'POST',headers:hdr,body}),
   ];
@@ -1265,46 +1124,6 @@ async function fetchAllRates() {
     throw new Error('Sin proxy disponible para '+fiat);
   };
 
-  // ── v3.0: primero los precios que guarda el robot en Supabase (cada 10 min) ──
-  try{
-    const mk = await sbPost('v_mercado_actual?select=fiat,lado,fecha,detalle');
-    const M={}; let masNuevo=0;
-    (mk||[]).forEach(r=>{ M[r.fiat]=(r.detalle||[]).map(x=>({price:parseFloat(x[0]),classify:x[1]||'normal'}));
-                          masNuevo=Math.max(masNuevo,new Date(r.fecha).getTime()); });
-    const edadMin=Math.round((Date.now()-masNuevo)/60000);
-    if(Object.keys(M).length && edadMin<=30){
-      const desc=a=>a.map(x=>x.price).sort((a,b)=>b-a);
-      const top10=a=>(a||[]).slice(0,10); // la app original consultaba 10 anuncios (VES: 20)
-      const noProm=a=>a.filter(x=>x.classify!=='promoted');
-      // VES: misma regla de siempre (sin promocionados, filtro ±2% de la mediana de posiciones 3-8, 2° precio)
-      if(M.VES&&M.VES.length){
-        const vs=desc(noProm(M.VES).filter(a=>a.price>0));
-        const mid=vs.slice(2,Math.min(8,vs.length));
-        const med=mid.length?mid.reduce((s,v)=>s+v,0)/mid.length:vs[Math.floor(vs.length/2)];
-        const cl=vs.filter(p=>Math.abs(p-med)/med<=0.02); const fin=cl.length>=2?cl:vs;
-        const vp=fin[1]||fin[0]; setV('i_ves',vp,'src_ves','rate-src src-auto'); ok++;
-        const det=document.getElementById('ves_detail');
-        if(det) det.textContent='✓ Robot IREMI · hace '+edadMin+' min · #1='+Math.round(fin[0]).toLocaleString()+' · #2='+Math.round(fin[1]||fin[0]).toLocaleString()+' ← usado';
-      }
-      [['COP','i_cop','src_cop'],['ARS','i_ars','src_ars'],['MXN','i_mxn','src_mxn']].forEach(([f,id,src])=>{
-        if(M[f]&&M[f].length){const p=desc(top10(M[f])); setV(id,p[1]||p[0],src,'rate-src src-auto'); ok++;}});
-      [['EUR','i_eur','src_eur'],['PEN','i_pen','src_pen'],['DOP','i_dop','src_dop'],['BOB','i_bob','src_bob']].forEach(([f,id,src])=>{
-        if(M[f]&&M[f].length){const n=noProm(top10(M[f])); const v=(n[1]||n[0]||{}).price; if(v){setV(id,v,src,'rate-src src-p2p'); ok++;}}});
-      if(M.CLP&&M.CLP.length){
-        const clpVal=parseFloat(desc(top10(M.CLP))[0]).toFixed(2);
-        setV('i_clp',clpVal,'src_clp','rate-src src-auto'); cachedCLP=clpVal;
-        const dc=document.getElementById('rf_dc'), dv=document.getElementById('rf_dv');
-        if(dc) dc.value=clpVal; if(dv) dv.value=clpVal; ok++;
-      }
-      recalc();
-      dot.className=ok>=2?'sdot ok':ok>0?'sdot spin':'sdot err'; if(dotm)dotm.className=dot.className;
-      if(txm) txm.textContent='✓ '+ok+' tasas del robot · hace '+edadMin+' min';
-      toast('✓ '+ok+' tasas del robot · hace '+edadMin+' min');
-      return;
-    }
-    console.warn('Precios del robot con '+edadMin+' min: se consulta Binance directo');
-  }catch(e){ console.warn('Robot no disponible, se consulta Binance directo:',e.message); }
-
   try{
     // VES: misma lógica exacta que módulo P2P (diagP2P)
     // SELL side DESC → excluir promoted → tomar [1] (2° más alto)
@@ -1421,29 +1240,23 @@ function recalc(){
   const t   =x=>(x/clp)*f;       // tasa directa
 
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
-  // v3.0: 3 cifras significativas, siempre redondeando hacia abajo (a favor de IREMI).
-  // Antes España salía 0.0009 aunque la tasa correcta fuera 0.000862.
-  const fT=x=>{ if(!isFinite(x)||x<=0) return '—';
-    if(x>=1) return (Math.floor(x*100+1e-9)/100).toFixed(2);
-    const d=2-Math.floor(Math.log10(x)); const f=Math.pow(10,d);
-    return (Math.floor(x*f+1e-9)/f).toFixed(d); };
   set('mval',margin.toFixed(1)+'%');
 
   const vesN=Math.round(tVES(ves));
   set('r_ves',vesN); set('r_ves2',vesN+1);
 
-  set('r_cop', fT(t(cop)));
-  set('r_pen', fT(t(pen)));
-  set('r_ars', fT(t(ars)));
-  set('r_eur', fT(t(eur)));
-  set('r_dop', fT(t(dop)));
-  set('r_mxn', fT(t(mxn)));
-  set('r_pab', fT(t(pab)));
-  set('r_bob', fT(t(bob)));
-  set('r_usd', fT(t(usd)));
-  set('r_paypal', fT(t(usd*(1-ppfee/100))));
-  set('r_zelle', fT(t(usd)));
-  set('r_usdt', fT(t(usd)));
+  set('r_cop',   t(cop).toFixed(2));
+  set('r_pen',   t(pen).toFixed(4));
+  set('r_ars',   t(ars).toFixed(2));
+  set('r_eur',   t(eur).toFixed(4));
+  set('r_dop',   t(dop).toFixed(3));
+  set('r_mxn',   t(mxn).toFixed(4));
+  set('r_pab',   t(pab).toFixed(5));
+  set('r_bob',   t(bob).toFixed(4));
+  set('r_usd',   t(usd).toFixed(5));
+  set('r_paypal',t(usd*(1-ppfee/100)).toFixed(5));
+  set('r_zelle', t(usd).toFixed(5));
+  set('r_usdt',  t(usd).toFixed(5));
 
   const now=new Date();
   const pad=n=>String(n).padStart(2,'0');
@@ -1487,37 +1300,7 @@ function doChangeBg(){bgIdx=(bgIdx+1)%BG_IDS.length;loadBg(BG_IDS[bgIdx]);toast(
 // ══════════════════════════════════════════════════════════
 //  COMPARTIR / DESCARGAR
 // ══════════════════════════════════════════════════════════
-// ══════════════════════════════════════════════════════════
-//  TASA DEL DÍA → Supabase (v3.0). El robot la usa para calcular el CLP de cada cliente.
-// ══════════════════════════════════════════════════════════
-function hoyChile(){ return new Date().toLocaleDateString('en-CA',{timeZone:'America/Santiago'}); }
-async function guardarTasaDelDia(){
-  const g=id=>{const v=parseFloat((document.getElementById(id)?.textContent||'').replace(',','.'));return isFinite(v)&&v>0?v:null;};
-  const n=id=>{const v=parseFloat(document.getElementById(id)?.value);return isFinite(v)?v:null;};
-  const ves=g('r_ves'), ves2=g('r_ves2');
-  if(!ves){ toast('⚠ No hay tasa VES para guardar'); return false; }
-  const ahora=new Date();
-  const fila={fecha:hoyChile(), ves:ves/1000, ves_pref:ves2?ves2/1000:null,
-    cop:g('r_cop'), pen:g('r_pen'), ars:g('r_ars'), eur:g('r_eur'), dop:g('r_dop'), mxn:g('r_mxn'),
-    pab:g('r_pab'), bob:g('r_bob'), ecu:g('r_usd'), paypal:g('r_paypal'), zelle:g('r_zelle'), usdt:g('r_usdt'),
-    hora:ahora.toLocaleTimeString('es-CL',{timeZone:'America/Santiago',hour:'2-digit',minute:'2-digit',hour12:false}),
-    fuente:'app', margen:n('i_margin'),
-    mercado:{clp:n('i_clp'),ves:n('i_ves'),cop:n('i_cop'),pen:n('i_pen'),ars:n('i_ars'),eur:n('i_eur'),
-             dop:n('i_dop'),mxn:n('i_mxn'),bob:n('i_bob'),ppfee:n('i_ppfee')},
-    actualizado:ahora.toISOString()};
-  const est=document.getElementById('tasa_estado');
-  try{
-    await sbPost('tasas_diarias?on_conflict=fecha','POST',[fila],'resolution=merge-duplicates,return=minimal');
-    if(est){est.style.color='var(--green)';est.textContent='💾 Tasa del día guardada · VES '+ves+' · '+fila.hora;}
-    return true;
-  }catch(e){
-    if(est){est.style.color='#f87171';est.textContent='⚠ No se pudo guardar la tasa: '+e.message;}
-    toast('⚠ Tasa no guardada: '+e.message); return false;
-  }
-}
-
 async function doShare(){
-  guardarTasaDelDia();
   toast('⏳ Generando imagen...');
   try{
     if(!window.html2canvas){
@@ -1582,6 +1365,7 @@ async function cargarP2P(){
       let data = null;
       for(const reqFn of [
         ()=>fetch(apiUrl,{headers:{'X-MBX-APIKEY':keys.apiKey}}),
+        ()=>fetch('https://corsproxy.io/?url='+encodeURIComponent(apiUrl),{headers:{'X-MBX-APIKEY':keys.apiKey,'x-requested-with':'XMLHttpRequest'}})
       ]){
         try{
           const res=await reqFn();
@@ -1631,7 +1415,7 @@ async function cargarP2P(){
     if(cnt) cnt.textContent=ops.length;
 
     if(!keys.apiKey){
-      list.innerHTML='<div style="background:#1a1000;border:1px solid #b45309;border-radius:8px;padding:10px;margin-bottom:8px;font-size:9px;color:#fbbf24">⚠ Sin API Key configurada — mostrando historial de la BD.<br>Las operaciones reales de Binance ahora las registra el robot (pantalla Movimientos).</div>';
+      list.innerHTML='<div style="background:#1a1000;border:1px solid #b45309;border-radius:8px;padding:10px;margin-bottom:8px;font-size:9px;color:#fbbf24">⚠ Sin API Key configurada — mostrando historial de la BD.<br>Para traer operaciones reales de Binance, configura tu API Key (botón 🔑).</div>';
     }
 
     if(!ops.length && !keys.apiKey){
@@ -2185,65 +1969,6 @@ async function exportarXLS(){
 }
 
 // ══════════════════════════════════════════════════════════
-//  INICIO (v3.0) — indicadores desde los datos del robot
-// ══════════════════════════════════════════════════════════
-async function cargarInicio(){
-  const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v;};
-  const $=n=>'$'+Math.round(n||0).toLocaleString('es-CL');
-  const diaCL=d=>new Date(d).toLocaleDateString('en-CA',{timeZone:'America/Santiago'});
-  const hoy=hoyChile(), mesIni=hoy.slice(0,8)+'01';
-  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  set('ini_mes', meses[parseInt(hoy.slice(5,7))-1]+' '+hoy.slice(0,4));
-  const aviso=document.getElementById('ini_aviso'); if(aviso) aviso.innerHTML='';
-  try{
-    const [ords,sal,px,res,est,al,tas]=await Promise.all([
-      sbPost('v_ordenes?select=cuenta,tipo,usdt,creado,clp_final,costo_usdt,metodo_clp&estado=eq.COMPLETED&creado=gte.'+encodeURIComponent(mesIni+'T00:00:00-03:00')+'&order=creado.desc&limit=5000'),
-      sbPost('robot_saldos?select=cuenta,total,fecha&order=fecha.desc&limit=6'),
-      sbPost('precios_p2p?select=clp_min,fecha&order=fecha.desc&limit=1'),
-      sbPost('precios_resumen?select=*'),
-      sbPost('robot_estado?select=clave,valor,actualizado'),
-      sbPost('robot_alertas?select=fecha,mensaje&order=fecha.desc&limit=1'),
-      sbPost('tasas_diarias?select=fecha,ves,hora,fuente&fecha=eq.'+hoy)]);
-    const ventas=(ords||[]).filter(o=>o.tipo==='SELL');
-    const gan=o=>o.clp_final==null?0:(o.clp_final-o.usdt*o.costo_usdt);
-    const resumir=arr=>{const clp=arr.reduce((s,o)=>s+(o.clp_final||0),0), g=arr.reduce((s,o)=>s+gan(o),0);
-                        return {n:arr.length,clp,g,mg:clp?g/clp*100:0};};
-    const H=resumir(ventas.filter(o=>diaCL(o.creado)===hoy)), Mm=resumir(ventas);
-    set('k_hoy_n',H.n); set('k_hoy_clp',$(H.clp)); set('k_hoy_gan',$(H.g)); set('k_hoy_mg',H.clp?('margen '+H.mg.toFixed(1)+'%'):'—');
-    set('k_mes_n',Mm.n); set('k_mes_clp',$(Mm.clp)); set('k_mes_gan',$(Mm.g)); set('k_mes_mg','margen '+Mm.mg.toFixed(1)+'%');
-    const jc=ventas.filter(o=>o.cuenta==='JULIO').length;
-    set('k_mes_cta','Julio '+jc+' · IREMI '+(ventas.length-jc));
-    const rev=ventas.filter(o=>o.metodo_clp==='estimado'||o.metodo_clp==='sin_tasa').length;
-    set('k_mes_rev',rev); const kr=document.getElementById('k_mes_rev'); if(kr) kr.parentElement.className='kc'+(rev?' r':' g');
-    // tasa del día
-    const t=(tas||[])[0];
-    if(t){ set('k_hoy_tasa',Math.round(t.ves*1000)); set('k_hoy_tasa_s','guardada '+(t.hora||'')+(t.fuente==='app'?'':' ('+t.fuente+')')); }
-    else { set('k_hoy_tasa','—'); set('k_hoy_tasa_s','sin tasa guardada hoy');
-           if(aviso) aviso.innerHTML='<div class="panel" style="border-color:#b45309;color:#fbbf24;font-size:12px">⚠ Todavía no hay tasa del día. Ve a <b>Tasas</b> → Actualizar → Compartir para guardarla. Sin tasa, el robot no puede calcular el CLP de los cambios de hoy.</div>'; }
-    // capital: último saldo de cada cuenta
-    const vistos={}; let cap=0; (sal||[]).forEach(r=>{ if(!vistos[r.cuenta]){vistos[r.cuenta]=r; cap+=parseFloat(r.total)||0;} });
-    set('k_cap',cap.toLocaleString('es-CL',{maximumFractionDigits:2}));
-    set('k_cap_s',Object.keys(vistos).map(c=>c+' '+Math.round(vistos[c].total)).join(' · ')||'—');
-    const p=(px||[])[0], r0=(res||[])[0]||{};
-    set('k_px',p?parseFloat(p.clp_min).toFixed(2):'—');
-    set('k_px_s',r0.prom7?('prom. 7 días '+parseFloat(r0.prom7).toFixed(2)):'—');
-    // robot
-    const E={}; (est||[]).forEach(r=>E[r.clave]=r);
-    const ok=E.ultima_sync_ok;
-    const mins=ok?Math.round((Date.now()-new Date(ok.actualizado).getTime())/60000):null;
-    const sano=mins!=null&&mins<=25;
-    document.getElementById('ini_robot').innerHTML=
-      (sano?'<span style="color:var(--green)">● Funcionando</span>':'<span style="color:#f87171">● Sin actividad reciente</span>')+
-      ' · última revisión '+(ok?ok.valor:'—')+(mins!=null?' (hace '+mins+' min)':'')+
-      (E.ultimo_error&&!sano?'<br><span style="color:#f87171;font-size:11px">Último error: '+E.ultimo_error.valor+'</span>':'');
-    const a=(al||[])[0];
-    set('ini_alerta',a?(new Date(a.fecha).toLocaleString('es-CL',{timeZone:'America/Santiago',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})+'\n'+a.mensaje):'Sin alertas todavía');
-  }catch(e){
-    if(aviso) aviso.innerHTML='<div class="panel" style="border-color:#7f1d1d;color:#f87171;font-size:12px">✗ '+e.message+'</div>';
-  }
-}
-
-// ══════════════════════════════════════════════════════════
 //  NAVIGATION
 // ══════════════════════════════════════════════════════════
 function showPg(id,navId){
@@ -2266,23 +1991,17 @@ function toast(msg){
 }
 
 // ══════════════════════════════════════════════════════════
-//  INIT (v3.0: primero la sesión)
+//  INIT
 // ══════════════════════════════════════════════════════════
 loadKeys();
 recalc();
 loadBg(BG_IDS[bgIdx]);
 document.getElementById('rf_fecha').value=new Date().toISOString().split('T')[0];
+// Action bar visible by default (starts on tasas)
 const _bar=document.getElementById('action_bar');
-if(_bar) _bar.style.display='none';
+if(_bar) _bar.style.display='flex';
 cargarTasasGuardadas();
-let _appIniciada=false;
-function iniciarApp(){
-  if(_appIniciada) return; _appIniciada=true;
-  showPg('pg_inicio','nb_i');
-  cargarInicio();
-  setTimeout(fetchAllRates,800);
-}
-(async()=>{ if(await tokenValido()) iniciarApp(); else mostrarLogin(); })();
+setTimeout(fetchAllRates,800);
 </script>
 </body>
 </html>
