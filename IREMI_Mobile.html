@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="IREMI">
 <title>IREMI Remesas</title>
-<meta name="version" content="3.0">
+<meta name="version" content="3.1">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -344,6 +344,37 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 .masbtn small{display:block;font-size:10px;font-weight:500;color:#6b85a8}
 .pronto{text-align:center;color:#6b85a8;padding:40px 20px;font-size:13px;line-height:1.6}
 #tasa_estado{font-size:10px;text-align:center;color:#6b85a8;margin-top:4px}
+/* v3.1 */
+.filtros{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.filtros select,.filtros input[type=month]{background:#0d1f3c;border:1px solid #2a4070;border-radius:8px;color:#fff;
+  font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:7px 8px;outline:none}
+.filtros label{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--silver)}
+.mv{background:#0d1f3c;border:1px solid #1e3256;border-radius:11px;padding:9px 11px;margin-bottom:7px;cursor:pointer}
+.mv:active{border-color:var(--gold)}
+.mv .r1{display:flex;justify-content:space-between;font-size:10px;color:#6b85a8;gap:6px}
+.mv .r2{display:flex;justify-content:space-between;align-items:baseline;margin:2px 0}
+.mv .r2 .a{font-size:13px;color:var(--silver)} .mv .r2 .b{font-size:19px;font-weight:900}
+.mv .r3{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#6b85a8;gap:6px}
+.tag{display:inline-block;border-radius:5px;padding:1px 6px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:#1e3256;color:var(--silver)}
+.tag.j{background:#1d4ed8;color:#fff} .tag.i{background:#7c3aed;color:#fff} .tag.w{background:#b45309;color:#fff}
+.tag.ok{background:#14532d;color:#86efac} .tag.m{background:#0e7490;color:#fff} .tag.buy{background:#166534;color:#fff}
+.resumen{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--silver);margin-bottom:8px}
+.resumen b{color:#fff}
+.frm{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.frm .full{grid-column:1/-1}
+.frm label{display:block;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--silver);margin-bottom:3px}
+.frm input,.frm select{width:100%;background:#060e1a;border:1.5px solid #2a4070;border-radius:8px;color:#fff;
+  font-family:'Barlow',sans-serif;font-size:14px;padding:9px 10px;outline:none}
+.tabla{width:100%;border-collapse:collapse;font-size:12px}
+.tabla th{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--silver);text-align:right;padding:5px 4px;border-bottom:1px solid #1e3256}
+.tabla td{text-align:right;padding:6px 4px;border-bottom:1px solid #16294a}
+.tabla th:first-child,.tabla td:first-child{text-align:left}
+.mg-ok{color:var(--green)} .mg-med{color:var(--gold)} .mg-bad{color:#f87171}
+.cfg-row{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:end;padding:8px 0;border-bottom:1px solid #16294a}
+.cfg-row small{display:block;font-size:10px;color:#6b85a8;margin:2px 0 4px}
+.cfg-row input{width:100%;background:#060e1a;border:1.5px solid #2a4070;border-radius:8px;color:#fff;font-size:14px;padding:8px 9px;outline:none}
+.volver{background:none;border:none;color:var(--gold);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;padding:0 0 8px}
+@media(min-width:900px){#pg_cuadre.on,#pg_htasas.on,#pg_belkys.on,#pg_alertas.on{display:block;max-width:980px;margin:0 auto}}
 @media(min-width:900px){#pg_inicio.on,#pg_mov.on,#pg_gastos.on,#pg_mas.on{display:block;max-width:980px;margin:0 auto}}
 #pg_inicio.on > .kgrid,#pg_inicio.on > .section,#pg_inicio.on > #ini_aviso,#pg_mas.on > .section{padding-bottom:0}
 #pg_inicio.on > .panel,#pg_mas.on > .panel{padding-bottom:12px}
@@ -450,8 +481,8 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 <nav class="nav">
   <button type="button" class="nb active" id="nb_i" onclick="showPg('pg_inicio','nb_i');cargarInicio()"><span class="ni">📊</span><span>Inicio</span></button>
   <button type="button" class="nb" id="nb_t" onclick="showPg('pg_tasas','nb_t')"><span class="ni">💱</span><span>Tasas</span></button>
-  <button type="button" class="nb" id="nb_m" onclick="showPg('pg_mov','nb_m')"><span class="ni">🔄</span><span>Movim.</span></button>
-  <button type="button" class="nb" id="nb_g" onclick="showPg('pg_gastos','nb_g')"><span class="ni">💸</span><span>Gastos</span></button>
+  <button type="button" class="nb" id="nb_m" onclick="showPg('pg_mov','nb_m');cargarMov()"><span class="ni">🔄</span><span>Movim.</span></button>
+  <button type="button" class="nb" id="nb_g" onclick="showPg('pg_gastos','nb_g');cargarGastos()"><span class="ni">💸</span><span>Gastos</span></button>
   <button type="button" class="nb" id="nb_mas" onclick="showPg('pg_mas','nb_mas');pintarSesion()"><span class="ni">☰</span><span>Más</span></button>
 </nav>
 
@@ -486,8 +517,61 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 </div>
 
 <!-- ══ PAGE: MOVIMIENTOS / GASTOS (próximas etapas) ═════════ -->
-<div class="pg" id="pg_mov" style="padding:12px"><div class="pronto">🔄 <b>Movimientos</b><br>Llega en la Etapa 2: todas las órdenes de tus dos cuentas, filtros y corrección de montos estimados.<br><br>Mientras tanto, el robot ya las está guardando.</div></div>
-<div class="pg" id="pg_gastos" style="padding:12px"><div class="pronto">💸 <b>Gastos</b><br>Llega en la Etapa 3.</div></div>
+<div class="pg" id="pg_mov" style="padding:12px 12px 90px">
+  <div class="filtros">
+    <select id="mv_per" onchange="cargarMov()"><option value="hoy">Hoy</option><option value="7d">7 días</option><option value="mes" selected>Este mes</option><option value="mesant">Mes anterior</option></select>
+    <select id="mv_cta" onchange="cargarMov()"><option value="">Ambas cuentas</option><option value="JULIO">Julio</option><option value="IREMI">IREMI</option></select>
+    <select id="mv_tipo" onchange="cargarMov()"><option value="SELL">Ventas (cambios)</option><option value="BUY">Compras USDT</option><option value="">Todo</option></select>
+    <label><input type="checkbox" id="mv_rev" onchange="pintarMov()"> Solo por revisar</label>
+  </div>
+  <div class="resumen" id="mv_res">—</div>
+  <div id="mv_lista"><div class="pronto">Cargando...</div></div>
+  <div class="section" style="margin-top:16px">💳 Binance Pay <label style="margin-left:auto;font-size:11px;color:var(--silver);text-transform:none;letter-spacing:0"><input type="checkbox" id="mv_int" onchange="cargarPay()"> incluir traspasos entre tus cuentas</label></div>
+  <div id="mv_pay"></div>
+</div>
+<div class="pg" id="pg_gastos" style="padding:12px 12px 90px">
+  <div class="panel"><h3>➕ Nuevo gasto</h3>
+    <form class="frm" onsubmit="guardarGasto(event)">
+      <div><label>Fecha</label><input type="date" id="gs_fecha" required></div>
+      <div><label>Monto CLP</label><input type="number" id="gs_monto" min="1" step="1" required placeholder="40000"></div>
+      <div><label>Categoría</label><select id="gs_cat"><option>Contador</option><option>IVA / SII</option><option>Combustible</option><option>Comisiones Binance</option><option>Sueldos</option><option>Publicidad</option><option>Teléfono / Internet</option><option>Otros</option></select></div>
+      <div><label>¿Con factura?</label><select id="gs_fac"><option value="false">No</option><option value="true">Sí (IVA crédito)</option></select></div>
+      <div class="full"><label>Descripción</label><input type="text" id="gs_desc" placeholder="Ej: honorario contador septiembre"></div>
+      <div class="full"><button type="submit" class="btn b-gold" style="width:100%" id="gs_btn">💾 Guardar gasto</button></div>
+    </form>
+  </div>
+  <div class="filtros"><input type="month" id="gs_mes" onchange="cargarGastos()"></div>
+  <div class="resumen" id="gs_res">—</div>
+  <div id="gs_lista"></div>
+</div>
+<div class="pg" id="pg_cuadre" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
+  <div class="panel"><h3>⚖️ Cuadre de caja USDT</h3><div id="cq_body">Cargando...</div></div>
+  <div style="font-size:11px;color:#6b85a8;line-height:1.6">Se parte del saldo que el robot leyó la primera vez y se suman compras, restan ventas y comisiones, y se suman los Binance Pay con terceros. Si la diferencia no es 0, hay un movimiento que el libro no conoce.</div>
+</div>
+<div class="pg" id="pg_htasas" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
+  <div class="filtros">
+    <select id="ht_pais" onchange="cargarHTasas()"><option value="ves">🇻🇪 Venezuela</option><option value="cop">🇨🇴 Colombia</option><option value="pen">🇵🇪 Perú</option><option value="ars">🇦🇷 Argentina</option><option value="eur">🇪🇸 España</option><option value="dop">🇩🇴 Dominicana</option><option value="mxn">🇲🇽 México</option><option value="bob">🇧🇴 Bolivia</option><option value="pab">🇵🇦 Panamá</option><option value="ecu">🇪🇨 Ecuador</option><option value="zelle">Zelle</option><option value="paypal">PayPal</option><option value="usdt">USDT</option></select>
+    <select id="ht_dias" onchange="cargarHTasas()"><option value="14">14 días</option><option value="30" selected>30 días</option><option value="60">60 días</option></select>
+  </div>
+  <div class="panel"><h3 id="ht_tit">Tasa IREMI</h3><div id="ht_graf"></div></div>
+  <div class="panel" style="overflow-x:auto"><table class="tabla" id="ht_tabla"></table></div>
+  <div style="font-size:11px;color:#6b85a8;line-height:1.6"><b>Margen teórico</b>: tu tasa vs. el mercado en el momento en que guardaste el flyer (disponible desde que usas la app nueva).<br><b>Margen real</b>: lo que ganaste de verdad ese día con los cambios de ese país (ganancia ÷ pesos recibidos). 🟢 ≥5% · 🟡 3–5% · 🔴 menos de 3%.</div>
+</div>
+<div class="pg" id="pg_belkys" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
+  <div class="filtros"><input type="month" id="bk_mes" onchange="cargarBelkys()"></div>
+  <div class="kgrid">
+    <div class="kc"><div class="kl">Ingresos</div><div class="kv" id="bk_in">—</div><div class="ks">Fidel / Angélica</div></div>
+    <div class="kc"><div class="kl">Pagado</div><div class="kv" id="bk_pag">—</div><div class="ks">Florelvis / Belkys RUT</div></div>
+    <div class="kc g"><div class="kl">Tu comisión 4%</div><div class="kv" id="bk_com">—</div><div class="ks">no va a boleta</div></div>
+    <div class="kc y"><div class="kl">Resto a Venezuela</div><div class="kv" id="bk_resto">—</div><div class="ks">por Binance</div></div>
+  </div>
+  <div class="panel" style="overflow-x:auto"><h3>Movimientos del banco</h3><table class="tabla" id="bk_tabla"></table></div>
+  <div style="font-size:11px;color:#6b85a8;line-height:1.6">Datos de las cartolas del banco. Cuando subas una cartola nueva (Etapa 4) se agregan solos.</div>
+</div>
+<div class="pg" id="pg_alertas" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
+  <div class="panel"><h3>🔔 Configuración de alertas</h3><div id="al_cfg">Cargando...</div></div>
+  <div class="panel"><h3>📲 Últimas alertas enviadas</h3><div id="al_hist" style="font-size:12px;color:var(--silver)">—</div></div>
+</div>
 
 <!-- ══ PAGE: MÁS ════════════════════════════════════════════ -->
 <div class="pg" id="pg_mas" style="padding:12px 12px 90px">
@@ -498,8 +582,13 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
   <button type="button" class="masbtn" onclick="showPg('pg_hist','nb_mas');setTimeout(cargarHist,100)">📜 Historial <small>Operaciones registradas a mano (tabla antigua)</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_exp','nb_mas')">📤 Exportar <small>Reporte antiguo</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_p2p','nb_mas');diagP2P()">🔬 Diagnóstico P2P <small>Precios en vivo de Binance</small></button>
-  <div class="section">Próximamente</div>
-  <div style="font-size:11px;color:#6b85a8;line-height:1.7">⚖️ Cuadre de caja · 📈 Historial de tasas · 🤝 Belkys · 🏦 Subir cartola · 📄 Reportes Excel/boleta · 🔔 Configurar alertas</div>
+  <div class="section">Gestión</div>
+  <button type="button" class="masbtn" onclick="showPg('pg_cuadre','nb_mas');cargarCuadre()">⚖️ Cuadre de caja <small>Libro vs. saldo real en Binance</small></button>
+  <button type="button" class="masbtn" onclick="showPg('pg_htasas','nb_mas');cargarHTasas()">📈 Historial de tasas <small>Tu tasa, el mercado y tu margen real por país</small></button>
+  <button type="button" class="masbtn" onclick="showPg('pg_belkys','nb_mas');cargarBelkys()">🤝 Belkys <small>Ingresos, pagos, tu 4% y el resto a Venezuela</small></button>
+  <button type="button" class="masbtn" onclick="showPg('pg_alertas','nb_mas');cargarAlertas()">🔔 Alertas <small>Precio objetivo, WhatsApp y últimos avisos</small></button>
+  <div class="section">Próximamente (Etapa 4)</div>
+  <div style="font-size:11px;color:#6b85a8;line-height:1.7">🏦 Subir cartola y cruce bancario · 📄 Reportes Excel / boleta · 👥 Gestión de usuarios</div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
@@ -939,6 +1028,34 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
       <span style="font-size:8px;color:var(--silver)"><span style="color:var(--gold)">●</span> Binance spot</span>
       <span style="font-size:8px;color:var(--silver)"><span style="color:#374151">●</span> Manual</span>
     </div>
+  </div>
+</div>
+
+<!-- v3.1: corregir orden -->
+<div class="modal" id="modal_mov">
+  <div class="mbox"><div class="mtit">✎ Corregir cambio <button type="button" class="mcl" onclick="closeModal('modal_mov')">✕</button></div>
+    <div id="mm_info" style="font-size:12px;color:var(--silver);margin-bottom:10px;line-height:1.6"></div>
+    <div class="frm">
+      <div class="full"><label>Pesos que te pagó el cliente (CLP)</label><input type="number" id="mm_clp" step="1" min="0"></div>
+      <div class="full"><label>Nota</label><input type="text" id="mm_nota" placeholder="Ej: tasa especial cliente frecuente"></div>
+    </div>
+    <div class="brow" style="margin-top:10px">
+      <button type="button" class="btn b-gold" style="flex:2" onclick="guardarMov(false)">💾 Guardar</button>
+      <button type="button" class="btn b-gray" style="flex:1" onclick="guardarMov(true)">↺ Usar el del robot</button>
+    </div>
+  </div>
+</div>
+<!-- v3.1: clasificar Binance Pay -->
+<div class="modal" id="modal_pay">
+  <div class="mbox"><div class="mtit">💳 Clasificar Binance Pay <button type="button" class="mcl" onclick="closeModal('modal_pay')">✕</button></div>
+    <div id="mp_info" style="font-size:12px;color:var(--silver);margin-bottom:10px;line-height:1.6"></div>
+    <div class="frm">
+      <div class="full"><label>¿Qué fue?</label><select id="mp_cls">
+        <option value="traspaso_interno">Traspaso entre mis cuentas</option><option value="ingreso_capital">Ingreso a capital</option>
+        <option value="gasto">Gasto</option><option value="cambio">Cambio a cliente</option><option value="otro">Otro</option><option value="tercero_revisar">Por revisar</option></select></div>
+      <div class="full"><label>Nota</label><input type="text" id="mp_nota"></div>
+    </div>
+    <button type="button" class="btn b-gold" style="width:100%;margin-top:10px" onclick="guardarPay()">💾 Guardar</button>
   </div>
 </div>
 
@@ -2248,6 +2365,247 @@ async function cargarInicio(){
   }catch(e){
     if(aviso) aviso.innerHTML='<div class="panel" style="border-color:#7f1d1d;color:#f87171;font-size:12px">✗ '+e.message+'</div>';
   }
+}
+
+// ══════════════════════════════════════════════════════════
+//  v3.1 — utilidades
+// ══════════════════════════════════════════════════════════
+const $clp=n=>'$'+Math.round(+n||0).toLocaleString('es-CL');
+const num=(n,d=2)=>(+n||0).toLocaleString('es-CL',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fh=d=>new Date(d).toLocaleString('es-CL',{timeZone:'America/Santiago',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
+const diaDe=d=>new Date(d).toLocaleDateString('en-CA',{timeZone:'America/Santiago'});
+const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function sumarDias(ymd,n){const d=new Date(ymd+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+function mesDe(ymd,delta){const [y,m]=ymd.split('-').map(Number);const d=new Date(Date.UTC(y,m-1+delta,1));return d.toISOString().slice(0,10);}
+const tz=ymd=>encodeURIComponent(ymd+'T00:00:00-03:00');
+function rangoPer(per){const h=hoyChile();
+  if(per==='hoy') return [h,sumarDias(h,1)];
+  if(per==='7d') return [sumarDias(h,-6),sumarDias(h,1)];
+  if(per==='mesant') return [mesDe(h,-1),mesDe(h,0)];
+  return [mesDe(h,0),sumarDias(h,1)];}
+const METODO={base:['Tasa del día','ok'],preferencial:['Preferencial','ok'],dia_anterior:['Tasa día anterior','ok'],
+  pref_dia_anterior:['Pref. día anterior','ok'],estimado:['⚠ Estimado','w'],sin_tasa:['⚠ Sin tasa','w'],compra:['Compra','buy']};
+const fmtTasa=(v,col)=>v==null?'—':(col==='ves'?Math.round(v*1000):(v>=1?(+v).toFixed(2):(+v).toPrecision(3)));
+
+// ══════════════════════════════════════════════════════════
+//  MOVIMIENTOS (Etapa 2)
+// ══════════════════════════════════════════════════════════
+let _mov=[];
+async function cargarMov(){
+  const lista=document.getElementById('mv_lista'); lista.innerHTML='<div class="pronto">Cargando...</div>';
+  const [ini,fin]=rangoPer(document.getElementById('mv_per').value);
+  const cta=document.getElementById('mv_cta').value, tipo=document.getElementById('mv_tipo').value;
+  let q='v_ordenes?select=order_number,cuenta,tipo,fiat,monto_fiat,precio,usdt,comision,contraparte,creado,clp,clp_manual,clp_final,tasa_usada,metodo_clp,nota,costo_usdt'+
+        '&estado=eq.COMPLETED&creado=gte.'+tz(ini)+'&creado=lt.'+tz(fin)+'&order=creado.desc&limit=3000';
+  if(cta) q+='&cuenta=eq.'+cta; if(tipo) q+='&tipo=eq.'+tipo;
+  try{ _mov=await sbPost(q); pintarMov(); }catch(e){ lista.innerHTML='<div class="pronto" style="color:#f87171">✗ '+esc(e.message)+'</div>'; }
+  cargarPay();
+}
+function pintarMov(){
+  const soloRev=document.getElementById('mv_rev').checked;
+  const arr=_mov.map((o,i)=>({o,i})).filter(({o})=>!soloRev||(o.clp_manual==null&&(o.metodo_clp==='estimado'||o.metodo_clp==='sin_tasa')));
+  const ventas=arr.filter(x=>x.o.tipo==='SELL').map(x=>x.o);
+  const clp=ventas.reduce((s,o)=>s+(+o.clp_final||0),0), usdt=ventas.reduce((s,o)=>s+(+o.usdt||0),0);
+  const gan=ventas.reduce((s,o)=>s+(o.clp_final==null?0:o.clp_final-o.usdt*o.costo_usdt),0);
+  const compras=arr.filter(x=>x.o.tipo==='BUY').map(x=>x.o);
+  document.getElementById('mv_res').innerHTML='<span><b>'+ventas.length+'</b> cambios</span><span>Recibido <b>'+$clp(clp)+'</b></span><span>USDT <b>'+num(usdt)+'</b></span><span>Ganancia <b style="color:var(--green)">'+$clp(gan)+'</b></span>'+
+    (compras.length?'<span><b>'+compras.length+'</b> compras · '+num(compras.reduce((s,o)=>s+(+o.usdt),0))+' USDT</span>':'');
+  const lista=document.getElementById('mv_lista');
+  if(!arr.length){ lista.innerHTML='<div class="pronto">'+(soloRev?'🎉 Nada por revisar en este período':'Sin movimientos en este período')+'</div>'; return; }
+  lista.innerHTML=arr.map(({o,i})=>{
+    const buy=o.tipo==='BUY';
+    const met=o.clp_manual!=null?['✎ Corregido','m']:(METODO[o.metodo_clp]||[o.metodo_clp||'—','']);
+    const g=(!buy&&o.clp_final!=null)?(o.clp_final-o.usdt*o.costo_usdt):null;
+    const monto=o.fiat==='VES'?Math.round(o.monto_fiat).toLocaleString('es-CL'):(+o.monto_fiat).toLocaleString('es-CL',{maximumFractionDigits:2});
+    return '<div class="mv" onclick="editarMov('+i+')">'+
+      '<div class="r1"><span>'+fh(o.creado)+'</span><span><span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+(buy?'<span class="tag buy">Compra USDT</span>':'')+'</span></div>'+
+      '<div class="r2"><span class="a">'+(buy?'Pagaste':o.fiat+' '+monto)+'</span><span class="b">'+(o.clp_final==null?'<span style="color:#f87171">sin CLP</span>':$clp(o.clp_final))+'</span></div>'+
+      '<div class="r3"><span>'+num(o.usdt)+' USDT · '+esc((o.contraparte||'').slice(0,18))+(o.nota?' · 📝':'')+'</span><span>'+
+      (g!=null?'<b style="color:'+(g>=0?'var(--green)':'#f87171')+'">'+$clp(g)+'</b> ':'')+'<span class="tag '+met[1]+'">'+met[0]+'</span></span></div></div>';
+  }).join('');
+}
+let _movSel=null;
+function editarMov(i){
+  const o=_mov[i]; if(!o) return; _movSel=o;
+  if(o.tipo==='BUY'){ toast('Las compras de USDT no necesitan corrección'); return; }
+  const met=(METODO[o.metodo_clp]||[o.metodo_clp])[0];
+  document.getElementById('mm_info').innerHTML=fh(o.creado)+' · '+o.cuenta+' · '+esc(o.contraparte||'')+'<br>'+
+    o.fiat+' '+(+o.monto_fiat).toLocaleString('es-CL')+' · '+num(o.usdt)+' USDT<br>'+
+    'Robot: <b>'+(o.clp==null?'sin cálculo':$clp(o.clp))+'</b> ('+met+(o.tasa_usada?', tasa '+fmtTasa(o.tasa_usada,o.fiat==='VES'?'ves':''):'')+')';
+  document.getElementById('mm_clp').value=o.clp_manual!=null?o.clp_manual:(o.clp_final!=null?Math.round(o.clp_final):'');
+  document.getElementById('mm_nota').value=o.nota||'';
+  openModal('modal_mov');
+}
+async function guardarMov(usarRobot){
+  const o=_movSel; if(!o) return;
+  const v=parseFloat(document.getElementById('mm_clp').value);
+  const body={nota:document.getElementById('mm_nota').value.trim()||null,
+              clp_manual:usarRobot?null:(isFinite(v)&&v>0&&Math.round(v)!==Math.round(o.clp||-1)?Math.round(v):null)};
+  try{ await sbPost('robot_ordenes?order_number=eq.'+encodeURIComponent(o.order_number),'PATCH',body,'return=minimal');
+       closeModal('modal_mov'); toast('✓ Guardado'); cargarMov(); }catch(e){ toast('✗ '+e.message); }
+}
+let _pay=[], _paySel=null;
+const PAYCLS={traspaso_interno:'Traspaso interno',ingreso_capital:'Ingreso a capital',gasto:'Gasto',cambio:'Cambio a cliente',otro:'Otro',tercero_revisar:'⚠ Por revisar'};
+async function cargarPay(){
+  const box=document.getElementById('mv_pay');
+  const [ini,fin]=rangoPer(document.getElementById('mv_per').value);
+  let q='v_pay?select=id,cuenta,fecha,monto,moneda,contraparte,clasificacion_final,nota&fecha=gte.'+tz(ini)+'&fecha=lt.'+tz(fin)+'&order=fecha.desc&limit=500';
+  if(!document.getElementById('mv_int').checked) q+='&clasificacion_final=neq.traspaso_interno';
+  try{ _pay=await sbPost(q);
+    box.innerHTML=_pay.length?_pay.map((p,i)=>'<div class="mv" onclick="editarPay('+i+')"><div class="r1"><span>'+fh(p.fecha)+'</span><span class="tag '+(p.cuenta==='JULIO'?'j':'i')+'">'+p.cuenta+'</span></div>'+
+      '<div class="r2"><span class="a">'+esc(p.contraparte||'—')+'</span><span class="b" style="color:'+(p.monto<0?'#f87171':'var(--green)')+'">'+(p.monto>0?'+':'')+num(p.monto)+' '+esc(p.moneda)+'</span></div>'+
+      '<div class="r3"><span>'+esc(p.nota||'')+'</span><span class="tag '+(p.clasificacion_final==='tercero_revisar'?'w':'ok')+'">'+(PAYCLS[p.clasificacion_final]||p.clasificacion_final)+'</span></div></div>').join('')
+      :'<div style="font-size:12px;color:#6b85a8">Sin movimientos de Binance Pay con terceros en este período.</div>';
+  }catch(e){ box.innerHTML='<div style="color:#f87171;font-size:12px">✗ '+esc(e.message)+'</div>'; }
+}
+function editarPay(i){ const p=_pay[i]; _paySel=p;
+  document.getElementById('mp_info').innerHTML=fh(p.fecha)+' · '+p.cuenta+'<br>'+(p.monto>0?'+':'')+num(p.monto)+' '+esc(p.moneda)+' · '+esc(p.contraparte||'');
+  document.getElementById('mp_cls').value=p.clasificacion_final; document.getElementById('mp_nota').value=p.nota||''; openModal('modal_pay'); }
+async function guardarPay(){ const p=_paySel; if(!p) return;
+  try{ await sbPost('robot_pay?id=eq.'+encodeURIComponent(p.id),'PATCH',{clasificacion_manual:document.getElementById('mp_cls').value,nota:document.getElementById('mp_nota').value.trim()||null},'return=minimal');
+       closeModal('modal_pay'); toast('✓ Guardado'); cargarPay(); }catch(e){ toast('✗ '+e.message); } }
+
+// ══════════════════════════════════════════════════════════
+//  CUADRE (Etapa 2)
+// ══════════════════════════════════════════════════════════
+async function cargarCuadre(){
+  const b=document.getElementById('cq_body'); b.textContent='Cargando...';
+  try{
+    const [c,sal]=await Promise.all([sbPost('v_cuadre?select=*'),sbPost('robot_saldos?select=cuenta,total,fecha&order=fecha.desc&limit=6')]);
+    const r=(c||[])[0]; if(!r||r.apertura==null){ b.textContent='Todavía no hay saldos registrados por el robot.'; return; }
+    const d=+r.diferencia, okc=Math.abs(d)<1;
+    const vistos={}; (sal||[]).forEach(x=>{if(!vistos[x.cuenta]) vistos[x.cuenta]=x;});
+    b.innerHTML='<div class="fila"><span>Saldo inicial ('+fh(r.desde)+')</span><b>'+num(r.apertura)+'</b></div>'+
+      '<div class="fila"><span>Compras − ventas ('+r.compras+' compras · '+r.ventas+' ventas)</span><b>'+(r.ordenes_neto>=0?'+':'')+num(r.ordenes_neto)+'</b></div>'+
+      '<div class="fila"><span>Comisiones Binance</span><b>−'+num(r.comisiones)+'</b></div>'+
+      '<div class="fila"><span>Binance Pay con terceros</span><b>'+(r.binance_pay_neto>=0?'+':'')+num(r.binance_pay_neto)+'</b></div>'+
+      '<div class="fila"><span><b>Debería haber</b></span><b>'+num(r.esperado)+' USDT</b></div>'+
+      '<div class="fila"><span><b>Hay en Binance</b> ('+fh(r.hasta)+')</span><b>'+num(r.saldo_real)+' USDT</b></div>'+
+      '<div class="fila"><span style="color:#fff"><b>Diferencia</b></span><b style="font-size:18px;color:'+(okc?'var(--green)':'#f87171')+'">'+(d>=0?'+':'')+num(d)+(okc?' ✅':' ⚠')+'</b></div>'+
+      '<div style="font-size:11px;color:#6b85a8;margin-top:6px">'+Object.keys(vistos).map(k=>k+': '+num(vistos[k].total)+' USDT').join(' · ')+'</div>';
+  }catch(e){ b.innerHTML='<span style="color:#f87171">✗ '+esc(e.message)+'</span>'; }
+}
+
+// ══════════════════════════════════════════════════════════
+//  GASTOS (Etapa 3)
+// ══════════════════════════════════════════════════════════
+let _gastos=[];
+async function cargarGastos(){
+  const mesEl=document.getElementById('gs_mes'); if(!mesEl.value) mesEl.value=hoyChile().slice(0,7);
+  const fe=document.getElementById('gs_fecha'); if(!fe.value) fe.value=hoyChile();
+  const ini=mesEl.value+'-01', fin=mesDe(ini,1);
+  const lista=document.getElementById('gs_lista');
+  try{
+    _gastos=await sbPost('robot_gastos?select=*&fecha=gte.'+ini+'&fecha=lt.'+fin+'&order=fecha.desc,id.desc');
+    const tot=_gastos.reduce((s,g)=>s+(+g.monto_clp||0),0);
+    const iva=_gastos.filter(g=>g.con_factura).reduce((s,g)=>s+Math.round(g.monto_clp*19/119),0);
+    document.getElementById('gs_res').innerHTML='<span><b>'+_gastos.length+'</b> gastos</span><span>Total <b style="color:#f87171">'+$clp(tot)+'</b></span><span>IVA crédito <b>'+$clp(iva)+'</b></span>';
+    lista.innerHTML=_gastos.length?_gastos.map((g,i)=>'<div class="mv" style="cursor:default"><div class="r1"><span>'+g.fecha.split('-').reverse().join('/')+'</span><span class="tag">'+esc(g.categoria)+'</span></div>'+
+      '<div class="r2"><span class="a">'+esc(g.descripcion||'')+'</span><span class="b">'+$clp(g.monto_clp)+'</span></div>'+
+      '<div class="r3"><span>'+(g.con_factura?'🧾 Con factura · IVA '+$clp(g.monto_clp*19/119):'Sin factura')+'</span><button type="button" class="tbtn" onclick="borrarGasto('+i+')">🗑 Borrar</button></div></div>').join('')
+      :'<div class="pronto">Sin gastos este mes</div>';
+  }catch(e){ lista.innerHTML='<div class="pronto" style="color:#f87171">✗ '+esc(e.message)+'</div>'; }
+}
+async function guardarGasto(ev){
+  ev.preventDefault(); const btn=document.getElementById('gs_btn'); btn.disabled=true;
+  const fila={fecha:document.getElementById('gs_fecha').value, categoria:document.getElementById('gs_cat').value,
+    descripcion:document.getElementById('gs_desc').value.trim()||null, monto_clp:Math.round(+document.getElementById('gs_monto').value),
+    con_factura:document.getElementById('gs_fac').value==='true'};
+  try{ await sbPost('robot_gastos','POST',[fila],'return=minimal'); toast('✓ Gasto guardado');
+       document.getElementById('gs_monto').value=''; document.getElementById('gs_desc').value='';
+       document.getElementById('gs_mes').value=fila.fecha.slice(0,7); cargarGastos(); }
+  catch(e){ toast('✗ '+e.message); } finally{ btn.disabled=false; }
+}
+async function borrarGasto(i){ const g=_gastos[i]; if(!g||!confirm('¿Borrar el gasto "'+(g.descripcion||g.categoria)+'" por '+$clp(g.monto_clp)+'?')) return;
+  try{ await sbPost('robot_gastos?id=eq.'+g.id,'DELETE',null,'return=minimal'); toast('✓ Borrado'); cargarGastos(); }catch(e){ toast('✗ '+e.message); } }
+
+// ══════════════════════════════════════════════════════════
+//  HISTORIAL DE TASAS (Etapa 3)
+// ══════════════════════════════════════════════════════════
+const HT_FIAT={ves:'VES',cop:'COP',pen:'PEN',ars:'ARS',eur:'EUR',dop:'DOP',mxn:'MXN',bob:'BOB',zelle:'USD'};
+async function cargarHTasas(){
+  const col=document.getElementById('ht_pais').value, dias=+document.getElementById('ht_dias').value;
+  const desde=sumarDias(hoyChile(),-(dias-1));
+  const nombre=document.getElementById('ht_pais').selectedOptions[0].textContent;
+  document.getElementById('ht_tit').textContent='Tasa IREMI · '+nombre+(col==='ves'?' (Bs por CLP 1.000)':' (por 1 CLP)');
+  const tabla=document.getElementById('ht_tabla'); tabla.innerHTML='<tr><td>Cargando...</td></tr>';
+  try{
+    const fiat=HT_FIAT[col];
+    const [tas,ords]=await Promise.all([
+      sbPost('tasas_diarias?select=fecha,'+col+',mercado,margen,hora&fecha=gte.'+desde+'&order=fecha.asc'),
+      fiat?sbPost('v_ordenes?select=creado,usdt,clp_final,costo_usdt&estado=eq.COMPLETED&tipo=eq.SELL&fiat=eq.'+fiat+'&creado=gte.'+tz(desde)+'&limit=5000'):Promise.resolve([])]);
+    const R={}; (ords||[]).forEach(o=>{ if(o.clp_final==null) return; const d=diaDe(o.creado); const r=R[d]||(R[d]={n:0,clp:0,g:0});
+      r.n++; r.clp+=+o.clp_final; r.g+=o.clp_final-o.usdt*o.costo_usdt; });
+    const cls=m=>m==null?'':(m>=5?'mg-ok':(m>=3?'mg-med':'mg-bad'));
+    const filas=(tas||[]).filter(t=>t[col]!=null).map(t=>{
+      const mk=t.mercado||{}; const merc=(mk[col==='zelle'?'usd':col]&&mk.clp)?mk[col]/mk.clp:null;
+      const mt=merc?(1-t[col]/merc)*100:null; const r=R[t.fecha];
+      return {f:t.fecha,v:+t[col],mt,mr:r&&r.clp?r.g/r.clp*100:null,n:r?r.n:0};}).sort((a,b)=>a.f<b.f?-1:1);
+    // gráfico SVG simple
+    const g=document.getElementById('ht_graf');
+    if(filas.length>=2){
+      const W=600,H=170,P=24,B=40, vs=filas.map(x=>x.v), mn=Math.min(...vs), mx=Math.max(...vs), rg=(mx-mn)||mx*0.01||1;
+      const X=i=>P+i*(W-2*P)/(filas.length-1), Y=v=>H-B-(v-mn)*(H-B-P)/rg;
+      const dd=f=>f.slice(8)+'/'+f.slice(5,7);
+      g.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto">'+
+        '<polyline fill="none" stroke="#f5c518" stroke-width="2.5" points="'+filas.map((x,i)=>X(i)+','+Y(x.v)).join(' ')+'"/>'+
+        filas.map((x,i)=>'<circle cx="'+X(i)+'" cy="'+Y(x.v)+'" r="3" fill="#f5c518"/>').join('')+
+        '<line x1="'+P+'" y1="'+Y(mx)+'" x2="'+(W-P)+'" y2="'+Y(mx)+'" stroke="#1e3256" stroke-dasharray="4 4"/>'+
+        '<line x1="'+P+'" y1="'+Y(mn)+'" x2="'+(W-P)+'" y2="'+Y(mn)+'" stroke="#1e3256" stroke-dasharray="4 4"/>'+
+        '<text x="'+P+'" y="'+(Y(mx)-5)+'" fill="#c8d6e5" font-size="12">máx '+fmtTasa(mx,col)+'</text>'+
+        '<text x="'+P+'" y="'+(Y(mn)+15)+'" fill="#c8d6e5" font-size="12">mín '+fmtTasa(mn,col)+'</text>'+
+        '<text x="'+P+'" y="'+(H-4)+'" fill="#6b85a8" font-size="12">'+dd(filas[0].f)+'</text>'+
+        '<text x="'+(W-P)+'" y="'+(H-4)+'" fill="#6b85a8" font-size="12" text-anchor="end">'+dd(filas[filas.length-1].f)+' (hoy: '+fmtTasa(filas[filas.length-1].v,col)+')</text></svg>';
+    } else g.innerHTML='<div style="font-size:12px;color:#6b85a8">Faltan datos para el gráfico en este período.</div>';
+    tabla.innerHTML='<tr><th>Día</th><th>Tasa IREMI</th><th>Margen teórico</th><th>Margen real</th><th>Cambios</th></tr>'+
+      (filas.length?filas.slice().reverse().map(x=>'<tr><td>'+x.f.slice(8)+'/'+x.f.slice(5,7)+'</td><td>'+fmtTasa(x.v,col)+'</td>'+
+        '<td class="'+cls(x.mt)+'">'+(x.mt==null?'—':x.mt.toFixed(1)+'%')+'</td><td class="'+cls(x.mr)+'">'+(x.mr==null?'—':x.mr.toFixed(1)+'%')+'</td><td>'+(x.n||'—')+'</td></tr>').join('')
+        :'<tr><td colspan="5">Sin tasas guardadas para este país en el período.</td></tr>');
+  }catch(e){ tabla.innerHTML='<tr><td style="color:#f87171">✗ '+esc(e.message)+'</td></tr>'; }
+}
+
+// ══════════════════════════════════════════════════════════
+//  BELKYS (Etapa 3)
+// ══════════════════════════════════════════════════════════
+async function cargarBelkys(){
+  const m=document.getElementById('bk_mes'); if(!m.value) m.value=hoyChile().slice(0,7);
+  const ini=m.value+'-01', fin=mesDe(ini,1);
+  const set=(id,v)=>{document.getElementById(id).textContent=v;};
+  const tabla=document.getElementById('bk_tabla'); tabla.innerHTML='<tr><td>Cargando...</td></tr>';
+  try{
+    const [r,movs]=await Promise.all([sbPost('v_belkys_mes?select=*&mes=eq.'+ini),
+      sbPost('banco_movimientos?select=fecha,descripcion,cargo,abono,categoria&categoria=in.(belkys_ingreso,belkys_pago)&fecha=gte.'+ini+'&fecha=lt.'+fin+'&order=fecha.asc,id.asc')]);
+    const x=(r||[])[0]||{};
+    set('bk_in',$clp(x.ingresos)); set('bk_pag',$clp(x.pagado)); set('bk_com',$clp(x.comision)); set('bk_resto',$clp(x.resto_venezuela));
+    const nom=d=>esc((d||'').replace('TEF BANCOESTADO DE ','').replace('TEF BANCOESTADO A ','').replace('TEF DE ','').replace('TEF A ',''));
+    tabla.innerHTML='<tr><th>Día</th><th>Movimiento</th><th>Ingreso</th><th>Pago</th><th>Tu 4%</th></tr>'+
+      ((movs||[]).length?movs.map(v=>'<tr><td>'+v.fecha.slice(8)+'/'+v.fecha.slice(5,7)+'</td><td style="text-align:left">'+nom(v.descripcion)+'</td>'+
+        '<td>'+(v.categoria==='belkys_ingreso'?$clp(v.abono):'')+'</td><td>'+(v.categoria==='belkys_pago'?$clp(v.cargo):'')+'</td>'+
+        '<td class="mg-ok">'+(v.categoria==='belkys_pago'?$clp(v.cargo/0.96*0.04):'')+'</td></tr>').join('')
+        :'<tr><td colspan="5">Sin movimientos de Belkys este mes.</td></tr>');
+  }catch(e){ tabla.innerHTML='<tr><td style="color:#f87171">✗ '+esc(e.message)+'</td></tr>'; }
+}
+
+// ══════════════════════════════════════════════════════════
+//  ALERTAS (configuración)
+// ══════════════════════════════════════════════════════════
+const CFG_NOM={alerta_precio_max:'Precio objetivo USDT/CLP',alerta_pct_bajo_promedio:'% bajo el promedio de 30 días',alerta_minimo_7d:'Avisar mínimo de 7 días',
+  capital_minimo_usdt:'Capital mínimo (USDT)',callmebot_phone:'WhatsApp (número)',callmebot_apikey:'CallMeBot API key',telegram_token:'Telegram token',telegram_chat:'Telegram chat',costo_inicial_usdt:'Costo USDT inicial'};
+async function cargarAlertas(){
+  const box=document.getElementById('al_cfg');
+  try{
+    const [cfg,al]=await Promise.all([sbPost('robot_config?select=clave,valor,descripcion&order=clave'),sbPost('robot_alertas?select=fecha,mensaje,enviado_por&order=fecha.desc&limit=10')]);
+    box.innerHTML=cfg.map(c=>{const secreto=/apikey|token/.test(c.clave);
+      return '<div class="cfg-row"><div><b style="font-size:13px">'+esc(CFG_NOM[c.clave]||c.clave)+'</b><small>'+esc(c.descripcion||'')+'</small>'+
+        '<input id="cfg_'+c.clave+'" type="'+(secreto?'password':'text')+'" value="'+esc(c.valor||'')+'"></div>'+
+        '<button type="button" class="btn b-gold" style="padding:9px 12px" onclick="guardarCfg(\''+c.clave+'\')">💾</button></div>';}).join('');
+    document.getElementById('al_hist').innerHTML=(al||[]).length?al.map(a=>'<div class="fila" style="display:block"><b>'+fh(a.fecha)+'</b> · '+esc(a.enviado_por||'')+'<div style="white-space:pre-line;margin-top:2px">'+esc(a.mensaje)+'</div></div>').join(''):'Sin alertas todavía';
+  }catch(e){ box.innerHTML='<span style="color:#f87171">✗ '+esc(e.message)+'</span>'; }
+}
+async function guardarCfg(clave){
+  const v=document.getElementById('cfg_'+clave).value.trim();
+  try{ await sbPost('robot_config?clave=eq.'+encodeURIComponent(clave),'PATCH',{valor:v},'return=minimal'); toast('✓ Guardado: el robot lo usa en su próxima vuelta'); }
+  catch(e){ toast('✗ '+e.message); }
 }
 
 // ══════════════════════════════════════════════════════════
