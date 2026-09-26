@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="IREMI">
 <title>IREMI Remesas</title>
-<meta name="version" content="4.5">
+<meta name="version" content="4.6">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -746,10 +746,6 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
   <div class="panel"><h3>👤 Sesión</h3><div class="fila"><span>Usuario</span><b id="mas_email">—</b></div><div class="fila"><span>Rol</span><b id="mas_rol">—</b></div>
     <div class="fila"><span>Apariencia</span><select id="sel_tema" onchange="fijarTema(this.value)" style="background:var(--dark);border:1px solid var(--bord);border-radius:7px;color:var(--tx);padding:5px 8px;font-size:13px"><option value="auto">🕒 Automático (día/noche)</option><option value="light">☀️ Claro</option><option value="dark">🌙 Oscuro</option></select></div>
     <button type="button" class="btn b-gray" style="width:100%;margin-top:8px" onclick="salir()">Cerrar sesión</button></div>
-  <div class="section" data-perm="herramientas">Herramientas anteriores</div>
-  <button type="button" class="masbtn" onclick="showPg('pg_reg','nb_mas')">📋 Registrar <small>Formulario manual antiguo</small></button>
-  <button type="button" class="masbtn" onclick="showPg('pg_exp','nb_mas')">📤 Exportar <small>Reporte antiguo</small></button>
-  <button type="button" class="masbtn" onclick="showPg('pg_p2p','nb_mas');diagP2P()">🔬 Diagnóstico P2P <small>Precios en vivo de Binance</small></button>
   <div class="section">Gestión</div>
   <button type="button" class="masbtn" onclick="showPg('pg_cuadre','nb_mas');cargarCuadre()">⚖️ Cuadre de caja <small>Libro vs. saldo real en Binance</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_hist','nb_mas');cargarHist()">📜 Historial de operaciones <small>Cada cambio y compra desde ago-2025, con filtros y buscador</small></button>
@@ -2776,7 +2772,7 @@ async function cargarHTasas(){
 let YO=null;
 const PERMISOS=[['inicio','📊 Inicio'],['tasas','💱 Tasas'],['movimientos','🔄 Movimientos'],['gastos','💸 Gastos'],['cuadre','⚖️ Cuadre'],
   ['historial','📚 Historial mensual'],['htasas','📈 Historial tasas'],['belkys','🤝 Belkys'],['alertas','🔔 Alertas'],['banco','🏦 Banco'],
-  ['reportes','📄 Reportes'],['herramientas','🧰 Herramientas antiguas']];
+  ['reportes','📄 Reportes']];
 const PERM_UI={
   inicio:{nav:'nb_i',abrir:()=>{showPg('pg_inicio','nb_i');cargarInicio();}}, tasas:{nav:'nb_t',abrir:()=>showPg('pg_tasas','nb_t')},
   movimientos:{nav:'nb_m',abrir:()=>{showPg('pg_mov','nb_m');cargarMov();}}, gastos:{nav:'nb_g',abrir:()=>{showPg('pg_gastos','nb_g');cargarGastos();}},
