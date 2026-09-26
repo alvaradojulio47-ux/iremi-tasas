@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="IREMI">
 <title>IREMI Remesas</title>
-<meta name="version" content="4.6">
+<meta name="version" content="4.7">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -699,7 +699,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
     <div class="frm"><div class="full"><label>Mes</label><input type="month" id="rp_mes"></div></div>
     <button type="button" class="btn b-gold" id="rp_btn" style="width:100%;margin-top:10px;padding:12px" onclick="informeMes()">📥 Descargar informe del mes (.xlsx)</button>
     <div id="rp_res" style="margin-top:10px"></div>
-    <div style="font-size:11px;color:var(--mute);line-height:1.6;margin-top:6px">Trae 6 hojas: Resumen (con el <b>monto para la boleta</b>), Operaciones, Gastos, Banco, Belkys y Cuadre. La boleta considera <b>solo la ganancia de los cambios por Binance</b>; tu 4% de Belkys va aparte.</div>
+    <div style="font-size:11px;color:var(--mute);line-height:1.6;margin-top:6px">Trae 6 hojas: Resumen (con el <b>monto para la boleta</b>), Operaciones, Gastos, Banco, Transf Local y Cuadre. La boleta considera <b>solo la ganancia de los cambios por Binance</b>; tu 4% de Transf Local va aparte.</div>
   </div>
   <div class="panel"><h3>📊 Todos los meses</h3>
     <button type="button" class="btn b-gray" id="rp_btn2" style="width:100%;padding:12px" onclick="informeTodo()">📥 Descargar resumen de todos los meses (.xlsx)</button></div>
@@ -714,7 +714,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
   <div class="panel"><h3>📚 Ganancia y utilidad por mes</h3><div id="hs_graf">Cargando...</div></div>
   <div class="panel" style="overflow-x:auto"><table class="tabla" id="hs_tabla"></table></div>
   <div class="panel" id="hs_det" style="display:none"></div>
-  <div style="font-size:11px;color:var(--mute);line-height:1.6">Hasta agosto 2026 los datos vienen de tu <b>libro de cambios en Excel</b>; desde septiembre 2026, del <b>robot</b>. <b>Utilidad</b> = ganancia de los cambios + tu 4% de Belkys − gastos anotados. Toca un mes para ver el detalle por país.</div>
+  <div style="font-size:11px;color:var(--mute);line-height:1.6">Hasta agosto 2026 los datos vienen de tu <b>libro de cambios en Excel</b>; desde septiembre 2026, del <b>robot</b>. <b>Utilidad</b> = ganancia de los cambios + tu 4% de Transf Local − gastos anotados. Toca un mes para ver el detalle por país.</div>
 </div>
 <div class="pg" id="pg_htasas" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
   <div class="filtros">
@@ -728,7 +728,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
 <div class="pg" id="pg_belkys" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
   <div class="filtros"><input type="month" id="bk_mes" onchange="cargarBelkys()"></div>
   <div class="kgrid">
-    <div class="kc"><div class="kl">Ingresos</div><div class="kv" id="bk_in">—</div><div class="ks">Fidel / Angélica</div></div>
+    <div class="kc"><div class="kl">Ingresos</div><div class="kv" id="bk_in">—</div><div class="ks">Fidel / Angélica / Lilibeth</div></div>
     <div class="kc"><div class="kl">Pagado</div><div class="kv" id="bk_pag">—</div><div class="ks">Florelvis / Belkys RUT</div></div>
     <div class="kc g"><div class="kl">Tu comisión 4%</div><div class="kv" id="bk_com">—</div><div class="ks">no va a boleta</div></div>
     <div class="kc y"><div class="kl">Resto a Venezuela</div><div class="kv" id="bk_resto">—</div><div class="ks">por Binance</div></div>
@@ -751,7 +751,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
   <button type="button" class="masbtn" onclick="showPg('pg_hist','nb_mas');cargarHist()">📜 Historial de operaciones <small>Cada cambio y compra desde ago-2025, con filtros y buscador</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_hmes','nb_mas');cargarHMes()">📚 Historial mensual <small>Todos tus meses desde ago-2025: cambios, ganancia, gastos y utilidad</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_htasas','nb_mas');cargarHTasas()">📈 Historial de tasas <small>Tu tasa, el mercado y tu margen real por país</small></button>
-  <button type="button" class="masbtn" onclick="showPg('pg_belkys','nb_mas');cargarBelkys()">🤝 Belkys <small>Ingresos, pagos, tu 4% y el resto a Venezuela</small></button>
+  <button type="button" class="masbtn" onclick="showPg('pg_belkys','nb_mas');cargarBelkys()">🤝 Transf Local <small>Ingresos, pagos, tu 4% y el resto a Venezuela</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_alertas','nb_mas');cargarAlertas()">🔔 Alertas <small>Precio objetivo, WhatsApp y últimos avisos</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_banco','nb_mas');cargarBanco()">🏦 Banco <small>Subir cartolas, cruce con las órdenes y movimientos por revisar</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_rep','nb_mas');prepRep()">📄 Reportes <small>Informe mensual en Excel con el monto de la boleta</small></button>
@@ -2665,7 +2665,7 @@ async function cargarCuadreBanco(){
         ((r.salvedad||incompleto(r)||r.por_revisar)?'<tr><td colspan="5" class="salv">'+
           (r.salvedad?'⚠ '+esc(r.salvedad)+'<br>':'')+(incompleto(r)?'Banco cargado solo hasta el '+r.banco_hasta.slice(8)+'/'+r.banco_hasta.slice(5,7)+'. ':'')+
           (r.por_revisar?r.por_revisar+' movimientos por revisar en Banco.':'')+'</td></tr>':'')).join('')+'</table>'+
-      '<div style="font-size:11px;color:var(--mute);margin-top:6px;line-height:1.5"><b>Plata en banco</b> = depósitos de clientes + entradas Belkys − lo pagado a Belkys/Florelvis − tu 4%. '+
+      '<div style="font-size:11px;color:var(--mute);margin-top:6px;line-height:1.5"><b>Plata en banco</b> = depósitos de clientes + entradas Transf Local − lo pagado a Belkys/Florelvis − tu 4%. '+
       '🟢 diferencia menor a $50.000 · 🟡 hasta $500.000 · 🔴 más. Lo importante es desde oct-2025; antes de la cuenta de la empresa (22/01/2026) no hay cartolas.</div>';
   }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
@@ -2771,7 +2771,7 @@ async function cargarHTasas(){
 // ══════════════════════════════════════════════════════════
 let YO=null;
 const PERMISOS=[['inicio','📊 Inicio'],['tasas','💱 Tasas'],['movimientos','🔄 Movimientos'],['gastos','💸 Gastos'],['cuadre','⚖️ Cuadre'],
-  ['historial','📚 Historial mensual'],['htasas','📈 Historial tasas'],['belkys','🤝 Belkys'],['alertas','🔔 Alertas'],['banco','🏦 Banco'],
+  ['historial','📚 Historial mensual'],['htasas','📈 Historial tasas'],['belkys','🤝 Transf Local'],['alertas','🔔 Alertas'],['banco','🏦 Banco'],
   ['reportes','📄 Reportes']];
 const PERM_UI={
   inicio:{nav:'nb_i',abrir:()=>{showPg('pg_inicio','nb_i');cargarInicio();}}, tasas:{nav:'nb_t',abrir:()=>showPg('pg_tasas','nb_t')},
@@ -2799,8 +2799,8 @@ async function aplicarPermisos(){
 // ══════════════════════════════════════════════════════════
 //  v4.0 · BANCO: subir cartolas, clasificar y cruzar
 // ══════════════════════════════════════════════════════════
-const BK_CAT={cambio:'Cambio (cliente)',cambio_sin_orden:'Cambio sin orden',compra_usdt:'Compra USDT',belkys_ingreso:'Belkys · entrada',
-  belkys_pago:'Belkys · pago',gasto:'Gasto',traspaso_propio:'Traspaso propio',por_revisar:'Por revisar'};
+const BK_CAT={cambio:'Cambio (cliente)',cambio_sin_orden:'Cambio sin orden',compra_usdt:'Compra USDT',belkys_ingreso:'Transf Local · entrada',
+  belkys_pago:'Transf Local · pago',gasto:'Gasto',traspaso_propio:'Traspaso propio',por_revisar:'Por revisar'};
 const catOpts=sel=>Object.entries(BK_CAT).map(([k,v])=>'<option value="'+k+'"'+(k===sel?' selected':'')+'>'+v+'</option>').join('');
 let _bkPrev=[], _bkRev=[], _bkSel=null;
 async function cargaXLSX(){ if(window.XLSX) return; await new Promise((res,rej)=>{const s=document.createElement('script');
@@ -2825,8 +2825,8 @@ function parsearCartola(wb){
 function reglaBanco(b){
   const d=b.descripcion.replace(/\s+/g,' ').toUpperCase();
   const r=(cat,nota,gcat)=>{b.categoria=cat;b.nota=nota||null;b.gcat=gcat||null;return true;};
-  if(b.abono&&/CARRASCO MORENO FIDEL|ALDUNATE MIRALLES ANGELICA|JIMENEZ MIRANDA LILIBETH/.test(d)) return r('belkys_ingreso','Entrada Belkys');
-  if(b.cargo&&/CONIGLIARO BOLIV|PIRELA ROSAS FLORELVIS|JIMENEZ MIRANDA LILIBETH/.test(d)) return r('belkys_pago','Pago Belkys');
+  if(b.abono&&/CARRASCO MORENO FIDEL|ALDUNATE MIRALLES ANGELICA|JIMENEZ MIRANDA LILIBETH/.test(d)) return r('belkys_ingreso','Entrada Transf Local');
+  if(b.cargo&&/CONIGLIARO BOLIV|PIRELA ROSAS FLORELVIS|JIMENEZ MIRANDA LILIBETH/.test(d)) return r('belkys_pago','Pago Transf Local');
   if(/INVERSIONES IREMI/.test(d)) return r('traspaso_propio','Traspaso Inversiones Iremi');
   if(/ALVARADO ROJAS J/.test(d)) return b.cargo?r('gasto','Retiro de socio (Julio)','Retiro socio'):r('traspaso_propio','Depósito desde tu cuenta personal');
   if(b.cargo&&/FLORES PINA PAULA/.test(d)) return r('gasto','Sueldo Paula','Sueldos');
@@ -2958,9 +2958,9 @@ async function informeMes(){
     const A=[['IREMI Remesas · Informe '+mesTxt(ini)],[],
       ['CAMBIOS'],['Cambios realizados',+R.cambios||0],['CLP recibidos de clientes',Math.round(+R.clp_cambiado||0)],['USDT vendidos',Math.round((+R.usdt_vendidos||0)*100)/100],
       ['Ganancia de los cambios (Binance)',gan],['Margen',R.clp_cambiado?Math.round(gan/R.clp_cambiado*10000)/100+'%':'—'],[],
-      ['BOLETA SII'],['Monto para la boleta (solo cambios por Binance)',gan],['Comisión Belkys 4% (NO va en la boleta)',com],[],
+      ['BOLETA SII'],['Monto para la boleta (solo cambios por Binance)',gan],['Comisión Transf Local 4% (NO va en la boleta)',com],[],
       ['GASTOS'],...Object.entries(porCat).map(([k,v])=>['  '+k,Math.round(v)]),['Total gastos',gTot],[],
-      ['RESULTADO INTERNO'],['Ganancia cambios + 4% Belkys − gastos',gan+com-gTot],[],
+      ['RESULTADO INTERNO'],['Ganancia cambios + 4% Transf Local − gastos',gan+com-gTot],[],
       ['CUADRE CON EL BANCO'],['Cambios según libro/robot',Math.round(+C.ventas||0)],['Plata de clientes en el banco',C.movimientos?Math.round(+C.plata_clientes_banco||0):'sin cartola'],
       ['Diferencia',C.movimientos?Math.round(+C.dif_ventas||0):'—'],['Compras USDT según libro/robot',Math.round(+C.compras||0)],['Compras USDT pagadas por banco',C.movimientos?Math.round(+C.compras_banco||0):'sin cartola'],
       ['Movimientos del banco por revisar',+C.por_revisar||0],['Salvedad',C.salvedad||'—'],[],['Generado',new Date().toLocaleString('es-CL',{timeZone:'America/Santiago'})+' por '+((sesion()||{}).email||'')]];
@@ -2971,15 +2971,15 @@ async function informeMes(){
     XLSX.utils.book_append_sheet(wb,hojaAncha(XLSX.utils.json_to_sheet((gas||[]).map(g=>({Fecha:g.fecha,Categoria:g.categoria,Descripcion:g.descripcion||'',CLP:Math.round(+g.monto_clp||0),Factura:g.con_factura?'Sí':'No'}))),[11,14,50,12,8]),'Gastos');
     const banRows=(ban||[]).map(b=>({Fecha:b.fecha,Cartola:b.cartola,Descripcion:b.descripcion,Cargo:+b.cargo||0,Abono:+b.abono||0,Saldo:b.saldo!=null?+b.saldo:'',Tipo:BK_CAT[b.categoria]||b.categoria,Orden:b.orden_binance||'',Nota:b.nota||''}));
     XLSX.utils.book_append_sheet(wb,hojaAncha(XLSX.utils.json_to_sheet(banRows.length?banRows:[{Aviso:'Sin cartolas cargadas para este mes'}]),[11,8,38,11,11,11,16,22,40]),'Banco');
-    const belRows=banRows.filter(b=>/Belkys/.test(b.Tipo));
+    const belRows=banRows.filter(b=>/Transf Local/.test(b.Tipo));
     XLSX.utils.book_append_sheet(wb,hojaAncha(XLSX.utils.aoa_to_sheet([['Entradas (Fidel, Angélica, Lilibeth)',+B.ingresos||0],['Pagado a Belkys / Florelvis (96%)',+B.pagado||0],
-      ['Tu comisión 4%',com],['Resto enviado a Venezuela',+B.resto_venezuela||0],[],['Fecha','Descripción','Entrada','Pago']].concat(belRows.map(b=>[b.Fecha,b.Descripcion,b.Abono,b.Cargo]))),[36,40,12,12]),'Belkys');
+      ['Tu comisión 4%',com],['Resto enviado a Venezuela',+B.resto_venezuela||0],[],['Fecha','Descripción','Entrada','Pago']].concat(belRows.map(b=>[b.Fecha,b.Descripcion,b.Abono,b.Cargo]))),[36,40,12,12]),'Transf Local');
     const cq=(await sbPost('v_conciliacion_mensual?select=*&order=mes.asc'))||[];
     XLSX.utils.book_append_sheet(wb,hojaAncha(XLSX.utils.json_to_sheet(cq.map(r=>({Mes:r.mes.slice(0,7),Cambios_libro:Math.round(+r.ventas||0),Plata_banco:r.movimientos?Math.round(+r.plata_clientes_banco):'sin cartola',
       Diferencia:r.movimientos?Math.round(+r.dif_ventas):'',Compras_libro:Math.round(+r.compras||0),Compras_banco:r.movimientos?Math.round(+r.compras_banco):'',Por_revisar:r.por_revisar||'',Salvedad:r.salvedad||''}))),[9,14,14,12,14,14,11,70]),'Cuadre');
     XLSX.writeFile(wb,'IREMI_Informe_'+mes+'.xlsx');
     document.getElementById('rp_res').innerHTML='<div class="fila"><span>Monto boleta '+mesTxt(ini)+'</span><b style="color:var(--gold)">'+$clp(gan)+'</b></div>'+
-      '<div class="fila"><span>4% Belkys (aparte)</span><b>'+$clp(com)+'</b></div><div class="fila"><span>Resultado interno</span><b>'+$clp(gan+com-gTot)+'</b></div>';
+      '<div class="fila"><span>4% Transf Local (aparte)</span><b>'+$clp(com)+'</b></div><div class="fila"><span>Resultado interno</span><b>'+$clp(gan+com-gTot)+'</b></div>';
     toast('✓ Informe descargado');
   }catch(e){ toast('✗ '+e.message); } finally{ btn.disabled=false; btn.textContent='📥 Descargar informe del mes (.xlsx)'; }
 }
@@ -2989,7 +2989,7 @@ async function informeTodo(){
     const [res,con]=await Promise.all([sbPost('v_resumen_mensual?select=*&order=mes.asc'),sbPost('v_conciliacion_mensual?select=*&order=mes.asc')]);
     const C={}; (con||[]).forEach(c=>C[c.mes]=c);
     const rows=(res||[]).map(r=>{const c=C[r.mes]||{}; return {Mes:r.mes.slice(0,7),Origen:r.origen,Cambios:+r.cambios||0,CLP_cambiado:Math.round(+r.clp_cambiado||0),
-      Ganancia_boleta:Math.round(+r.ganancia||0),Comision_Belkys:Math.round(+r.comision_belkys||0),Gastos:Math.round(+r.gastos||0),Utilidad:Math.round(+r.utilidad||0),
+      Ganancia_boleta:Math.round(+r.ganancia||0),Comision_Transf_Local:Math.round(+r.comision_belkys||0),Gastos:Math.round(+r.gastos||0),Utilidad:Math.round(+r.utilidad||0),
       Dif_banco:c.movimientos?Math.round(+c.dif_ventas):'sin cartola',Salvedad:c.salvedad||''};});
     const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,hojaAncha(XLSX.utils.json_to_sheet(rows),[9,7,9,14,15,15,12,12,13,70]),'Meses');
     XLSX.writeFile(wb,'IREMI_Resumen_todos_los_meses.xlsx'); toast('✓ Descargado');
@@ -3155,7 +3155,7 @@ async function detalleMes(mes){
     box.innerHTML='<h3>🔎 '+mesTxt(mes)+' por país de destino</h3><table class="tabla"><tr><th>Destino</th><th>Cambios</th><th>CLP</th><th>Ganancia</th><th>Margen</th></tr>'+
       rows.map(([k,r])=>'<tr><td>'+esc(k)+'</td><td>'+r.n+'</td><td>'+$clp(r.clp)+'</td><td>'+$clp(r.g)+'</td><td>'+(r.clp?(r.g/r.clp*100).toFixed(1)+'%':'—')+'</td></tr>').join('')+'</table>'+
       ((gas||[]).length?'<h3 style="margin-top:12px">💸 Gastos del mes</h3><table class="tabla">'+gas.map(g=>'<tr><td>'+esc(g.categoria)+' · '+esc(g.descripcion||'')+'</td><td>'+$clp(g.monto_clp)+'</td></tr>').join('')+'</table>':'')+
-      (+h.comision_belkys?'<div style="font-size:12px;margin-top:8px">🤝 Tu 4% de Belkys este mes: <b>'+$clp(h.comision_belkys)+'</b> (incluido en la utilidad, no va en la boleta)</div>':'')+
+      (+h.comision_belkys?'<div style="font-size:12px;margin-top:8px">🤝 Tu 4% de Transf Local este mes: <b>'+$clp(h.comision_belkys)+'</b> (incluido en la utilidad, no va en la boleta)</div>':'')+
       (h.ganancia_libro?'<div style="font-size:11px;color:var(--mute);margin-top:8px">En el pie de la hoja del Excel anotaste: ganancia '+$clp(h.ganancia_libro)+(h.boleta?' · boleta '+$clp(h.boleta):'')+(h.pendiente?' · pendiente '+$clp(h.pendiente):'')+'</div>':'')+
       '<div style="font-size:11px;color:var(--mute);margin-top:4px">El país de destino del libro es estimado a partir de la tasa usada.</div>';
     box.scrollIntoView({behavior:'smooth',block:'start'});
@@ -3180,7 +3180,7 @@ async function cargarBelkys(){
       ((movs||[]).length?movs.map(v=>'<tr><td>'+v.fecha.slice(8)+'/'+v.fecha.slice(5,7)+'</td><td style="text-align:left">'+nom(v.descripcion)+'</td>'+
         '<td>'+(v.categoria==='belkys_ingreso'?$clp(v.abono):'')+'</td><td>'+(v.categoria==='belkys_pago'?$clp(v.cargo):'')+'</td>'+
         '<td class="mg-ok">'+(v.categoria==='belkys_pago'?$clp(v.cargo/0.96*0.04):'')+'</td></tr>').join('')
-        :'<tr><td colspan="5">Sin movimientos de Belkys este mes.</td></tr>');
+        :'<tr><td colspan="5">Sin movimientos de Transf Local este mes.</td></tr>');
   }catch(e){ tabla.innerHTML='<tr><td style="color:var(--red2)">✗ '+esc(e.message)+'</td></tr>'; }
 }
 
