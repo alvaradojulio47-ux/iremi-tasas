@@ -374,7 +374,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 .cfg-row{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:end;padding:8px 0;border-bottom:1px solid #16294a}
 .cfg-row small{display:block;font-size:10px;color:#6b85a8;margin:2px 0 4px}
 .cfg-row input{width:100%;background:#060e1a;border:1.5px solid #2a4070;border-radius:8px;color:#fff;font-size:14px;padding:8px 9px;outline:none}
-.hs-row{cursor:pointer} .hs-row:hover td{background:#0f1f3a} .hs-tot td{font-weight:700;color:var(--gold);border-top:2px solid #2a4070}
+.hs-row{cursor:pointer} #hs_tabla td:first-child{white-space:nowrap} @media(max-width:520px){#hs_tabla .hs-opt{display:none}} .hs-row:hover td{background:#0f1f3a} .hs-tot td{font-weight:700;color:var(--gold);border-top:2px solid #2a4070}
 .volver{background:none;border:none;color:var(--gold);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;padding:0 0 8px}
 @media(min-width:900px){#pg_cuadre.on,#pg_hist.on,#pg_htasas.on,#pg_belkys.on,#pg_alertas.on{display:block;max-width:980px;margin:0 auto}}
 @media(min-width:900px){#pg_inicio.on,#pg_mov.on,#pg_gastos.on,#pg_mas.on{display:block;max-width:980px;margin:0 auto}}
@@ -2601,11 +2601,11 @@ function pintarHist(){
     '<line x1="'+P+'" y1="'+y0+'" x2="'+(W-P)+'" y2="'+y0+'" stroke="#2a4070"/></svg>'+
     '<div style="font-size:11px;color:#c8d6e5;margin-top:4px"><span style="color:#f5c518">■</span> Ganancia cambios &nbsp; <span style="color:#22c55e">■</span> Utilidad (− gastos)</div>';
   const T={c:0,clp:0,g:0,ga:0,u:0}; L.forEach(h=>{T.c+=+h.cambios||0;T.clp+=+h.clp_cambiado||0;T.g+=+h.ganancia||0;T.ga+=+h.gastos||0;T.u+=+h.utilidad||0;});
-  document.getElementById('hs_tabla').innerHTML='<tr><th>Mes</th><th>Cambios</th><th>CLP cambiado</th><th>Ganancia</th><th>Margen</th><th>Gastos</th><th>Utilidad</th></tr>'+
+  document.getElementById('hs_tabla').innerHTML='<tr><th>Mes</th><th class="hs-opt">Cambios</th><th class="hs-opt">CLP cambiado</th><th>Ganancia</th><th>Margen</th><th>Gastos</th><th>Utilidad</th></tr>'+
     L.slice().reverse().map(h=>{const m=h.clp_cambiado?h.ganancia/h.clp_cambiado*100:null;
-      return '<tr class="hs-row" onclick="detalleMes(\''+h.mes+'\')"><td>'+mesTxt(h.mes)+(h.origen==='robot'?' 🤖':'')+'</td><td>'+(h.cambios||0)+'</td><td>'+$clp(h.clp_cambiado)+'</td><td>'+$clp(h.ganancia)+
+      return '<tr class="hs-row" onclick="detalleMes(\''+h.mes+'\')"><td>'+mesTxt(h.mes)+(h.origen==='robot'?' 🤖':'')+'</td><td class="hs-opt">'+(h.cambios||0)+'</td><td class="hs-opt">'+$clp(h.clp_cambiado)+'</td><td>'+$clp(h.ganancia)+
         '</td><td class="'+(m==null?'':(m>=5?'mg-ok':(m>=3?'mg-med':'mg-bad')))+'">'+(m==null?'—':m.toFixed(1)+'%')+'</td><td>'+$clp(h.gastos)+'</td><td class="'+((+h.utilidad)<0?'mg-bad':'')+'">'+$clp(h.utilidad)+'</td></tr>';}).join('')+
-    '<tr class="hs-tot"><td>Total</td><td>'+T.c+'</td><td>'+$clp(T.clp)+'</td><td>'+$clp(T.g)+'</td><td>'+(T.clp?(T.g/T.clp*100).toFixed(1)+'%':'—')+'</td><td>'+$clp(T.ga)+'</td><td>'+$clp(T.u)+'</td></tr>';
+    '<tr class="hs-tot"><td>Total</td><td class="hs-opt">'+T.c+'</td><td class="hs-opt">'+$clp(T.clp)+'</td><td>'+$clp(T.g)+'</td><td>'+(T.clp?(T.g/T.clp*100).toFixed(1)+'%':'—')+'</td><td>'+$clp(T.ga)+'</td><td>'+$clp(T.u)+'</td></tr>';
 }
 async function detalleMes(mes){
   const box=document.getElementById('hs_det'); box.style.display='block'; box.innerHTML='Cargando '+mesTxt(mes)+'...';
