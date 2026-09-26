@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="IREMI">
 <title>IREMI Remesas</title>
-<meta name="version" content="4.2">
+<meta name="version" content="4.4">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -116,7 +116,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
     padding:16px;
   }
   /* HISTORIAL: full width table */
-  #pg_hist.on{display:block;padding:16px}
+  #pg_hist.on{display:block}
   /* EXPORTAR */
   #pg_exp.on{display:block;padding:16px;max-width:800px;margin:0 auto}
   /* Nav horizontal on desktop */
@@ -735,11 +735,11 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
     <button type="button" class="btn b-gray" style="width:100%;margin-top:8px" onclick="salir()">Cerrar sesión</button></div>
   <div class="section" data-perm="herramientas">Herramientas anteriores</div>
   <button type="button" class="masbtn" onclick="showPg('pg_reg','nb_mas')">📋 Registrar <small>Formulario manual antiguo</small></button>
-  <button type="button" class="masbtn" onclick="showPg('pg_hist','nb_mas');setTimeout(cargarHist,100)">📜 Historial <small>Operaciones registradas a mano (tabla antigua)</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_exp','nb_mas')">📤 Exportar <small>Reporte antiguo</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_p2p','nb_mas');diagP2P()">🔬 Diagnóstico P2P <small>Precios en vivo de Binance</small></button>
   <div class="section">Gestión</div>
   <button type="button" class="masbtn" onclick="showPg('pg_cuadre','nb_mas');cargarCuadre()">⚖️ Cuadre de caja <small>Libro vs. saldo real en Binance</small></button>
+  <button type="button" class="masbtn" onclick="showPg('pg_hist','nb_mas');cargarHist()">📜 Historial de operaciones <small>Cada cambio y compra desde ago-2025, con filtros y buscador</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_hmes','nb_mas');cargarHMes()">📚 Historial mensual <small>Todos tus meses desde ago-2025: cambios, ganancia, gastos y utilidad</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_htasas','nb_mas');cargarHTasas()">📈 Historial de tasas <small>Tu tasa, el mercado y tu margen real por país</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_belkys','nb_mas');cargarBelkys()">🤝 Belkys <small>Ingresos, pagos, tu 4% y el resto a Venezuela</small></button>
@@ -949,68 +949,16 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
 <!-- ══════════════════════════════════════════════════════════
      PAGE: HISTORIAL
 ════════════════════════════════════════════════════════════ -->
-<div class="pg" id="pg_hist" style="padding:12px">
-  <div class="section">
-    📊 Historial de Cambios
-    <button type="button" onclick="borrarPorId()"
-      style="margin-left:auto;background:#7f1d1d;color:#fff;border:none;border-radius:6px;
-             padding:3px 10px;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;cursor:pointer">
-      🗑 Borrar por ID
-    </button>
+<div class="pg" id="pg_hist" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
+  <div class="filtros">
+    <select id="hf_mes" onchange="cargarHist()"><option value="">Cargando meses...</option></select>
+    <select id="hf_tipo" onchange="pintarHistOps()"><option value="VENTA">Cambios</option><option value="COMPRA">Compras USDT</option><option value="AJUSTE">Ajustes</option><option value="">Todo</option></select>
+    <select id="hf_dest" onchange="pintarHistOps()"><option value="">Todos los países</option></select>
+    <input type="search" id="hf_buscar" placeholder="🔎 Buscar (nombre, comentario, monto)" oninput="pintarHistOps()" style="flex:1 1 100%;background:var(--card);border:1px solid var(--bord);border-radius:8px;color:var(--tx);padding:8px 10px;font-size:13px">
   </div>
-  <div id="sbar_hist" class="sbar"></div>
-  <!-- Filters -->
-  <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-    <select id="hf_mes" style="flex:2;min-width:130px;background:var(--card);border:1.5px solid var(--bord);border-radius:8px;
-      color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:8px 10px;outline:none">
-      <option value="">Todos los meses</option>
-      <option value="Agosto 2025">Agosto 2025</option>
-      <option value="Septiembre 2025">Septiembre 2025</option>
-      <option value="Octubre 2025">Octubre 2025</option>
-      <option value="Noviembre 2025">Noviembre 2025</option>
-      <option value="Diciembre 2025">Diciembre 2025</option>
-      <option value="Enero 2026">Enero 2026</option>
-      <option value="Febrero 2026">Febrero 2026</option>
-      <option value="Marzo 2026">Marzo 2026</option>
-      <option value="Abril 2026">Abril 2026</option>
-      <option value="Mayo 2026" selected>Mayo 2026 ★</option>
-    </select>
-    <select id="hf_tipo" style="flex:1;min-width:90px;background:var(--card);border:1.5px solid var(--bord);border-radius:8px;
-      color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:8px 8px;outline:none">
-      <option value="">SELL+BUY</option>
-      <option value="SELL">Solo SELL</option>
-      <option value="BUY">Solo BUY</option>
-    </select>
-    <select id="hf_dias" style="flex:1;min-width:90px;background:var(--card);border:1.5px solid var(--bord);border-radius:8px;
-      color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;padding:8px 6px;outline:none">
-      <option value="7" selected>Últ. 7d</option>
-      <option value="30">Últ. 30d</option>
-      <option value="0">Todo el mes</option>
-    </select>
-    <button type="button" class="btn b-blue" onclick="cargarHist()" style="flex:0;padding:10px 14px;font-size:11px">↻</button>
-  </div>
-  <!-- Stats -->
-  <div class="stats4" id="hist_stats" style="display:none">
-    <div class="stat"><div class="stat-v" id="hs_ops">0</div><div class="stat-l">Ops SELL</div></div>
-    <div class="stat"><div class="stat-v" id="hs_vol">$0</div><div class="stat-l">Vol. CLP</div></div>
-    <div class="stat"><div class="stat-v" id="hs_gan" style="color:var(--green)">$0</div><div class="stat-l">Ganancia</div></div>
-    <div class="stat"><div class="stat-v" id="hs_acum" style="color:var(--gold)">$0</div><div class="stat-l">Acumulado</div></div>
-  </div>
-  <!-- Table -->
-  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-    <table class="hist-table" id="hist_table">
-      <thead>
-        <tr>
-          <th>ID</th><th>Fecha</th><th>Tipo</th><th>Fiat</th>
-          <th>Monto CLP</th><th>USDT Mov</th><th>USDT/CLP</th>
-          <th>Gan USDT</th><th>Gan CLP</th><th>Acumulado CLP</th><th>Comentario</th>
-        </tr>
-      </thead>
-      <tbody id="hist_body">
-        <tr><td colspan="11" style="text-align:center;color:var(--mute2);padding:20px">Selecciona un mes y presiona ↻</td></tr>
-      </tbody>
-    </table>
-  </div>
+  <div class="kpis" id="ho_kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px"></div>
+  <div id="ho_lista">Cargando...</div>
+  <div style="font-size:11px;color:var(--mute);line-height:1.6;margin-top:8px">Hasta agosto 2026 las operaciones vienen de tu <b>libro de cambios</b> (📒); desde septiembre 2026, del <b>robot</b> (🤖). El país de destino del libro es estimado a partir de la tasa usada.</div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
@@ -2238,91 +2186,53 @@ function updateSesion(){
 // ══════════════════════════════════════════════════════════
 //  HISTORIAL
 // ══════════════════════════════════════════════════════════
+let _hOps=[], _hMesesListos=false;
+const BANDERA={VES:'🇻🇪',COP:'🇨🇴',PEN:'🇵🇪',ARS:'🇦🇷',EUR:'🇪🇸',DOP:'🇩🇴',MXN:'🇲🇽',BOB:'🇧🇴',USD:'🇺🇸',PAB:'🇵🇦',CLP:'🇨🇱'};
 async function cargarHist(){
-  const mes  =document.getElementById('hf_mes').value;
-  const tipo =document.getElementById('hf_tipo').value;
-  const dias =parseInt(document.getElementById('hf_dias').value||'7');
-  const tbody=document.getElementById('hist_body');
-  tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--gold);padding:20px"><span class="spin">⏳</span> Cargando...</td></tr>';
-
+  const selM=document.getElementById('hf_mes'), box=document.getElementById('ho_lista');
   try{
-    let query='operaciones?select=*&order=fecha.asc,created_at.asc&limit=500';
-    if(mes)  query+='&mes=eq.'+encodeURIComponent(mes);
-    if(tipo) query+='&tipo=eq.'+tipo;
-    // Solo aplicar filtro de días cuando NO hay mes seleccionado
-    if(dias>0 && !mes){
-      const desde=new Date(Date.now()-dias*86400000).toISOString().split('T')[0];
-      query+='&fecha=gte.'+desde;
+    if(!_hMesesListos){
+      const meses=((await sbPost('v_resumen_mensual?select=mes&order=mes.desc'))||[]).map(r=>r.mes);
+      selM.innerHTML=meses.map(m=>'<option value="'+m+'">'+['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][+m.slice(5,7)-1]+' '+m.slice(0,4)+'</option>').join('')+'<option value="">Todos los meses</option>';
+      _hMesesListos=true;
     }
-    const ops=await sbPost(query);
-    if(!ops.length){
-      document.getElementById('hist_stats').style.display='none';
-      tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--mute2);padding:20px">Sin operaciones en este período</td></tr>';
-      return;
+    box.innerHTML='<div style="color:var(--gold)">⏳ Cargando operaciones...</div>';
+    const mes=selM.value; let filas=[];
+    for(let off=0;off<20000;off+=1000){   // Supabase entrega máximo 1.000 filas por consulta
+      const p=(await sbPost('v_operaciones?select=origen,fecha,mes,tipo,monto_clp,usdt,destino,tasa_iremi,ganancia_clp,detalle'+(mes?'&mes=eq.'+mes:'')+'&order=fecha.desc&limit=1000&offset='+off))||[];
+      filas=filas.concat(p); if(p.length<1000) break;
     }
-
-    // Stats
-    const sells=ops.filter(o=>o.tipo==='SELL');
-    const vol  =sells.reduce((s,o)=>s+(o.monto_clp||0),0);
-    const gan  =sells.reduce((s,o)=>s+(o.gan_clp||0),0);
-    const acum =ops[0]?ops[0].id:0; // Use last known acumulado
-    const fmt  =n=>new Intl.NumberFormat('es-CL').format(Math.round(n));
-    document.getElementById('hs_ops').textContent=sells.length;
-    document.getElementById('hs_vol').textContent='$'+fmt(vol);
-    document.getElementById('hs_gan').textContent='$'+fmt(gan);
-    // Calculate running total for acumulado
-    let runAcum=0;
-    const sortedSells=[...ops].filter(o=>o.tipo==='SELL').sort((a,b)=>a.fecha>b.fecha?1:-1);
-    for(const s of sortedSells) runAcum+=(s.gan_clp||0);
-    document.getElementById('hs_acum').textContent='$'+fmt(runAcum);
-    document.getElementById('hist_stats').style.display='grid';
-
-    // Table
-    // Calculate acumulado ascending (oldest→newest), then display descending
-    let acumRun=0;
-    const acumMap={};
-    for(const op of ops){
-      if(op.tipo==='SELL') acumRun+=(op.gan_clp||0);
-      acumMap[op.id]=acumRun;
-    }
-    // Display newest first (reverse)
-    const opsDesc=[...ops].reverse();
-    acumRun=0;
-    tbody.innerHTML=opsDesc.map(op=>{
-      const acumVal=acumMap[op.id]||0;
-      if(op.tipo==='SELL') acumRun+=(op.gan_clp||0);
-      const isSell=op.tipo==='SELL';
-      const flags={VES:'🇻🇪',COP:'🇨🇴',PEN:'🇵🇪',ARS:'🇦🇷',MXN:'🇲🇽',USD:'🇺🇸',EUR:'🇪🇸'};
-      return `<tr>
-        <td style="color:var(--mute2)">#${op.id}</td>
-        <td>${op.fecha}</td>
-        <td><span class="pill ${op.tipo.toLowerCase()}">${op.tipo}</span></td>
-        <td>${flags[op.fiat]||'🌍'} ${op.fiat||'—'}</td>
-        <td style="font-weight:700">${fmt(op.monto_clp||0)}</td>
-        <td style="color:${op.usdt_mov<0?'var(--red)':'var(--green)'}">
-          ${op.usdt_mov>0?'+':''}<b>${parseFloat(op.usdt_mov||0).toFixed(3)}</b>
-        </td>
-        <td style="color:var(--silver)">${parseFloat(op.dc||0).toFixed(2)}</td>
-        <td style="color:${(op.gan_usdt||0)>0?'var(--green)':'var(--silver)'}">
-          ${op.gan_usdt!=null?(op.gan_usdt>0?'+':'')+parseFloat(op.gan_usdt).toFixed(4):'—'}
-        </td>
-        <td style="font-weight:700;color:${(op.gan_clp||0)>0?'var(--green)':'var(--silver)'}">
-          ${op.gan_clp!=null?'$'+fmt(op.gan_clp):'—'}
-        </td>
-        <td style="color:var(--gold);font-weight:700">${isSell?'$'+fmt(acumVal):'—'}</td>
-        <td style="color:var(--silver);font-size:9px">${op.comentario||'—'}</td>
-      </tr>`;
-    }).join('');
-  }catch(e){
-    const msg = e.message.includes('Failed to fetch') 
-      ? '✗ Sin conexión — puede que Supabase esté pausado. Visita supabase.com para activarlo'
-      : '✗ '+e.message;
-    tbody.innerHTML=`<tr><td colspan="11" style="color:var(--red);text-align:center;padding:16px;font-size:11px">${msg}</td></tr>`;
-    console.error('cargarHist error:',e);
-    document.getElementById('supabase_warning').style.display='block';
-  }
+    _hOps=filas;
+    const dests=[...new Set(filas.map(o=>o.destino).filter(Boolean))].sort();
+    const sd=document.getElementById('hf_dest'), prev=sd.value;
+    sd.innerHTML='<option value="">Todos los países</option>'+dests.map(d=>'<option value="'+d+'">'+(BANDERA[d]||'🌍')+' '+d+'</option>').join('');
+    if(dests.includes(prev)) sd.value=prev;
+    pintarHistOps();
+  }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
-
+function pintarHistOps(){
+  const tipo=document.getElementById('hf_tipo').value, dest=document.getElementById('hf_dest').value,
+        q=(document.getElementById('hf_buscar').value||'').trim().toLowerCase();
+  const L=_hOps.filter(o=>(!tipo||o.tipo===tipo)&&(!dest||o.destino===dest)&&
+    (!q||String(o.detalle||'').toLowerCase().includes(q)||String(Math.round(o.monto_clp||0)).includes(q.replace(/\D/g,'')||'¬')));
+  const V=L.filter(o=>o.tipo==='VENTA'), clp=V.reduce((s,o)=>s+(+o.monto_clp||0),0), g=V.reduce((s,o)=>s+(+o.ganancia_clp||0),0);
+  const k=(t,v,c)=>'<div class="kc" style="padding:8px"><div class="kt" style="font-size:9px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em">'+t+'</div><div style="font-size:15px;font-weight:800;'+(c||'')+'">'+v+'</div></div>';
+  document.getElementById('ho_kpis').innerHTML=k('Operaciones',L.length)+k('CLP cambiado',$clp(clp))+k('Ganancia',$clp(g),'color:var(--green)')+k('Margen',clp?(g/clp*100).toFixed(1)+'%':'—','color:var(--gold)');
+  const tasaTxt=o=>{ if(o.tasa_iremi==null) return ''; const t=+o.tasa_iremi; if(o.tipo==='COMPRA') return ' · $'+t.toLocaleString('es-CL',{maximumFractionDigits:2})+'/USDT';
+    return ' · tasa '+(o.destino==='VES'&&t<5?Math.round(t*1000):(t>=1?t.toFixed(2):t.toPrecision(3))); };
+  const MAX=300, vis=L.slice(0,MAX);
+  document.getElementById('ho_lista').innerHTML=vis.length?vis.map(o=>{
+    const f=o.fecha, esV=o.tipo==='VENTA', esC=o.tipo==='COMPRA';
+    return '<div class="mv" style="cursor:default"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline">'+
+      '<div style="font-size:11px;color:var(--mute)">'+f.slice(8)+'/'+f.slice(5,7)+'/'+f.slice(2,4)+' · '+(o.origen==='robot'?'🤖':'📒')+' '+
+        (esV?(BANDERA[o.destino]||'🌍')+' '+(o.destino||'¿?'):(esC?'🛒 Compra USDT':'⚖️ Ajuste'))+'</div>'+
+      '<div style="font-size:16px;font-weight:800">'+(o.monto_clp!=null?$clp(o.monto_clp):'—')+'</div></div>'+
+      '<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--silver);margin-top:2px">'+
+      '<span>'+num(o.usdt)+' USDT'+tasaTxt(o)+(o.detalle?' · '+esc(o.detalle):'')+'</span>'+
+      (esV?'<b style="color:'+((+o.ganancia_clp)>=0?'var(--green)':'var(--red2)')+';white-space:nowrap">'+((+o.ganancia_clp)>=0?'+':'')+$clp(o.ganancia_clp)+'</b>':'')+'</div></div>';}).join('')+
+    (L.length>MAX?'<div style="font-size:11px;color:var(--mute);text-align:center;padding:8px">Mostrando las '+MAX+' más recientes de '+L.length+'. Usa el filtro de mes o el buscador para ver las demás (los totales de arriba sí consideran todas).</div>':'')
+    :'<div style="font-size:12px;color:var(--mute);padding:14px;text-align:center">Sin operaciones con estos filtros.</div>';
+}
 
 // ══════════════════════════════════════════════════════════
 //  DIAGNÓSTICO P2P — valores brutos sin procesamiento
@@ -2846,8 +2756,8 @@ const PERMISOS=[['inicio','📊 Inicio'],['tasas','💱 Tasas'],['movimientos','
 const PERM_UI={
   inicio:{nav:'nb_i',abrir:()=>{showPg('pg_inicio','nb_i');cargarInicio();}}, tasas:{nav:'nb_t',abrir:()=>showPg('pg_tasas','nb_t')},
   movimientos:{nav:'nb_m',abrir:()=>{showPg('pg_mov','nb_m');cargarMov();}}, gastos:{nav:'nb_g',abrir:()=>{showPg('pg_gastos','nb_g');cargarGastos();}},
-  cuadre:{pg:['pg_cuadre']}, historial:{pg:['pg_hmes']}, htasas:{pg:['pg_htasas']}, belkys:{pg:['pg_belkys']}, alertas:{pg:['pg_alertas']},
-  banco:{pg:['pg_banco']}, reportes:{pg:['pg_rep']}, herramientas:{pg:['pg_reg','pg_hist','pg_exp','pg_p2p']}};
+  cuadre:{pg:['pg_cuadre']}, historial:{pg:['pg_hmes','pg_hist']}, htasas:{pg:['pg_htasas']}, belkys:{pg:['pg_belkys']}, alertas:{pg:['pg_alertas']},
+  banco:{pg:['pg_banco']}, reportes:{pg:['pg_rep']}, herramientas:{pg:['pg_reg','pg_exp','pg_p2p']}};
 function puede(p){ if(!YO) return false; if(p==='usuarios') return YO.rol==='admin'; return YO.rol==='admin'||!YO.permisos||YO.permisos.includes(p); }
 async function aplicarPermisos(){
   const em=((sesion()||{}).email||'').toLowerCase();
