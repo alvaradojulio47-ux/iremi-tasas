@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="IREMI">
 <title>IREMI Remesas</title>
-<meta name="version" content="4.4">
+<meta name="version" content="4.5">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -421,6 +421,19 @@ html[data-theme="light"] .lg-ob{background:#fff;border-color:#0f1f4b;color:#0f1f
 html[data-theme="light"] .lg-ob svg{fill:#0f1f4b}
 html[data-theme="light"] .lg-ob svg path[stroke]{stroke:#0f1f4b}
 /* v4.2 login nuevo */
+/* v4.5 libro excel */
+#pg_libro.on{display:block}
+.lx-wrap{overflow:auto;max-height:calc(100dvh - 230px);border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.lx{border-collapse:separate;border-spacing:0;font-family:'Barlow',sans-serif;font-size:11.5px;white-space:nowrap}
+.lx th{position:sticky;top:0;z-index:2;background:var(--modal);color:var(--gold);font-size:10px;font-weight:700;text-align:center;
+  padding:7px 8px;border-bottom:2px solid var(--gold);border-right:1px solid var(--line2)}
+.lx td{padding:5px 8px;border-bottom:1px solid var(--line2);border-right:1px solid var(--line2);text-align:right;color:var(--tx)}
+.lx td.t{text-align:left;max-width:260px;overflow:hidden;text-overflow:ellipsis}
+.lx td:first-child,.lx th:first-child{position:sticky;left:0;z-index:1;background:var(--modal);color:var(--mute);text-align:center}
+.lx th:first-child{z-index:3}
+.lx tr:nth-child(even) td{background:var(--zebra)} .lx tr:nth-child(even) td:first-child{background:var(--modal)}
+.lx td.neg{color:var(--red2)} .lx td.err{color:var(--mute2)} .lx tr.res td{font-weight:700;color:var(--gold)}
+.lx tr.hit td{background:rgba(245,197,24,.18)!important}
 /* v4.1 tema claro/oscuro */
 /* v4.0 etapa 4 */
 /* v3.2 historial */
@@ -747,6 +760,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
   <button type="button" class="masbtn" onclick="showPg('pg_banco','nb_mas');cargarBanco()">🏦 Banco <small>Subir cartolas, cruce con las órdenes y movimientos por revisar</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_rep','nb_mas');prepRep()">📄 Reportes <small>Informe mensual en Excel con el monto de la boleta</small></button>
   <div class="section" id="sec_admin">Administración</div>
+  <button type="button" class="masbtn" onclick="showPg('pg_libro','nb_mas');cargarLibro()">📒 Libro Excel <small>Todas las hojas del libro de cambios, tal cual (solo tú)</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_usu','nb_mas');cargarUsuarios()">👥 Usuarios <small>Quién entra a la app y qué puede ver</small></button>
 </div>
 
@@ -949,6 +963,16 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
 <!-- ══════════════════════════════════════════════════════════
      PAGE: HISTORIAL
 ════════════════════════════════════════════════════════════ -->
+<div class="pg" id="pg_libro" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
+  <div class="filtros">
+    <select id="lx_hoja" onchange="cargarLibroHoja()"><option>Cargando...</option></select>
+    <input type="search" id="lx_buscar" placeholder="🔎 Buscar en la hoja" oninput="pintarLibro()" style="flex:1;min-width:140px;background:var(--card);border:1px solid var(--bord);border-radius:8px;color:var(--tx);padding:8px 10px;font-size:13px">
+    <button type="button" class="btn b-gold" style="padding:8px 12px;font-size:12px" onclick="bajarHoja()">📥 .xlsx</button>
+  </div>
+  <div id="lx_info" style="font-size:11px;color:var(--mute);margin-bottom:6px"></div>
+  <div class="lx-wrap"><table class="lx" id="lx_tabla"></table></div>
+  <div style="font-size:11px;color:var(--mute);line-height:1.6;margin-top:8px">🔒 Solo el administrador ve esta pantalla. Es tu libro de cambios tal como quedó en el Excel (todas las hojas, fila por fila, con los resúmenes). Desliza hacia el lado para ver todas las columnas.</div>
+</div>
 <div class="pg" id="pg_hist" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
   <div class="filtros">
     <select id="hf_mes" onchange="cargarHist()"><option value="">Cargando meses...</option></select>
@@ -2773,7 +2797,7 @@ async function aplicarPermisos(){
   document.querySelectorAll('[data-perm]').forEach(e=>e.style.display=puede(e.dataset.perm)?'':'none');
   const adm=puede('usuarios');
   document.getElementById('sec_admin').style.display=adm?'':'none';
-  botones.filter(b=>(b.getAttribute('onclick')||'').includes("'pg_usu'")).forEach(b=>b.style.display=adm?'':'none');
+  botones.filter(b=>/'pg_usu'|'pg_libro'/.test(b.getAttribute('onclick')||'')).forEach(b=>b.style.display=adm?'':'none');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2974,6 +2998,74 @@ async function informeTodo(){
     const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,hojaAncha(XLSX.utils.json_to_sheet(rows),[9,7,9,14,15,15,12,12,13,70]),'Meses');
     XLSX.writeFile(wb,'IREMI_Resumen_todos_los_meses.xlsx'); toast('✓ Descargado');
   }catch(e){ toast('✗ '+e.message); } finally{ btn.disabled=false; }
+}
+
+
+// ══════════════════════════════════════════════════════════
+//  v4.5 · LIBRO EXCEL (solo administrador)
+// ══════════════════════════════════════════════════════════
+let _lxHojas=[], _lxFilas=[], _lxCols=[];
+async function cargarLibro(){
+  const sel=document.getElementById('lx_hoja');
+  if(!puede('usuarios')){ document.getElementById('lx_tabla').innerHTML='<tr><td>🔒 Solo el administrador puede ver el libro.</td></tr>'; return; }
+  if(!_lxHojas.length){
+    try{ _lxHojas=(await sbPost('libro_excel_hojas?select=hoja,orden,columnas,filas&order=orden.asc'))||[]; }
+    catch(e){ document.getElementById('lx_info').textContent='✗ '+e.message; return; }
+    if(!_lxHojas.length){ document.getElementById('lx_info').innerHTML='Todavía no está cargado. Corre <b>IREMI_libro_excel.sql</b> en Supabase.'; sel.innerHTML=''; return; }
+    sel.innerHTML=_lxHojas.map(h=>'<option value="'+esc(h.hoja)+'">'+esc(h.hoja)+' ('+h.filas+')</option>').join('');
+    const mens=_lxHojas.filter(h=>/^(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)/i.test(h.hoja)); if(mens.length) sel.value=mens[mens.length-1].hoja;
+  }
+  cargarLibroHoja();
+}
+async function cargarLibroHoja(){
+  const hoja=document.getElementById('lx_hoja').value, info=document.getElementById('lx_info');
+  info.textContent='Cargando '+hoja+'...';
+  try{
+    _lxFilas=(await sbPost('libro_excel?select=fila,datos&hoja=eq.'+encodeURIComponent(hoja)+'&order=fila.asc&limit=2000'))||[];
+    _lxCols=((_lxHojas.find(h=>h.hoja===hoja)||{}).columnas)||[];
+    pintarLibro();
+  }catch(e){ info.textContent='✗ '+e.message; }
+}
+function lxCelda(v,col){
+  if(v==null) return ['',''];
+  if(typeof v==='number'){
+    const c=String(col||'').toLowerCase(); let t;
+    if(/%/.test(c)&&Math.abs(v)<5) t=(v*100).toFixed(2)+'%';
+    else if(Math.abs(v)>=1000) t=Math.round(v).toLocaleString('es-CL');
+    else if(Number.isInteger(v)) t=String(v);
+    else if(Math.abs(v)>=1) t=v.toLocaleString('es-CL',{maximumFractionDigits:2});
+    else t=v.toLocaleString('es-CL',{maximumSignificantDigits:4});
+    return [t, v<0?'neg':''];
+  }
+  const sv=String(v);
+  if(/^\d{4}-\d\d-\d\d$/.test(sv)) return [sv.slice(8)+'/'+sv.slice(5,7)+'/'+sv.slice(0,4),''];
+  if(/^#/.test(sv)) return [sv,'err'];
+  return [sv,'t'];
+}
+function pintarLibro(){
+  const q=(document.getElementById('lx_buscar').value||'').trim().toLowerCase(), tabla=document.getElementById('lx_tabla');
+  const n=Math.max(_lxCols.length,..._lxFilas.map(f=>(f.datos||[]).length));
+  const cols=Array.from({length:n},(_,i)=>_lxCols[i]||String.fromCharCode(65+(i%26)));
+  let hits=0;
+  const filas=_lxFilas.map(f=>{
+    const d=f.datos||[]; const txt=d.map(x=>x==null?'':String(x)).join(' ').toLowerCase();
+    const hit=q&&txt.includes(q); if(hit) hits++;
+    const res=d[0]==null&&d[1]==null&&d.some(x=>x!=null);   // filas de resumen / pie de hoja
+    return '<tr class="'+(res?'res ':'')+(hit?'hit':'')+'"><td>'+f.fila+'</td>'+cols.map((c,i)=>{const [t,cl]=lxCelda(d[i],c); return '<td class="'+cl+'">'+esc(t)+'</td>';}).join('')+'</tr>';
+  });
+  tabla.innerHTML='<tr><th>#</th>'+cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr>'+filas.join('');
+  document.getElementById('lx_info').textContent=_lxFilas.length+' filas · '+n+' columnas'+(q?' · '+hits+' coincidencias (resaltadas)':'');
+  if(q&&hits){ const h=tabla.querySelector('tr.hit'); if(h) h.scrollIntoView({block:'center'}); }
+}
+async function bajarHoja(){
+  const hoja=document.getElementById('lx_hoja').value; if(!_lxFilas.length) return toast('Primero elige una hoja');
+  try{ await cargaXLSX();
+    const n=Math.max(_lxCols.length,..._lxFilas.map(f=>(f.datos||[]).length));
+    const aoa=[Array.from({length:n},(_,i)=>_lxCols[i]||'')].concat(_lxFilas.map(f=>Array.from({length:n},(_,i)=>{const v=(f.datos||[])[i];
+      return typeof v==='string'&&/^\d{4}-\d\d-\d\d$/.test(v)?new Date(v+'T12:00:00'):(v==null?'':v);})));
+    const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa,{cellDates:true}),hoja.slice(0,31));
+    XLSX.writeFile(wb,'IREMI_Libro_'+hoja.replace(/\s+/g,'_')+'.xlsx'); toast('✓ Descargado');
+  }catch(e){ toast('✗ '+e.message); }
 }
 
 // ══════════════════════════════════════════════════════════
