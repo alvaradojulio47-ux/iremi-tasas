@@ -2204,6 +2204,13 @@ async function cargarInicio(){
       sbPost('robot_estado?select=clave,valor,actualizado'),
       sbPost('robot_alertas?select=fecha,mensaje&order=fecha.desc&limit=1'),
       sbPost('tasas_diarias?select=fecha,ves,hora,fuente&fecha=eq.'+hoy)]);
+    // usuario con sesión pero fuera de la lista app_usuarios: la base de datos no le muestra nada
+    const yo=await sbPost('app_usuarios?select=email&limit=1');
+    if(!(yo&&yo.length)){
+      const em=(sesion()||{}).email||'tu usuario';
+      if(aviso) aviso.innerHTML='<div class="panel" style="border-color:#7f1d1d;color:#f87171;font-size:12px">🔒 <b>'+em+'</b> inició sesión, pero no está autorizado para ver los datos. Agrégalo a la tabla <b>app_usuarios</b> en Supabase.</div>';
+      return;
+    }
     const ventas=(ords||[]).filter(o=>o.tipo==='SELL');
     const gan=o=>o.clp_final==null?0:(o.clp_final-o.usdt*o.costo_usdt);
     const resumir=arr=>{const clp=arr.reduce((s,o)=>s+(o.clp_final||0),0), g=arr.reduce((s,o)=>s+gan(o),0);
