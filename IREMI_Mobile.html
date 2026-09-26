@@ -344,6 +344,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 .masbtn small{display:block;font-size:10px;font-weight:500;color:#6b85a8}
 .pronto{text-align:center;color:#6b85a8;padding:40px 20px;font-size:13px;line-height:1.6}
 #tasa_estado{font-size:10px;text-align:center;color:#6b85a8;margin-top:4px}
+/* v3.2 historial */
 /* v3.1 */
 .filtros{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .filtros select,.filtros input[type=month]{background:#0d1f3c;border:1px solid #2a4070;border-radius:8px;color:#fff;
@@ -373,8 +374,9 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 .cfg-row{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:end;padding:8px 0;border-bottom:1px solid #16294a}
 .cfg-row small{display:block;font-size:10px;color:#6b85a8;margin:2px 0 4px}
 .cfg-row input{width:100%;background:#060e1a;border:1.5px solid #2a4070;border-radius:8px;color:#fff;font-size:14px;padding:8px 9px;outline:none}
+.hs-row{cursor:pointer} .hs-row:hover td{background:#0f1f3a} .hs-tot td{font-weight:700;color:var(--gold);border-top:2px solid #2a4070}
 .volver{background:none;border:none;color:var(--gold);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;padding:0 0 8px}
-@media(min-width:900px){#pg_cuadre.on,#pg_htasas.on,#pg_belkys.on,#pg_alertas.on{display:block;max-width:980px;margin:0 auto}}
+@media(min-width:900px){#pg_cuadre.on,#pg_hist.on,#pg_htasas.on,#pg_belkys.on,#pg_alertas.on{display:block;max-width:980px;margin:0 auto}}
 @media(min-width:900px){#pg_inicio.on,#pg_mov.on,#pg_gastos.on,#pg_mas.on{display:block;max-width:980px;margin:0 auto}}
 #pg_inicio.on > .kgrid,#pg_inicio.on > .section,#pg_inicio.on > #ini_aviso,#pg_mas.on > .section{padding-bottom:0}
 #pg_inicio.on > .panel,#pg_mas.on > .panel{padding-bottom:12px}
@@ -548,10 +550,17 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
   <div class="panel"><h3>⚖️ Cuadre de caja USDT</h3><div id="cq_body">Cargando...</div></div>
   <div style="font-size:11px;color:#6b85a8;line-height:1.6">Se parte del saldo que el robot leyó la primera vez y se suman compras, restan ventas y comisiones, y se suman los Binance Pay con terceros. Si la diferencia no es 0, hay un movimiento que el libro no conoce.</div>
 </div>
+<div class="pg" id="pg_hist" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
+  <div class="filtros"><select id="hs_anio" onchange="pintarHist()"></select></div>
+  <div class="panel"><h3>📚 Ganancia y utilidad por mes</h3><div id="hs_graf">Cargando...</div></div>
+  <div class="panel" style="overflow-x:auto"><table class="tabla" id="hs_tabla"></table></div>
+  <div class="panel" id="hs_det" style="display:none"></div>
+  <div style="font-size:11px;color:#6b85a8;line-height:1.6">Hasta agosto 2026 los datos vienen de tu <b>libro de cambios en Excel</b>; desde septiembre 2026, del <b>robot</b>. <b>Utilidad</b> = ganancia de los cambios − gastos anotados. Toca un mes para ver el detalle por país.</div>
+</div>
 <div class="pg" id="pg_htasas" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
   <div class="filtros">
     <select id="ht_pais" onchange="cargarHTasas()"><option value="ves">🇻🇪 Venezuela</option><option value="cop">🇨🇴 Colombia</option><option value="pen">🇵🇪 Perú</option><option value="ars">🇦🇷 Argentina</option><option value="eur">🇪🇸 España</option><option value="dop">🇩🇴 Dominicana</option><option value="mxn">🇲🇽 México</option><option value="bob">🇧🇴 Bolivia</option><option value="pab">🇵🇦 Panamá</option><option value="ecu">🇪🇨 Ecuador</option><option value="zelle">Zelle</option><option value="paypal">PayPal</option><option value="usdt">USDT</option></select>
-    <select id="ht_dias" onchange="cargarHTasas()"><option value="14">14 días</option><option value="30" selected>30 días</option><option value="60">60 días</option></select>
+    <select id="ht_dias" onchange="cargarHTasas()"><option value="14">14 días</option><option value="30" selected>30 días</option><option value="60">60 días</option><option value="180">6 meses</option><option value="365">1 año</option><option value="800">Todo</option></select>
   </div>
   <div class="panel"><h3 id="ht_tit">Tasa IREMI</h3><div id="ht_graf"></div></div>
   <div class="panel" style="overflow-x:auto"><table class="tabla" id="ht_tabla"></table></div>
@@ -584,6 +593,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
   <button type="button" class="masbtn" onclick="showPg('pg_p2p','nb_mas');diagP2P()">🔬 Diagnóstico P2P <small>Precios en vivo de Binance</small></button>
   <div class="section">Gestión</div>
   <button type="button" class="masbtn" onclick="showPg('pg_cuadre','nb_mas');cargarCuadre()">⚖️ Cuadre de caja <small>Libro vs. saldo real en Binance</small></button>
+  <button type="button" class="masbtn" onclick="showPg('pg_hist','nb_mas');cargarHist()">📚 Historial mensual <small>Todos tus meses desde ago-2025: cambios, ganancia, gastos y utilidad</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_htasas','nb_mas');cargarHTasas()">📈 Historial de tasas <small>Tu tasa, el mercado y tu margen real por país</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_belkys','nb_mas');cargarBelkys()">🤝 Belkys <small>Ingresos, pagos, tu 4% y el resto a Venezuela</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_alertas','nb_mas');cargarAlertas()">🔔 Alertas <small>Precio objetivo, WhatsApp y últimos avisos</small></button>
@@ -2533,9 +2543,8 @@ async function cargarHTasas(){
     const fiat=HT_FIAT[col];
     const [tas,ords]=await Promise.all([
       sbPost('tasas_diarias?select=fecha,'+col+',mercado,margen,hora&fecha=gte.'+desde+'&order=fecha.asc'),
-      fiat?sbPost('v_ordenes?select=creado,usdt,clp_final,costo_usdt&estado=eq.COMPLETED&tipo=eq.SELL&fiat=eq.'+fiat+'&creado=gte.'+tz(desde)+'&limit=5000'):Promise.resolve([])]);
-    const R={}; (ords||[]).forEach(o=>{ if(o.clp_final==null) return; const d=diaDe(o.creado); const r=R[d]||(R[d]={n:0,clp:0,g:0});
-      r.n++; r.clp+=+o.clp_final; r.g+=o.clp_final-o.usdt*o.costo_usdt; });
+      fiat?sbPost('v_margen_diario?select=fecha,n,clp,ganancia&destino=eq.'+fiat+'&fecha=gte.'+desde):Promise.resolve([])]);
+    const R={}; (ords||[]).forEach(o=>{ R[o.fecha]={n:+o.n,clp:+o.clp,g:+o.ganancia}; });
     const cls=m=>m==null?'':(m>=5?'mg-ok':(m>=3?'mg-med':'mg-bad'));
     const filas=(tas||[]).filter(t=>t[col]!=null).map(t=>{
       const mk=t.mercado||{}; const merc=(mk[col==='zelle'?'usd':col]&&mk.clp)?mk[col]/mk.clp:null;
@@ -2546,10 +2555,10 @@ async function cargarHTasas(){
     if(filas.length>=2){
       const W=600,H=170,P=24,B=40, vs=filas.map(x=>x.v), mn=Math.min(...vs), mx=Math.max(...vs), rg=(mx-mn)||mx*0.01||1;
       const X=i=>P+i*(W-2*P)/(filas.length-1), Y=v=>H-B-(v-mn)*(H-B-P)/rg;
-      const dd=f=>f.slice(8)+'/'+f.slice(5,7);
+      const dd=f=>f.slice(8)+'/'+f.slice(5,7)+(dias>60?'/'+f.slice(2,4):'');
       g.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto">'+
         '<polyline fill="none" stroke="#f5c518" stroke-width="2.5" points="'+filas.map((x,i)=>X(i)+','+Y(x.v)).join(' ')+'"/>'+
-        filas.map((x,i)=>'<circle cx="'+X(i)+'" cy="'+Y(x.v)+'" r="3" fill="#f5c518"/>').join('')+
+        (filas.length<=70?filas.map((x,i)=>'<circle cx="'+X(i)+'" cy="'+Y(x.v)+'" r="3" fill="#f5c518"/>').join(''):'')+
         '<line x1="'+P+'" y1="'+Y(mx)+'" x2="'+(W-P)+'" y2="'+Y(mx)+'" stroke="#1e3256" stroke-dasharray="4 4"/>'+
         '<line x1="'+P+'" y1="'+Y(mn)+'" x2="'+(W-P)+'" y2="'+Y(mn)+'" stroke="#1e3256" stroke-dasharray="4 4"/>'+
         '<text x="'+P+'" y="'+(Y(mx)-5)+'" fill="#c8d6e5" font-size="12">máx '+fmtTasa(mx,col)+'</text>'+
@@ -2558,10 +2567,61 @@ async function cargarHTasas(){
         '<text x="'+(W-P)+'" y="'+(H-4)+'" fill="#6b85a8" font-size="12" text-anchor="end">'+dd(filas[filas.length-1].f)+' (hoy: '+fmtTasa(filas[filas.length-1].v,col)+')</text></svg>';
     } else g.innerHTML='<div style="font-size:12px;color:#6b85a8">Faltan datos para el gráfico en este período.</div>';
     tabla.innerHTML='<tr><th>Día</th><th>Tasa IREMI</th><th>Margen teórico</th><th>Margen real</th><th>Cambios</th></tr>'+
-      (filas.length?filas.slice().reverse().map(x=>'<tr><td>'+x.f.slice(8)+'/'+x.f.slice(5,7)+'</td><td>'+fmtTasa(x.v,col)+'</td>'+
+      (filas.length?filas.slice().reverse().map(x=>'<tr><td>'+x.f.slice(8)+'/'+x.f.slice(5,7)+(dias>60?'/'+x.f.slice(2,4):'')+'</td><td>'+fmtTasa(x.v,col)+'</td>'+
         '<td class="'+cls(x.mt)+'">'+(x.mt==null?'—':x.mt.toFixed(1)+'%')+'</td><td class="'+cls(x.mr)+'">'+(x.mr==null?'—':x.mr.toFixed(1)+'%')+'</td><td>'+(x.n||'—')+'</td></tr>').join('')
         :'<tr><td colspan="5">Sin tasas guardadas para este país en el período.</td></tr>');
   }catch(e){ tabla.innerHTML='<tr><td style="color:#f87171">✗ '+esc(e.message)+'</td></tr>'; }
+}
+
+// ══════════════════════════════════════════════════════════
+//  HISTORIAL MENSUAL (libro + robot)
+// ══════════════════════════════════════════════════════════
+let _hist=[];
+const MES_N=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const mesTxt=m=>MES_N[+m.slice(5,7)-1]+'-'+m.slice(2,4);
+async function cargarHist(){
+  try{
+    _hist=await sbPost('v_resumen_mensual?select=*&order=mes.asc')||[];
+    const sel=document.getElementById('hs_anio'), anios=[...new Set(_hist.map(h=>h.mes.slice(0,4)))];
+    const prev=sel.value; sel.innerHTML='<option value="">Todos los meses</option>'+anios.map(a=>'<option>'+a+'</option>').join(''); sel.value=prev||'';
+    pintarHist();
+  }catch(e){ document.getElementById('hs_graf').innerHTML='<span style="color:#f87171">✗ '+esc(e.message)+'</span>'; }
+}
+function pintarHist(){
+  const a=document.getElementById('hs_anio').value, L=_hist.filter(h=>!a||h.mes.startsWith(a));
+  const g=document.getElementById('hs_graf');
+  if(!L.length){ g.innerHTML='Sin datos'; document.getElementById('hs_tabla').innerHTML=''; return; }
+  const W=600,H=190,P=8,B=22, mx=Math.max(...L.map(h=>Math.max(+h.ganancia||0,+h.utilidad||0)),1), mn=Math.min(0,...L.map(h=>+h.utilidad||0));
+  const bw=(W-2*P)/L.length, Y=v=>P+(mx-v)*(H-B-P)/(mx-mn), y0=Y(0);
+  g.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto">'+
+    L.map((h,i)=>{const x=P+i*bw, gy=Y(+h.ganancia||0), u=+h.utilidad||0, uy=Y(u);
+      return '<rect x="'+(x+bw*0.12)+'" y="'+gy+'" width="'+(bw*0.38)+'" height="'+Math.max(1,y0-gy)+'" fill="#f5c518" rx="2"/>'+
+        '<rect x="'+(x+bw*0.5)+'" y="'+Math.min(uy,y0)+'" width="'+(bw*0.38)+'" height="'+Math.max(1,Math.abs(y0-uy))+'" fill="'+(u>=0?'#22c55e':'#f87171')+'" rx="2"/>'+
+        '<text x="'+(x+bw/2)+'" y="'+(H-6)+'" fill="#6b85a8" font-size="'+(L.length>14?9:11)+'" text-anchor="middle">'+mesTxt(h.mes)+'</text>';}).join('')+
+    '<line x1="'+P+'" y1="'+y0+'" x2="'+(W-P)+'" y2="'+y0+'" stroke="#2a4070"/></svg>'+
+    '<div style="font-size:11px;color:#c8d6e5;margin-top:4px"><span style="color:#f5c518">■</span> Ganancia cambios &nbsp; <span style="color:#22c55e">■</span> Utilidad (− gastos)</div>';
+  const T={c:0,clp:0,g:0,ga:0,u:0}; L.forEach(h=>{T.c+=+h.cambios||0;T.clp+=+h.clp_cambiado||0;T.g+=+h.ganancia||0;T.ga+=+h.gastos||0;T.u+=+h.utilidad||0;});
+  document.getElementById('hs_tabla').innerHTML='<tr><th>Mes</th><th>Cambios</th><th>CLP cambiado</th><th>Ganancia</th><th>Margen</th><th>Gastos</th><th>Utilidad</th></tr>'+
+    L.slice().reverse().map(h=>{const m=h.clp_cambiado?h.ganancia/h.clp_cambiado*100:null;
+      return '<tr class="hs-row" onclick="detalleMes(\''+h.mes+'\')"><td>'+mesTxt(h.mes)+(h.origen==='robot'?' 🤖':'')+'</td><td>'+(h.cambios||0)+'</td><td>'+$clp(h.clp_cambiado)+'</td><td>'+$clp(h.ganancia)+
+        '</td><td class="'+(m==null?'':(m>=5?'mg-ok':(m>=3?'mg-med':'mg-bad')))+'">'+(m==null?'—':m.toFixed(1)+'%')+'</td><td>'+$clp(h.gastos)+'</td><td class="'+((+h.utilidad)<0?'mg-bad':'')+'">'+$clp(h.utilidad)+'</td></tr>';}).join('')+
+    '<tr class="hs-tot"><td>Total</td><td>'+T.c+'</td><td>'+$clp(T.clp)+'</td><td>'+$clp(T.g)+'</td><td>'+(T.clp?(T.g/T.clp*100).toFixed(1)+'%':'—')+'</td><td>'+$clp(T.ga)+'</td><td>'+$clp(T.u)+'</td></tr>';
+}
+async function detalleMes(mes){
+  const box=document.getElementById('hs_det'); box.style.display='block'; box.innerHTML='Cargando '+mesTxt(mes)+'...';
+  const h=_hist.find(x=>x.mes===mes)||{};
+  try{
+    const [ops,gas]=await Promise.all([sbPost('v_operaciones?select=destino,monto_clp,ganancia_clp,usdt&tipo=eq.VENTA&mes=eq.'+mes),
+      sbPost('robot_gastos?select=categoria,descripcion,monto_clp&fecha=gte.'+mes+'&fecha=lt.'+mesDe(mes,1)+'&order=monto_clp.desc')]);
+    const D={}; (ops||[]).forEach(o=>{const k=o.destino||'¿?'; const r=D[k]||(D[k]={n:0,clp:0,g:0}); r.n++; r.clp+=+o.monto_clp||0; r.g+=+o.ganancia_clp||0;});
+    const rows=Object.entries(D).sort((a,b)=>b[1].clp-a[1].clp);
+    box.innerHTML='<h3>🔎 '+mesTxt(mes)+' por país de destino</h3><table class="tabla"><tr><th>Destino</th><th>Cambios</th><th>CLP</th><th>Ganancia</th><th>Margen</th></tr>'+
+      rows.map(([k,r])=>'<tr><td>'+esc(k)+'</td><td>'+r.n+'</td><td>'+$clp(r.clp)+'</td><td>'+$clp(r.g)+'</td><td>'+(r.clp?(r.g/r.clp*100).toFixed(1)+'%':'—')+'</td></tr>').join('')+'</table>'+
+      ((gas||[]).length?'<h3 style="margin-top:12px">💸 Gastos del mes</h3><table class="tabla">'+gas.map(g=>'<tr><td>'+esc(g.categoria)+' · '+esc(g.descripcion||'')+'</td><td>'+$clp(g.monto_clp)+'</td></tr>').join('')+'</table>':'')+
+      (h.ganancia_libro?'<div style="font-size:11px;color:#6b85a8;margin-top:8px">En el pie de la hoja del Excel anotaste: ganancia '+$clp(h.ganancia_libro)+(h.boleta?' · boleta '+$clp(h.boleta):'')+(h.pendiente?' · pendiente '+$clp(h.pendiente):'')+'</div>':'')+
+      '<div style="font-size:11px;color:#6b85a8;margin-top:4px">El país de destino del libro es estimado a partir de la tasa usada.</div>';
+    box.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){ box.innerHTML='<span style="color:#f87171">✗ '+esc(e.message)+'</span>'; }
 }
 
 // ══════════════════════════════════════════════════════════
