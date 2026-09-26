@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="IREMI">
 <title>IREMI Remesas</title>
-<meta name="version" content="4.1">
+<meta name="version" content="4.2">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -39,11 +39,10 @@ html[data-theme="light"] #flyer{
 }
 html[data-theme="light"] .panel,html[data-theme="light"] .kc,html[data-theme="light"] .mv,html[data-theme="light"] .masbtn{box-shadow:0 1px 3px rgba(15,27,45,.08)}
 html[data-theme="light"] .topbar,html[data-theme="light"] .nav{box-shadow:0 1px 4px rgba(15,27,45,.08)}
-html[data-theme="light"] #login{background:radial-gradient(circle at 50% 20%,#dbe6f7,#eef2f7 70%)}
 html[data-theme="light"] .modal{background:rgba(15,27,45,.55)}
 html[data-theme="light"] .tt{color:#b38600}
 body{transition:background .3s,color .3s}
-#login .lbox button.lnk{background:none;color:var(--gold);width:auto;padding:6px 2px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;text-decoration:underline;border-radius:0}
+
 html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Barlow Condensed',sans-serif;overflow-x:hidden}
 
 /* ── TOPBAR ── */
@@ -339,19 +338,6 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 }
 
 /* ══ v3.0: LOGIN + INICIO ══════════════════════════════════ */
-#login{position:fixed;inset:0;z-index:500;background:radial-gradient(circle at 50% 20%,var(--glow),var(--dark) 70%);
-  display:none;align-items:center;justify-content:center;padding:20px}
-#login.on{display:flex}
-.lbox{width:100%;max-width:360px;background:var(--card);border:1.5px solid var(--bord);border-radius:16px;padding:22px 20px;
-  box-shadow:0 10px 40px rgba(0,0,0,.6)}
-.lbox h1{font-size:22px;font-weight:900;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;text-align:center}
-.lbox p{font-size:11px;color:var(--silver);text-align:center;margin:4px 0 16px}
-.lbox input{width:100%;background:var(--dark);border:1.5px solid var(--bord);border-radius:9px;color:var(--tx);
-  font-family:'Barlow',sans-serif;font-size:15px;padding:11px 12px;outline:none;margin-bottom:10px}
-.lbox input:focus{border-color:var(--gold)}
-.lbox button{width:100%;padding:12px;border:none;border-radius:10px;background:var(--gold);color:var(--on-gold);
-  font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
-#login_err{font-size:11px;color:var(--red2);text-align:center;min-height:16px;margin-top:8px}
 .kgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 @media(min-width:700px){.kgrid{grid-template-columns:repeat(4,1fr)}}
 .kc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
@@ -370,6 +356,49 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 .masbtn small{display:block;font-size:10px;font-weight:500;color:var(--mute)}
 .pronto{text-align:center;color:var(--mute);padding:40px 20px;font-size:13px;line-height:1.6}
 #tasa_estado{font-size:10px;text-align:center;color:var(--mute);margin-top:4px}
+
+/* ── LOGIN v4.2 (diseño IREMI "Acercando familias") ── */
+#login{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;overflow:auto;
+  background:linear-gradient(180deg,#002759 0%,#01183d 55%,#010d22 100%);font-family:'Barlow',sans-serif}
+#login.on{display:flex}
+.lg-poster{position:relative;flex:none;width:min(100vw,calc(100dvh * 941 / 1672));aspect-ratio:941/1672;
+  background:url('login_fondo.jpg') center/100% 100% no-repeat;container-type:inline-size}
+#login .lbox{position:absolute;left:12.6%;top:29.8%;width:74.8%;min-height:45.6%;box-sizing:border-box;
+  background:linear-gradient(180deg,#0f2558 0%,#0a1b45 100%);border:1.5px solid rgba(96,140,220,.55);border-radius:4.2cqw;
+  box-shadow:0 0 5cqw rgba(40,90,200,.35),inset 0 1px 0 rgba(255,255,255,.08);padding:3.2cqw 4.8cqw 3cqw;color:#fff;text-align:center}
+#login h2{font-family:'Barlow',sans-serif;font-size:5cqw;font-weight:700;color:#fff;letter-spacing:.01em;line-height:1.1}
+#login #lg_txt{font-size:max(10px,2.45cqw);color:#dfe7f5;line-height:1.35;margin:1cqw 0 3cqw}
+.lg-in{display:flex;align-items:center;gap:2.4cqw;height:8cqw;margin-bottom:2.2cqw;padding:0 2.6cqw;
+  background:#071433;border:1.5px solid rgba(96,140,220,.5);border-radius:2.6cqw;cursor:text}
+.lg-in:focus-within{border-color:#f7c325;box-shadow:0 0 0 2px rgba(247,195,37,.2)}
+.lg-in svg{width:3.4cqw;height:3.4cqw;flex:none;stroke:#c9d4e8;fill:none;stroke-width:1.7}
+.lg-in input{flex:1;min-width:0;background:none;border:none;outline:none;color:#fff;font-family:'Barlow',sans-serif;font-size:max(15px,2.9cqw)}
+.lg-in input::placeholder{color:#8f9fbd}
+.lg-eye{background:none;border:none;padding:1cqw;cursor:pointer;display:flex}
+.lg-row{display:flex;align-items:center;justify-content:space-between;gap:2cqw;margin:0 0 2.4cqw;font-size:max(11px,2.3cqw);white-space:nowrap}
+.lg-row label{display:flex;align-items:center;gap:1.6cqw;color:#e6ecf7;cursor:pointer}
+.lg-row input{appearance:none;-webkit-appearance:none;width:3.6cqw;height:3.6cqw;min-width:16px;min-height:16px;flex:none;border-radius:.8cqw;background:#f7c325;
+  display:grid;place-content:center;cursor:pointer;margin:0}
+.lg-row input::after{content:'';width:9px;height:5px;border:solid #0a1628;border-width:0 0 2.5px 2.5px;transform:rotate(-45deg) translate(1px,-1px);}
+.lg-row input:not(:checked){background:#071433;border:1.5px solid rgba(96,140,220,.6)}
+.lg-row input:not(:checked)::after{display:none}
+.lg-olv{background:none;border:none;color:#f7c325;font-weight:700;font-family:'Barlow',sans-serif;font-size:max(11px,2.3cqw);cursor:pointer;padding:0;white-space:nowrap}
+#lg_btn{position:relative;width:100%;height:8.4cqw;border:none;border-radius:2.6cqw;cursor:pointer;
+  background:linear-gradient(180deg,#ffd23f,#f2b705);color:#0a1628;font-family:'Barlow Condensed',sans-serif;font-weight:800;
+  font-size:max(16px,3.4cqw);letter-spacing:.04em;text-transform:uppercase;box-shadow:0 1cqw 3cqw rgba(242,183,5,.25)}
+#lg_btn::after{content:'';position:absolute;right:4cqw;top:50%;width:3.4cqw;height:3.4cqw;transform:translateY(-50%);
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230a1628' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12h15M13 6l6 6-6 6'/%3E%3C/svg%3E") center/contain no-repeat}
+#lg_btn:disabled{opacity:.7}
+#login_err{font-size:max(11px,2.2cqw);color:#ff8a8a;min-height:2cqw;margin:1.2cqw 0 .4cqw;line-height:1.3}
+.lg-div{display:flex;align-items:center;gap:2.4cqw;color:#c9d4e8;font-size:2.4cqw;margin:0 0 2cqw}
+.lg-div::before,.lg-div::after{content:'';flex:1;height:1px;background:rgba(201,212,232,.35)}
+.lg-2{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqw;margin:0 -1.8cqw}
+.lg-ob{display:flex;align-items:center;justify-content:center;gap:2cqw;height:10.4cqw;background:rgba(7,20,51,.6);
+  border:1.5px solid #f7c325;border-radius:2cqw;color:#f7c325;font-family:'Barlow Condensed',sans-serif;font-weight:800;
+  font-size:max(11px,2.5cqw);line-height:1.1;letter-spacing:.02em;cursor:pointer;text-transform:uppercase}
+.lg-ob svg{width:3.6cqw;height:3.6cqw;min-width:16px;min-height:16px;fill:#f7c325;flex:none}
+@media (min-aspect-ratio:941/1672){ .lg-poster{width:calc(100dvh * 941 / 1672)} }
+/* v4.2 login nuevo */
 /* v4.1 tema claro/oscuro */
 /* v4.0 etapa 4 */
 /* v3.2 historial */
@@ -444,18 +473,24 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
 <body>
 <!-- ══ LOGIN (v3.0) ══════════════════════════════════════════ -->
 <div id="login">
-  <form class="lbox" onsubmit="entrar(event)">
-    <h1>IREMI Remesas</h1>
-    <p id="lg_txt">Ingresa con tu correo y contraseña</p>
-    <input type="email" id="lg_email" placeholder="Correo" autocomplete="username" required>
-    <input type="password" id="lg_pass" placeholder="Contraseña" autocomplete="current-password" required>
+  <div class="lg-poster">
+  <form class="lbox" onsubmit="entrar(event)" autocomplete="on">
+    <h2 id="lg_tit">Bienvenido</h2>
+    <p id="lg_txt">Ingresa con tu correo y contraseña<br>para acceder a tu cuenta</p>
+    <label class="lg-in" id="lg_em_w"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6l8.5 7 8.5-7"/></svg><input type="email" id="lg_email" placeholder="Correo electrónico" autocomplete="username" required></label>
+    <label class="lg-in"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><circle cx="12" cy="16" r="1.2"/></svg><input type="password" id="lg_pass" placeholder="Contraseña" autocomplete="current-password" required>
+      <button type="button" class="lg-eye" onclick="verPass()" aria-label="Mostrar contraseña"><svg viewBox="0 0 24 24" id="lg_ojo"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path id="lg_ojo_x" d="M4 4l16 16"/></svg></button></label>
+    <div class="lg-row" id="lg_row"><label><input type="checkbox" id="lg_rec" checked><span>Recordar mi sesión</span></label>
+      <button type="button" class="lg-olv" onclick="olvide()">¿Olvidé mi contraseña?</button></div>
     <button type="submit" id="lg_btn">Entrar</button>
     <div id="login_err"></div>
-    <div id="lg_links" style="display:flex;justify-content:space-between;margin-top:8px">
-      <button type="button" class="lnk" id="lg_toggle" onclick="modoLogin(_lgModo==='crear'?'entrar':'crear')">Crear cuenta</button>
-      <button type="button" class="lnk" onclick="olvide()">Olvidé mi contraseña</button>
+    <div class="lg-div" id="lg_div">ó</div>
+    <div class="lg-2" id="lg_links">
+      <button type="button" class="lg-ob" onclick="modoLogin(_lgModo==='crear'?'entrar':'crear')"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M1.5 21c0-4.2 3.4-7 7.5-7s7.5 2.8 7.5 7z"/><path d="M19 8v6M16 11h6" stroke="#f7c325" stroke-width="2.2" stroke-linecap="round"/></svg><span id="lg_toggle">Crear cuenta</span></button>
+      <button type="button" class="lg-ob" onclick="olvide()"><svg viewBox="0 0 24 24"><path d="M7 10V7.5a5 5 0 0 1 10 0V10h1.2A1.8 1.8 0 0 1 20 11.8v8.4a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 20.2v-8.4A1.8 1.8 0 0 1 5.8 10zm2.4 0h5.2V7.5a2.6 2.6 0 0 0-5.2 0zM12 14a1.6 1.6 0 0 0-.8 3v1.6h1.6V17a1.6 1.6 0 0 0-.8-3z"/></svg><span>Olvidé mi<br>contraseña</span></button>
     </div>
   </form>
+  </div>
 </div>
 
 <!-- ══ TOPBAR ══════════════════════════════════════════════ -->
@@ -1212,7 +1247,8 @@ let allP2POps = []; // P2P ops loaded from Binance
 //  SESIÓN (v3.0) — Supabase Auth, solo usuarios autorizados
 // ══════════════════════════════════════════════════════════
 const AUTH_KEY='iremi_sesion';
-function sesion(){try{return JSON.parse(localStorage.getItem(AUTH_KEY)||'null');}catch{return null;}}
+function almacen(){ try{ return localStorage.getItem('iremi_recordar')==='0'?sessionStorage:localStorage; }catch{ return localStorage; } }
+function sesion(){try{return JSON.parse(localStorage.getItem(AUTH_KEY)||sessionStorage.getItem(AUTH_KEY)||'null');}catch{return null;}}
 async function authReq(grant, body){
   const r=await fetch(SB_URL+'/auth/v1/token?grant_type='+grant,{method:'POST',
     headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -1220,7 +1256,7 @@ async function authReq(grant, body){
   if(!r.ok) throw new Error(d.error_description||d.msg||d.message||('HTTP '+r.status));
   const s={access_token:d.access_token,refresh_token:d.refresh_token,
            expires_at:Date.now()+(d.expires_in||3600)*1000,email:(d.user&&d.user.email)||''};
-  try{localStorage.setItem(AUTH_KEY,JSON.stringify(s));}catch{}
+  try{almacen().setItem(AUTH_KEY,JSON.stringify(s));}catch{}
   return s;
 }
 let _refrescando=null;
@@ -1228,7 +1264,7 @@ async function tokenValido(){
   let s=sesion(); if(!s||!s.access_token) return null;
   if(Date.now() > (s.expires_at||0)-60000){
     if(!_refrescando) _refrescando=authReq('refresh_token',{refresh_token:s.refresh_token}).finally(()=>{_refrescando=null;});
-    try{ s=await _refrescando; }catch{ try{localStorage.removeItem(AUTH_KEY);}catch{} return null; }
+    try{ s=await _refrescando; }catch{ try{(localStorage.removeItem(AUTH_KEY),sessionStorage.removeItem(AUTH_KEY));}catch{} return null; }
   }
   return s.access_token;
 }
@@ -1240,16 +1276,21 @@ function mostrarLogin(msg){
 let _lgModo='entrar', _lgRecTok=null;
 function modoLogin(m){
   _lgModo=m; const t=document.getElementById('lg_txt'), b=document.getElementById('lg_btn'), g=document.getElementById('lg_toggle'),
-    em=document.getElementById('lg_email'), pw=document.getElementById('lg_pass');
-  document.getElementById('login_err').textContent='';
-  em.style.display=m==='nueva'?'none':''; em.required=m!=='nueva';
+    em=document.getElementById('lg_email'), pw=document.getElementById('lg_pass'), err=document.getElementById('login_err');
+  err.textContent=''; err.style.color='';
+  document.getElementById('lg_em_w').style.display=m==='nueva'?'none':''; em.required=m!=='nueva';
   pw.autocomplete=m==='entrar'?'current-password':'new-password';
   pw.placeholder=m==='entrar'?'Contraseña':'Nueva contraseña (mínimo 6)';
-  t.textContent={entrar:'Ingresa con tu correo y contraseña',crear:'Crea tu cuenta con el correo que te autorizó el administrador',nueva:'Escribe tu nueva contraseña'}[m];
+  document.getElementById('lg_tit').textContent={entrar:'Bienvenido',crear:'Crear cuenta',nueva:'Nueva contraseña'}[m];
+  t.innerHTML={entrar:'Ingresa con tu correo y contraseña<br>para acceder a tu cuenta',crear:'Usa el correo que te autorizó<br>el administrador de IREMI',nueva:'Escribe tu nueva contraseña<br>para volver a entrar'}[m];
   b.textContent={entrar:'Entrar',crear:'Crear cuenta',nueva:'Guardar contraseña'}[m];
   g.textContent=m==='crear'?'Ya tengo cuenta':'Crear cuenta';
-  document.getElementById('lg_links').style.display=m==='nueva'?'none':'flex';
+  document.getElementById('lg_row').style.visibility=m==='entrar'?'visible':'hidden';
+  document.getElementById('lg_links').style.display=m==='nueva'?'none':'';
+  document.getElementById('lg_div').style.display=m==='nueva'?'none':'';
 }
+function verPass(){ const p=document.getElementById('lg_pass'), x=document.getElementById('lg_ojo_x');
+  p.type=p.type==='password'?'text':'password'; x.style.display=p.type==='password'?'':'none'; }
 async function authFetch(path, body, method='POST', tok=null){
   const h={'apikey':SB_KEY,'Content-Type':'application/json'}; if(tok) h['Authorization']='Bearer '+tok;
   const r=await fetch(SB_URL+'/auth/v1/'+path,{method,headers:h,body:body?JSON.stringify(body):undefined});
@@ -1259,7 +1300,7 @@ async function authFetch(path, body, method='POST', tok=null){
 }
 function guardarSesionDe(d,email){
   const s={access_token:d.access_token,refresh_token:d.refresh_token,expires_at:Date.now()+(+d.expires_in||3600)*1000,email:email||(d.user&&d.user.email)||''};
-  try{localStorage.setItem(AUTH_KEY,JSON.stringify(s));}catch{} return s;
+  try{almacen().setItem(AUTH_KEY,JSON.stringify(s));}catch{} return s;
 }
 async function olvide(){
   const em=document.getElementById('lg_email').value.trim(), err=document.getElementById('login_err');
@@ -1283,6 +1324,7 @@ async function entrar(ev){
   if(_lgModo!=='entrar') return entrarOtro();
   const btn=document.getElementById('lg_btn'), err=document.getElementById('login_err');
   err.textContent=''; btn.disabled=true; btn.textContent='Entrando...';
+  try{ localStorage.setItem('iremi_recordar',document.getElementById('lg_rec').checked?'1':'0'); }catch{}
   try{
     await authReq('password',{email:document.getElementById('lg_email').value.trim(),
                               password:document.getElementById('lg_pass').value});
@@ -1310,7 +1352,7 @@ async function entrarOtro(){
   }catch(e){ err.textContent=/already|registered/i.test(e.message)?'Ese correo ya tiene cuenta: usa "Ya tengo cuenta" o "Olvidé mi contraseña"':('No se pudo: '+e.message); }
   finally{ btn.disabled=false; }
 }
-function salir(){ try{localStorage.removeItem(AUTH_KEY);}catch{} location.reload(); }
+function salir(){ try{(localStorage.removeItem(AUTH_KEY),sessionStorage.removeItem(AUTH_KEY));}catch{} location.reload(); }
 function pintarSesion(){ const s=sesion(); const e=document.getElementById('mas_email'); if(e) e.textContent=(s&&s.email)||'—';
   const r=document.getElementById('mas_rol'); if(r) r.textContent=!YO?'sin autorizar':(YO.rol==='admin'?'Administrador':'Usuario'+(YO.permisos?' ('+YO.permisos.length+' pantallas)':' (todo)')); }
 
@@ -1326,7 +1368,7 @@ async function sbPost(path, method='GET', body=null, prefer=null) {
   const opts = {method, headers};
   if(body) opts.body = JSON.stringify(body);
   const res = await fetch(SB_URL+'/rest/v1/'+path, opts);
-  if(res.status===401){ try{localStorage.removeItem(AUTH_KEY);}catch{} mostrarLogin('Tu sesión expiró. Vuelve a entrar.'); throw new Error('Sesión expirada'); }
+  if(res.status===401){ try{(localStorage.removeItem(AUTH_KEY),sessionStorage.removeItem(AUTH_KEY));}catch{} mostrarLogin('Tu sesión expiró. Vuelve a entrar.'); throw new Error('Sesión expirada'); }
   if(res.status===204) return [];
   if(!res.ok) {
     const err = await res.text();
