@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="IREMI">
 <title>IREMI Remesas</title>
-<meta name="version" content="4.8">
+<meta name="version" content="4.9">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -669,7 +669,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
     <form class="frm" onsubmit="guardarGasto(event)">
       <div><label>Fecha</label><input type="date" id="gs_fecha" required></div>
       <div><label>Monto CLP</label><input type="number" id="gs_monto" min="1" step="1" required placeholder="40000"></div>
-      <div><label>Categoría</label><select id="gs_cat"><option>Contador</option><option>IVA / SII</option><option>Combustible</option><option>Comisiones Binance</option><option>Sueldos</option><option>Retiro socio</option><option>Publicidad</option><option>Teléfono / Internet</option><option>Otros</option></select></div>
+      <div><label>Categoría</label><select id="gs_cat"><option>Contador</option><option>IVA / SII</option><option>Combustible</option><option>Comisiones Binance</option><option>Sueldos</option><option>Retiro socio</option><option>Envío familia</option><option>Publicidad</option><option>Teléfono / Internet</option><option>Otros</option></select></div>
       <div><label>¿Con factura?</label><select id="gs_fac"><option value="false">No</option><option value="true">Sí (IVA crédito)</option></select></div>
       <div class="full"><label>Descripción</label><input type="text" id="gs_desc" placeholder="Ej: honorario contador septiembre"></div>
       <div class="full"><button type="submit" class="btn b-gold" style="width:100%" id="gs_btn">💾 Guardar gasto</button></div>
@@ -690,9 +690,20 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
     <input type="file" id="bk_file" accept=".xlsx,.xls" multiple onchange="leerCartolas(this.files)" style="width:100%;color:var(--silver);font-size:12px">
     <div id="bk_prev" style="margin-top:10px"></div>
   </div>
-  <div class="panel"><h3>🔎 Por revisar</h3>
-    <div class="filtros"><select id="bk_cat" onchange="cargarRevisar()"><option value="por_revisar">Por revisar</option><option value="cambio_sin_orden">Cambio sin orden</option><option value="todos">Todos (últimos 150)</option></select></div>
-    <div id="bk_rev">Cargando...</div></div>
+  <div class="panel"><h3>🔎 Revisión</h3>
+    <div class="filtros">
+      <button type="button" class="btn b-gold" id="rv_t1" style="flex:1;padding:9px" onclick="tabRev(1)">Órdenes sin depósito</button>
+      <button type="button" class="btn b-gray" id="rv_t2" style="flex:1;padding:9px" onclick="tabRev(2)">Depósitos del banco</button>
+    </div>
+    <div id="rv_p1">
+      <div class="filtros"><label><input type="checkbox" id="rv_hechas" onchange="cargarSinDeposito()"> Ver también las ya revisadas</label></div>
+      <div id="rv_ord">Cargando...</div>
+      <div style="font-size:11px;color:var(--mute);line-height:1.6;margin-top:6px">Ventas de USDT del robot que no tienen un depósito en el banco. <b>✅ Aceptar</b>: fue un cambio (pagó en efectivo u otra cuenta). <b>💸 Familia</b>: fue un envío tuyo a Venezuela: se quita la ganancia y los USDT pasan a Gastos. <b>🔗 Unir</b>: elige el depósito que le corresponde.</div>
+    </div>
+    <div id="rv_p2" style="display:none">
+      <div class="filtros"><select id="bk_cat" onchange="cargarRevisar()"><option value="por_revisar">Por revisar</option><option value="cambio_sin_orden">Cambio sin orden</option><option value="todos">Todos (últimos 150)</option></select></div>
+      <div id="bk_rev">Cargando...</div>
+    </div></div>
   <div class="panel" style="overflow-x:auto"><h3>📚 Cartolas cargadas</h3><div id="bk_carts">Cargando...</div></div>
 </div>
 <div class="pg" id="pg_rep" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
@@ -1171,17 +1182,30 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
       <button type="button" class="btn b-gold" style="flex:2" onclick="guardarMov(false)">💾 Guardar</button>
       <button type="button" class="btn b-gray" style="flex:1" onclick="guardarMov(true)">↺ Usar el del robot</button>
     </div>
+    <div class="brow" style="margin-top:8px">
+      <button type="button" class="btn b-green" style="flex:1" onclick="revisarOrden(_movSel.order_number,'cambio')">✅ Aceptar cambio</button>
+      <button type="button" class="btn b-red" style="flex:1" onclick="revisarOrden(_movSel.order_number,'gasto')">💸 Envío familia (gasto)</button>
+    </div>
+    <div id="mm_rev" style="font-size:11px;color:var(--mute);margin-top:6px"></div>
   </div>
 </div>
 <!-- v4.0: movimiento del banco -->
 <div class="modal" id="modal_bk">
   <div class="mbox"><div class="mtit">🏦 Movimiento del banco <button type="button" class="mcl" onclick="closeModal('modal_bk')">✕</button></div>
     <div id="mb_info" style="font-size:12px;color:var(--silver);margin-bottom:10px;line-height:1.6"></div>
-    <div class="frm">
-      <div class="full"><label>¿Qué es?</label><select id="mb_cat"></select></div>
+    <div id="mb_acc"></div>
+    <div class="frm" style="margin-top:8px">
+      <div class="full"><label>O cambia el tipo a mano</label><select id="mb_cat"></select></div>
       <div class="full"><label>Nota</label><input type="text" id="mb_nota" placeholder="Ej: cambio de Juan a tasa especial"></div>
     </div>
     <button type="button" class="btn b-gold" style="width:100%;margin-top:10px" onclick="guardarBk()">💾 Guardar</button>
+  </div>
+</div>
+<!-- v4.9: unir orden con depósito -->
+<div class="modal" id="modal_unir">
+  <div class="mbox"><div class="mtit">🔗 Unir con un depósito <button type="button" class="mcl" onclick="closeModal('modal_unir')">✕</button></div>
+    <div id="mu2_info" style="font-size:12px;color:var(--silver);margin-bottom:8px;line-height:1.6"></div>
+    <div id="mu2_lista" style="max-height:50vh;overflow-y:auto"></div>
   </div>
 </div>
 <!-- v4.0: usuario -->
@@ -2499,7 +2523,7 @@ async function cargarInicio(){
   const aviso=document.getElementById('ini_aviso'); if(aviso) aviso.innerHTML='';
   try{
     const [ords,sal,px,res,est,al,tas]=await Promise.all([
-      sbPost('v_ordenes?select=cuenta,tipo,usdt,creado,clp_final,costo_usdt,metodo_clp&estado=eq.COMPLETED&creado=gte.'+encodeURIComponent(mesIni+'T00:00:00-03:00')+'&order=creado.desc&limit=5000'),
+      sbPost('v_ordenes?select=cuenta,tipo,usdt,creado,clp_final,costo_usdt,metodo_clp,revision&estado=eq.COMPLETED&creado=gte.'+encodeURIComponent(mesIni+'T00:00:00-03:00')+'&order=creado.desc&limit=5000'),
       sbPost('robot_saldos?select=cuenta,total,fecha&order=fecha.desc&limit=6'),
       sbPost('precios_p2p?select=clp_min,fecha&order=fecha.desc&limit=1'),
       sbPost('precios_resumen?select=*'),
@@ -2513,7 +2537,7 @@ async function cargarInicio(){
       if(aviso) aviso.innerHTML='<div class="panel" style="border-color:#7f1d1d;color:var(--red2);font-size:12px">🔒 <b>'+em+'</b> inició sesión, pero no está autorizado para ver los datos. Agrégalo a la tabla <b>app_usuarios</b> en Supabase.</div>';
       return;
     }
-    const ventas=(ords||[]).filter(o=>o.tipo==='SELL');
+    const ventas=(ords||[]).filter(o=>o.tipo==='SELL'&&o.revision!=='gasto');
     const gan=o=>o.clp_final==null?0:(o.clp_final-o.usdt*o.costo_usdt);
     const resumir=arr=>{const clp=arr.reduce((s,o)=>s+(o.clp_final||0),0), g=arr.reduce((s,o)=>s+gan(o),0);
                         return {n:arr.length,clp,g,mg:clp?g/clp*100:0};};
@@ -2580,7 +2604,7 @@ async function cargarMov(){
   const lista=document.getElementById('mv_lista'); lista.innerHTML='<div class="pronto">Cargando...</div>';
   const [ini,fin]=rangoPer(document.getElementById('mv_per').value);
   const cta=document.getElementById('mv_cta').value, tipo=document.getElementById('mv_tipo').value;
-  let q='v_ordenes?select=order_number,cuenta,tipo,fiat,monto_fiat,precio,usdt,comision,contraparte,creado,clp,clp_manual,clp_final,tasa_usada,metodo_clp,nota,costo_usdt'+
+  let q='v_ordenes?select=order_number,cuenta,tipo,fiat,monto_fiat,precio,usdt,comision,contraparte,creado,clp,clp_manual,clp_final,tasa_usada,metodo_clp,nota,costo_usdt,revision'+
         '&estado=eq.COMPLETED&creado=gte.'+tz(ini)+'&creado=lt.'+tz(fin)+'&order=creado.desc&limit=3000';
   if(cta) q+='&cuenta=eq.'+cta; if(tipo) q+='&tipo=eq.'+tipo;
   try{ _mov=await sbPost(q); pintarMov(); }catch(e){ lista.innerHTML='<div class="pronto" style="color:var(--red2)">✗ '+esc(e.message)+'</div>'; }
@@ -2589,7 +2613,7 @@ async function cargarMov(){
 function pintarMov(){
   const soloRev=document.getElementById('mv_rev').checked;
   const arr=_mov.map((o,i)=>({o,i})).filter(({o})=>!soloRev||(o.clp_manual==null&&(o.metodo_clp==='estimado'||o.metodo_clp==='sin_tasa')));
-  const ventas=arr.filter(x=>x.o.tipo==='SELL').map(x=>x.o);
+  const ventas=arr.filter(x=>x.o.tipo==='SELL'&&x.o.revision!=='gasto').map(x=>x.o);
   const clp=ventas.reduce((s,o)=>s+(+o.clp_final||0),0), usdt=ventas.reduce((s,o)=>s+(+o.usdt||0),0);
   const gan=ventas.reduce((s,o)=>s+(o.clp_final==null?0:o.clp_final-o.usdt*o.costo_usdt),0);
   const compras=arr.filter(x=>x.o.tipo==='BUY').map(x=>x.o);
@@ -2600,13 +2624,13 @@ function pintarMov(){
   lista.innerHTML=arr.map(({o,i})=>{
     const buy=o.tipo==='BUY';
     const met=o.clp_manual!=null?['✎ Corregido','m']:(METODO[o.metodo_clp]||[o.metodo_clp||'—','']);
-    const g=(!buy&&o.clp_final!=null)?(o.clp_final-o.usdt*o.costo_usdt):null;
+    const fam=o.revision==='gasto'; const g=(!buy&&!fam&&o.clp_final!=null)?(o.clp_final-o.usdt*o.costo_usdt):null;
     const monto=o.fiat==='VES'?Math.round(o.monto_fiat).toLocaleString('es-CL'):(+o.monto_fiat).toLocaleString('es-CL',{maximumFractionDigits:2});
     return '<div class="mv" onclick="editarMov('+i+')">'+
       '<div class="r1"><span>'+fh(o.creado)+'</span><span><span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+(buy?'<span class="tag buy">Compra USDT</span>':'')+'</span></div>'+
       '<div class="r2"><span class="a">'+(buy?'Pagaste':o.fiat+' '+monto)+'</span><span class="b">'+(o.clp_final==null?'<span style="color:var(--red2)">sin CLP</span>':$clp(o.clp_final))+'</span></div>'+
       '<div class="r3"><span>'+num(o.usdt)+' USDT · '+esc((o.contraparte||'').slice(0,18))+(o.nota?' · 📝':'')+'</span><span>'+
-      (g!=null?'<b style="color:'+(g>=0?'var(--green)':'var(--red2)')+'">'+$clp(g)+'</b> ':'')+'<span class="tag '+met[1]+'">'+met[0]+'</span></span></div></div>';
+      (g!=null?'<b style="color:'+(g>=0?'var(--green)':'var(--red2)')+'">'+$clp(g)+'</b> ':'')+(fam?'<span class="tag w">💸 Envío familia</span>':(o.revision==='cambio'?'<span class="tag ok">✅ Revisado</span> ':'')+'<span class="tag '+met[1]+'">'+met[0]+'</span>')+'</span></div></div>';
   }).join('');
 }
 let _movSel=null;
@@ -2619,6 +2643,7 @@ function editarMov(i){
     'Robot: <b>'+(o.clp==null?'sin cálculo':$clp(o.clp))+'</b> ('+met+(o.tasa_usada?', tasa '+fmtTasa(o.tasa_usada,o.fiat==='VES'?'ves':''):'')+')';
   document.getElementById('mm_clp').value=o.clp_manual!=null?o.clp_manual:(o.clp_final!=null?Math.round(o.clp_final):'');
   document.getElementById('mm_nota').value=o.nota||'';
+  document.getElementById('mm_rev').innerHTML=o.revision==='gasto'?'💸 Marcado como envío a familia (gasto). <a href="#" onclick="revisarOrden(_movSel.order_number,\'deshacer\');return false">Deshacer</a>':(o.revision==='cambio'?'✅ Cambio aceptado. <a href="#" onclick="revisarOrden(_movSel.order_number,\'deshacer\');return false">Deshacer</a>':'');
   openModal('modal_mov');
 }
 async function guardarMov(usarRobot){
@@ -2915,7 +2940,7 @@ async function guardarCartolas(){
     cargarBanco();
   }catch(e){ toast('✗ '+e.message); btn.disabled=false; btn.textContent='💾 Reintentar'; }
 }
-async function cargarBanco(){ cargarRevisar(); cargarCartolas(); }
+async function cargarBanco(){ tabRev(1); cargarCartolas(); }
 async function cargarCartolas(){
   const box=document.getElementById('bk_carts');
   try{ const L=(await sbPost('v_cartolas?select=*&order=cartola.desc&limit=12'))||[];
@@ -2934,7 +2959,90 @@ async function cargarRevisar(){
 }
 function editarBk(i){ const b=_bkRev[i]; if(!b) return; _bkSel=b;
   document.getElementById('mb_info').innerHTML=b.fecha.split('-').reverse().join('/')+' · cartola '+b.cartola+'<br><b>'+esc(b.descripcion)+'</b><br>'+(+b.abono?'Depósito '+$clp(b.abono):'Cargo '+$clp(b.cargo))+(b.orden_binance?'<br>Orden: '+esc(b.orden_binance):'');
-  document.getElementById('mb_cat').innerHTML=catOpts(b.categoria); document.getElementById('mb_nota').value=b.nota||''; openModal('modal_bk'); }
+  document.getElementById('mb_cat').innerHTML=catOpts(b.categoria); document.getElementById('mb_nota').value=b.nota||''; document.getElementById('mb_acc').innerHTML=''; openModal('modal_bk'); accionesBk(b); }
+
+// ══════════════════════════════════════════════════════════
+//  v4.9 · REVISIÓN: órdenes sin depósito y depósitos por revisar
+// ══════════════════════════════════════════════════════════
+let _sd=[], _tasasDia={}, _unirOrden=null;
+function tabRev(n){ [1,2].forEach(k=>{ document.getElementById('rv_p'+k).style.display=k===n?'':'none';
+  document.getElementById('rv_t'+k).className='btn '+(k===n?'b-gold':'b-gray'); });
+  if(n===1) cargarSinDeposito(); else cargarRevisar(); }
+async function tasasDelRango(d0,d1){
+  const t=(await sbPost('tasas_diarias?select=fecha,ves&fecha=gte.'+d0+'&fecha=lte.'+d1))||[]; t.forEach(x=>_tasasDia[x.fecha]=x.ves); }
+const tasaTxt=(fiat,bs,clp)=>{ if(!clp) return '—'; const t=bs/clp; return fiat==='VES'?String(Math.round(t*1000)):(t>=1?t.toFixed(2):t.toPrecision(3)); };
+function difTasa(fiat,bs,clp,dia){ const pub=_tasasDia[dia]; if(fiat!=='VES'||!pub||!clp) return '';
+  const d=((bs/clp)/pub-1)*100; return ' <span style="color:'+(Math.abs(d)<0.6?'var(--green)':(Math.abs(d)<2?'var(--amber)':'var(--red2)'))+'">'+(Math.abs(d)<0.6?'✅ igual a la del día':(d>0?'+':'')+d.toFixed(1)+'% vs '+Math.round(pub*1000))+'</span>'; }
+async function cargarSinDeposito(){
+  const box=document.getElementById('rv_ord'), todas=document.getElementById('rv_hechas').checked;
+  try{
+    _sd=(await sbPost('v_ordenes_sin_deposito?select=*'+(todas?'':'&revision=is.null')+'&order=creado.desc&limit=300'))||[];
+    if(_sd.length) await tasasDelRango(_sd[_sd.length-1].dia,_sd[0].dia);
+    document.getElementById('rv_t1').textContent='Órdenes sin depósito'+(todas?'':' ('+_sd.length+')');
+    box.innerHTML=_sd.length?_sd.map((o,i)=>{
+      const est=o.revision==='gasto'?'<span class="tag w">💸 Envío familia</span>':(o.revision==='cambio'?'<span class="tag ok">✅ Aceptado</span>':'');
+      return '<div class="mv" style="cursor:default"><div class="r1"><span>'+fh(o.creado)+' · <span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+est+'</span>'+
+        '<b>'+(o.clp_final!=null?$clp(o.clp_final):'sin CLP')+'</b></div>'+
+        '<div class="r3" style="margin-top:3px"><span>'+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+' · <b>'+num(o.usdt)+' USDT</b> · '+esc((o.contraparte||'').slice(0,18))+
+        ' · tasa '+tasaTxt(o.fiat,o.monto_fiat,o.clp_final)+difTasa(o.fiat,o.monto_fiat,o.clp_final,o.dia)+'</span></div>'+
+        '<div class="brow" style="margin-top:7px;gap:6px">'+(o.revision?
+          '<button type="button" class="btn b-gray" style="flex:1;padding:7px" onclick="revisarOrden(\''+o.order_number+'\',\'deshacer\')">↺ Deshacer</button>':
+          '<button type="button" class="btn b-green" style="flex:1;padding:7px" onclick="revisarOrden(\''+o.order_number+'\',\'cambio\')">✅ Aceptar</button>'+
+          '<button type="button" class="btn b-red" style="flex:1;padding:7px" onclick="revisarOrden(\''+o.order_number+'\',\'gasto\')">💸 Familia</button>'+
+          '<button type="button" class="btn b-blue" style="flex:1;padding:7px" onclick="unirOrden('+i+')">🔗 Unir</button>')+'</div></div>';}).join('')
+      :'<div style="font-size:12px;color:var(--green);padding:8px">🎉 Todas las ventas tienen su depósito o ya están revisadas.</div>';
+  }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+(/v_ordenes_sin_deposito/.test(e.message)?' · Falta correr IREMI_etapa5.sql en Supabase':'')+'</span>'; }
+}
+async function revisarOrden(orden,accion){
+  const o=_sd.find(x=>x.order_number===orden)||(_movSel&&_movSel.order_number===orden?_movSel:null);
+  if(accion==='gasto'&&o&&!confirm('¿Marcar como ENVÍO A FAMILIA?\n\n'+num(o.usdt)+' USDT pasan a Gastos (≈ '+$clp(o.usdt*o.costo_usdt)+') y este movimiento deja de contar como cambio y de dar ganancia.')) return;
+  try{ await sbPost('rpc/revisar_orden','POST',{p_orden:orden,p_accion:accion},'return=minimal');
+       toast(accion==='gasto'?'💸 Pasado a Gastos como envío a familia':(accion==='cambio'?'✅ Cambio aceptado':'↺ Deshecho'));
+       if(document.getElementById('modal_mov').classList.contains('on')){ closeModal('modal_mov'); cargarMov(); }
+       if(document.getElementById('pg_banco').classList.contains('on')) cargarSinDeposito();
+  }catch(e){ toast('✗ '+e.message); }
+}
+async function unirOrden(i){
+  const o=_sd[i]; _unirOrden=o; const box=document.getElementById('mu2_lista');
+  document.getElementById('mu2_info').innerHTML=fh(o.creado)+' · '+o.cuenta+' · '+esc(o.contraparte||'')+'<br><b>'+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+'</b> · '+num(o.usdt)+' USDT<br>Elige el depósito (±3 días). La tasa sale de dividir los '+o.fiat+' por el depósito:';
+  box.innerHTML='Buscando...'; openModal('modal_unir');
+  try{ const d=(await sbPost('banco_movimientos?select=id,fecha,descripcion,abono&categoria=in.(por_revisar,cambio_sin_orden)&abono=gt.0&fecha=gte.'+sumarDias(o.dia,-3)+'&fecha=lte.'+sumarDias(o.dia,3)+'&order=fecha.asc'))||[];
+    d.sort((a,b)=>Math.abs(a.abono-o.clp_final)-Math.abs(b.abono-o.clp_final));
+    box.innerHTML=d.length?d.map(b=>'<div class="mv" onclick="confirmarUnion('+b.id+',[\''+o.order_number+'\'])"><div class="bk-d">'+esc(b.descripcion)+'</div><div class="bk-s">'+b.fecha.slice(8)+'/'+b.fecha.slice(5,7)+
+      ' · <span class="m-in">+'+$clp(b.abono)+'</span> · tasa '+tasaTxt(o.fiat,o.monto_fiat,b.abono)+difTasa(o.fiat,o.monto_fiat,b.abono,o.dia)+'</div></div>').join('')
+      :'<div style="font-size:12px;color:var(--mute)">No hay depósitos pendientes cerca de esa fecha.</div>';
+  }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
+}
+async function confirmarUnion(bancoId,ordenes){
+  try{ await sbPost('rpc/vincular_deposito','POST',{p_banco_id:bancoId,p_ordenes:ordenes},'return=minimal');
+       toast(ordenes.length?'🔗 Unido: el cambio toma el monto real del banco':'✅ Aceptado como cambio');
+       closeModal('modal_unir'); closeModal('modal_bk'); cargarSinDeposito(); cargarRevisar();
+  }catch(e){ toast('✗ '+e.message); } }
+async function accionesBk(b){
+  const box=document.getElementById('mb_acc');
+  if(+b.abono>0){
+    if(b.orden_binance){ box.innerHTML='<div style="font-size:12px">🔗 Unido a la orden '+esc(b.orden_binance)+'</div><button type="button" class="btn b-gray" style="width:100%;margin-top:6px" onclick="deshacerUnion('+b.id+')">↺ Deshacer la unión</button>'; return; }
+    box.innerHTML='<div style="font-size:12px;font-weight:700;margin-bottom:4px">✅ ¿Es un cambio? Elige su orden (tasa propuesta):</div><div id="mb_cands">Buscando órdenes...</div>'+
+      '<button type="button" class="btn b-green" style="width:100%;margin-top:6px" onclick="confirmarUnion('+b.id+',[...document.querySelectorAll(\'#mb_cands input:checked\')].map(x=>x.value))">✅ Confirmar cambio</button>'+
+      '<div style="font-size:10.5px;color:var(--mute);margin-top:3px">Sin marcar ninguna orden = cambio aceptado sin orden (efectivo, otra cuenta, cambio del libro).</div>';
+    try{ const c=(await sbPost('v_ordenes_sin_deposito?select=*&revision=is.null&dia=gte.'+sumarDias(b.fecha,-3)+'&dia=lte.'+sumarDias(b.fecha,3)))||[];
+      await tasasDelRango(sumarDias(b.fecha,-3),sumarDias(b.fecha,3));
+      c.sort((x,y)=>Math.abs((x.clp_final||0)-b.abono)-Math.abs((y.clp_final||0)-b.abono));
+      document.getElementById('mb_cands').innerHTML=c.length?c.slice(0,12).map(o=>'<label class="mv" style="display:flex;gap:8px;align-items:center;cursor:pointer;margin-bottom:5px"><input type="checkbox" value="'+o.order_number+'" style="width:auto">'+
+        '<span style="font-size:11.5px">'+fh(o.creado)+' · '+o.cuenta+' · '+esc((o.contraparte||'').slice(0,14))+'<br><b>'+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+'</b> → tasa <b>'+tasaTxt(o.fiat,o.monto_fiat,b.abono)+'</b>'+difTasa(o.fiat,o.monto_fiat,b.abono,o.dia)+'</span></label>').join('')
+        :'<div style="font-size:12px;color:var(--mute)">No hay órdenes pendientes cerca de esa fecha.</div>';
+    }catch(e){ document.getElementById('mb_cands').innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
+  } else {
+    box.innerHTML='<div style="font-size:12px;font-weight:700;margin-bottom:4px">💸 ¿Es un gasto?</div><div class="brow" style="gap:6px"><select id="mb_gcat" style="flex:1;background:var(--dark);border:1px solid var(--bord);border-radius:8px;color:var(--tx);padding:8px">'+
+      ['Otros','Contador','IVA / SII','Sueldos','Retiro socio','Envío familia','Comisiones Binance','Combustible','Publicidad','Teléfono / Internet'].map(x=>'<option>'+x+'</option>').join('')+'</select>'+
+      '<button type="button" class="btn b-red" style="flex:1" onclick="cargoAGasto()">💸 Pasar a gasto</button></div>';
+  }
+}
+async function cargoAGasto(){ const b=_bkSel; if(!b) return; const cat=document.getElementById('mb_gcat').value, nota=document.getElementById('mb_nota').value.trim();
+  try{ await sbPost('banco_movimientos?id=eq.'+b.id,'PATCH',{categoria:'gasto',nota:nota||cat},'return=minimal');
+       await sbPost('robot_gastos','POST',[{fecha:b.fecha,categoria:cat,descripcion:(nota||b.descripcion)+' (banco c.'+b.cartola+')',monto_clp:+b.cargo,con_factura:false}],'return=minimal');
+       closeModal('modal_bk'); toast('💸 Pasado a Gastos'); cargarRevisar(); }catch(e){ toast('✗ '+e.message); } }
+async function deshacerUnion(id){ try{ await sbPost('rpc/desvincular_deposito','POST',{p_banco_id:id},'return=minimal'); closeModal('modal_bk'); toast('↺ Unión deshecha'); cargarRevisar(); }catch(e){ toast('✗ '+e.message); } }
 async function guardarBk(){ if(!_bkSel) return;
   try{ await sbPost('banco_movimientos?id=eq.'+_bkSel.id,'PATCH',{categoria:document.getElementById('mb_cat').value,nota:document.getElementById('mb_nota').value.trim()||null},'return=minimal');
        closeModal('modal_bk'); toast('✓ Guardado'); cargarRevisar(); }catch(e){ toast('✗ '+e.message); } }
