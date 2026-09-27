@@ -74,7 +74,7 @@ def flecha(nuevo, viejo):
     return f" ({'▲' if pct > 0 else '▼'} {abs(pct):.1f}%)"
 
 
-def armar(mercado, margenes, ultimo=None, publicada=None, resumen=None, ahora=None):
+def armar(mercado, margenes, ultimo=None, publicada=None, resumen=None, ahora=None, capital=None):
     ahora = ahora or dt.datetime.now(CL)
     clp = mercado['CLP']
     L = [f'📊 *IREMI · Tasas sugeridas*', f'🗓 {DIAS[ahora.weekday()]} {ahora:%d/%m} · {ahora:%H:%M}', '']
@@ -86,6 +86,17 @@ def armar(mercado, margenes, ultimo=None, publicada=None, resumen=None, ahora=No
         L.append(f"🇻🇪 USDT/VES: {mercado['VES']:,.2f} Bs{flecha(mercado['VES'], (ultimo or {}).get('ves'))}".replace(',', 'X').replace('.', ',').replace('X', '.'))
     if publicada:
         L.append(f"📌 Última tasa VES publicada: {publicada['valor']} ({publicada['fecha']})")
+    if capital and capital.get('cuentas'):
+        tot = sum(capital['cuentas'].values())
+        det = ' · '.join(f"{k} {v:,.2f}" for k, v in capital['cuentas'].items())
+        linea = f"💰 *Te quedan {tot:,.2f} USDT*{flecha(tot, (ultimo or {}).get('usdt')).replace(')', ' vs anterior)')}"
+        L += ['', linea.replace(',', 'X').replace('.', ',').replace('X', '.'),
+              f"     {det} ≈ ${tot * clp:,.0f} CLP".replace(',', 'X').replace('.', ',').replace('X', '.')]
+        if capital.get('fuente') == 'app':
+            L.append(f"     (saldo leído {capital.get('hora', '')})")
+        m = capital.get('minimo')
+        if m and tot < m:
+            L.append(f"⚠️ Bajo tu mínimo de {m:g} USDT: conviene reponer")
     L += ['', '*Margen → ' + ' | '.join(f"{m:g}%".replace('.', ',') for m in margenes) + '*']
     for fiat, nombre, _ in PAISES:
         px = mercado.get(fiat)
@@ -140,12 +151,32 @@ def main():
         resumen = (R.sb('GET', 'precios_resumen', params='select=*') or [None])[0]
     except Exception:
         pass
+    # USDT que te quedan: se leen en vivo en Binance (las mismas llaves de solo lectura del robot);
+    # si Binance no responde, se usa el último saldo guardado por el robot
+    capital = {'cuentas': {}, 'fuente': 'binance'}
+    try:
+        for cta in R.CUENTAS:
+            fondos, spot, _ = R.saldo_usdt(cta); capital['cuentas'][cta] = round(fondos + spot, 2)
+    except Exception as e:
+        R.log('Saldo en vivo no disponible, uso el último guardado:', e)
+        capital = {'cuentas': {}, 'fuente': 'app'}
+        try:
+            for s in R.sb('GET', 'robot_saldos', params='select=cuenta,total,fecha&order=fecha.desc&limit=10') or []:
+                if s['cuenta'] not in capital['cuentas']:
+                    capital['cuentas'][s['cuenta']] = round(float(s['total']), 2)
+                    capital['hora'] = dt.datetime.fromisoformat(s['fecha'].replace('Z', '+00:00')).astimezone(CL).strftime('%d/%m %H:%M')
+        except Exception:
+            pass
+    try:
+        capital['minimo'] = float(cfg.get('capital_minimo_usdt') or 0)
+    except Exception:
+        pass
     ahora = dt.datetime.now(CL)
-    msg = armar(mercado, margenes, ultimo, publicada, resumen, ahora)
+    msg = armar(mercado, margenes, ultimo, publicada, resumen, ahora, capital)
     if '--ver' in sys.argv:
         print(msg); return
     R.avisar(cfg, 'tasas', msg)
-    R.estado_set('tasas_msg_ultimo', json.dumps({'clp': mercado['CLP'], 'ves': mercado.get('VES'),
+    R.estado_set('tasas_msg_ultimo', json.dumps({'clp': mercado['CLP'], 'ves': mercado.get('VES'), 'usdt': round(sum(capital['cuentas'].values()), 2) or None,
                                                  'cuando': f"{DIAS[ahora.weekday()]} {ahora:%H:%M}"}))
 
 
