@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="IREMI">
 <title>IREMI Remesas</title>
-<meta name="version" content="4.9">
+<meta name="version" content="5.0">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -644,7 +644,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
   </div>
   <div class="section">Capital y mercado</div>
   <div class="kgrid">
-    <div class="kc y"><div class="kl">Capital USDT</div><div class="kv" id="k_cap">—</div><div class="ks" id="k_cap_s">—</div></div>
+    <div class="kc y"><div class="kl">Capital USDT (JULIO + IREMI)</div><div class="kv" id="k_cap">—</div><div class="ks" id="k_cap_s">—</div></div>
     <div class="kc"><div class="kl">USDT/CLP ahora</div><div class="kv" id="k_px">—</div><div class="ks" id="k_px_s">—</div></div>
   </div>
   <div class="panel"><h3>🤖 Robot</h3><div id="ini_robot" style="font-size:12px;color:var(--silver)">—</div></div>
@@ -661,7 +661,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
   </div>
   <div class="resumen" id="mv_res">—</div>
   <div id="mv_lista"><div class="pronto">Cargando...</div></div>
-  <div class="section" style="margin-top:16px">💳 Binance Pay <label style="margin-left:auto;font-size:11px;color:var(--silver);text-transform:none;letter-spacing:0"><input type="checkbox" id="mv_int" onchange="cargarPay()"> incluir traspasos entre tus cuentas</label></div>
+  <div class="section" style="margin-top:16px">💳 Binance Pay y retiros <label style="margin-left:auto;font-size:11px;color:var(--silver);text-transform:none;letter-spacing:0"><input type="checkbox" id="mv_int" onchange="cargarPay()"> incluir traspasos entre tus cuentas</label></div>
   <div id="mv_pay"></div>
 </div>
 <div class="pg" id="pg_gastos" style="padding:12px 12px 90px">
@@ -2655,17 +2655,23 @@ async function guardarMov(usarRobot){
        closeModal('modal_mov'); toast('✓ Guardado'); cargarMov(); }catch(e){ toast('✗ '+e.message); }
 }
 let _pay=[], _paySel=null;
-const PAYCLS={traspaso_interno:'Traspaso interno',ingreso_capital:'Ingreso a capital',gasto:'Gasto',cambio:'Cambio a cliente',otro:'Otro',tercero_revisar:'⚠ Por revisar'};
+const PAYCLS={traspaso_interno:'🔁 Traspaso entre cuentas',ingreso_capital:'Ingreso a capital',gasto:'Gasto',cambio:'Cambio a cliente',otro:'Otro',tercero_revisar:'⚠ Por revisar'};
 async function cargarPay(){
   const box=document.getElementById('mv_pay');
   const [ini,fin]=rangoPer(document.getElementById('mv_per').value);
-  let q='v_pay?select=id,cuenta,fecha,monto,moneda,contraparte,clasificacion_final,nota&fecha=gte.'+tz(ini)+'&fecha=lt.'+tz(fin)+'&order=fecha.desc&limit=500';
-  if(!document.getElementById('mv_int').checked) q+='&clasificacion_final=neq.traspaso_interno';
-  try{ _pay=await sbPost(q);
-    box.innerHTML=_pay.length?_pay.map((p,i)=>'<div class="mv" onclick="editarPay('+i+')"><div class="r1"><span>'+fh(p.fecha)+'</span><span class="tag '+(p.cuenta==='JULIO'?'j':'i')+'">'+p.cuenta+'</span></div>'+
+  const q='v_pay?select=id,cuenta,fecha,monto,moneda,contraparte,clasificacion_final,nota&fecha=gte.'+tz(ini)+'&fecha=lt.'+tz(fin)+'&order=fecha.desc&limit=1000';
+  try{ const todos=await sbPost(q)||[];
+    const tr=todos.filter(p=>p.clasificacion_final==='traspaso_interno'&&p.moneda==='USDT');
+    const JaI=tr.filter(p=>p.cuenta==='JULIO'&&p.monto<0).reduce((s,p)=>s-p.monto,0), IaJ=tr.filter(p=>p.cuenta==='IREMI'&&p.monto<0).reduce((s,p)=>s-p.monto,0);
+    const rev=todos.filter(p=>p.clasificacion_final==='tercero_revisar').length;
+    _pay=document.getElementById('mv_int').checked?todos:todos.filter(p=>p.clasificacion_final!=='traspaso_interno');
+    const resumen='<div style="font-size:11.5px;color:var(--silver);line-height:1.6;margin-bottom:6px">'+
+      (tr.length?'🔁 <b>'+tr.filter(p=>p.monto<0).length+' traspasos entre tus cuentas</b>: JULIO→IREMI '+num(JaI)+' USDT · IREMI→JULIO '+num(IaJ)+' USDT. <span style="color:var(--mute)">No cambian tu capital total.</span><br>':'')+
+      (rev?'⚠ <b>'+rev+' por revisar</b> (con otras personas o billeteras)':'<span style="color:var(--green)">✓ Nada por revisar con terceros</span>')+'</div>';
+    box.innerHTML=resumen+(_pay.length?_pay.map((p,i)=>'<div class="mv" onclick="editarPay('+i+')"><div class="r1"><span>'+fh(p.fecha)+'</span><span class="tag '+(p.cuenta==='JULIO'?'j':'i')+'">'+p.cuenta+'</span></div>'+
       '<div class="r2"><span class="a">'+esc(p.contraparte||'—')+'</span><span class="b" style="color:'+(p.monto<0?'var(--red2)':'var(--green)')+'">'+(p.monto>0?'+':'')+num(p.monto)+' '+esc(p.moneda)+'</span></div>'+
       '<div class="r3"><span>'+esc(p.nota||'')+'</span><span class="tag '+(p.clasificacion_final==='tercero_revisar'?'w':'ok')+'">'+(PAYCLS[p.clasificacion_final]||p.clasificacion_final)+'</span></div></div>').join('')
-      :'<div style="font-size:12px;color:var(--mute)">Sin movimientos de Binance Pay con terceros en este período.</div>';
+      :'<div style="font-size:12px;color:var(--mute)">Sin movimientos con terceros en este período.</div>');
   }catch(e){ box.innerHTML='<div style="color:var(--red2);font-size:12px">✗ '+esc(e.message)+'</div>'; }
 }
 function editarPay(i){ const p=_pay[i]; _paySel=p;
