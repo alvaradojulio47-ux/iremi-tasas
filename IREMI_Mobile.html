@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="IREMI">
 <title>IREMI Remesas</title>
-<meta name="version" content="5.0">
+<meta name="version" content="5.1">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -2523,7 +2523,7 @@ async function cargarInicio(){
   const aviso=document.getElementById('ini_aviso'); if(aviso) aviso.innerHTML='';
   try{
     const [ords,sal,px,res,est,al,tas]=await Promise.all([
-      sbPost('v_ordenes?select=cuenta,tipo,usdt,creado,clp_final,costo_usdt,metodo_clp,revision&estado=eq.COMPLETED&creado=gte.'+encodeURIComponent(mesIni+'T00:00:00-03:00')+'&order=creado.desc&limit=5000'),
+      sbPost('v_ordenes?select=cuenta,tipo,usdt,creado,clp_final,costo_usdt,metodo_clp,revision,clp_manual&estado=eq.COMPLETED&creado=gte.'+encodeURIComponent(mesIni+'T00:00:00-03:00')+'&order=creado.desc&limit=5000'),
       sbPost('robot_saldos?select=cuenta,total,fecha&order=fecha.desc&limit=6'),
       sbPost('precios_p2p?select=clp_min,fecha&order=fecha.desc&limit=1'),
       sbPost('precios_resumen?select=*'),
@@ -2546,7 +2546,7 @@ async function cargarInicio(){
     set('k_mes_n',Mm.n); set('k_mes_clp',$(Mm.clp)); set('k_mes_gan',$(Mm.g)); set('k_mes_mg','margen '+Mm.mg.toFixed(1)+'%');
     const jc=ventas.filter(o=>o.cuenta==='JULIO').length;
     set('k_mes_cta','Julio '+jc+' · IREMI '+(ventas.length-jc));
-    const rev=ventas.filter(o=>o.metodo_clp==='estimado'||o.metodo_clp==='sin_tasa').length;
+    const rev=ventas.filter(o=>!o.revision&&o.clp_manual==null&&(o.metodo_clp==='estimado'||o.metodo_clp==='sin_tasa')).length;
     set('k_mes_rev',rev); const kr=document.getElementById('k_mes_rev'); if(kr) kr.parentElement.className='kc'+(rev?' r':' g');
     // tasa del día
     const t=(tas||[])[0];
@@ -2612,7 +2612,7 @@ async function cargarMov(){
 }
 function pintarMov(){
   const soloRev=document.getElementById('mv_rev').checked;
-  const arr=_mov.map((o,i)=>({o,i})).filter(({o})=>!soloRev||(o.clp_manual==null&&(o.metodo_clp==='estimado'||o.metodo_clp==='sin_tasa')));
+  const arr=_mov.map((o,i)=>({o,i})).filter(({o})=>!soloRev||(!o.revision&&o.clp_manual==null&&(o.metodo_clp==='estimado'||o.metodo_clp==='sin_tasa')));
   const ventas=arr.filter(x=>x.o.tipo==='SELL'&&x.o.revision!=='gasto').map(x=>x.o);
   const clp=ventas.reduce((s,o)=>s+(+o.clp_final||0),0), usdt=ventas.reduce((s,o)=>s+(+o.usdt||0),0);
   const gan=ventas.reduce((s,o)=>s+(o.clp_final==null?0:o.clp_final-o.usdt*o.costo_usdt),0);
@@ -2630,7 +2630,7 @@ function pintarMov(){
       '<div class="r1"><span>'+fh(o.creado)+'</span><span><span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+(buy?'<span class="tag buy">Compra USDT</span>':'')+'</span></div>'+
       '<div class="r2"><span class="a">'+(buy?'Pagaste':o.fiat+' '+monto)+'</span><span class="b">'+(o.clp_final==null?'<span style="color:var(--red2)">sin CLP</span>':$clp(o.clp_final))+'</span></div>'+
       '<div class="r3"><span>'+num(o.usdt)+' USDT · '+esc((o.contraparte||'').slice(0,18))+(o.nota?' · 📝':'')+'</span><span>'+
-      (g!=null?'<b style="color:'+(g>=0?'var(--green)':'var(--red2)')+'">'+$clp(g)+'</b> ':'')+(fam?'<span class="tag w">💸 Envío familia</span>':(o.revision==='cambio'?'<span class="tag ok">✅ Revisado</span> ':'')+'<span class="tag '+met[1]+'">'+met[0]+'</span>')+'</span></div></div>';
+      (g!=null?'<b style="color:'+(g>=0?'var(--green)':'var(--red2)')+'">'+$clp(g)+'</b> ':'')+(fam?'<span class="tag w">💸 Envío familia</span>':(o.revision==='cambio'?'<span class="tag ok">✅ Revisado</span>':'<span class="tag '+met[1]+'">'+met[0]+'</span>'))+'</span></div></div>';
   }).join('');
 }
 let _movSel=null;

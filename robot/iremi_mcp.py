@@ -266,7 +266,7 @@ def estado_robot_y_alertas() -> str:
 def ordenes_por_corregir(limite: int = 20) -> str:
     """Órdenes del robot cuyo monto en CLP es estimado o no tiene tasa (hay que confirmarlas en la app, pantalla Movimientos)."""
     return json.dumps(sb(f'v_ordenes?select=creado,cuenta,fiat,monto_fiat,usdt,contraparte,clp_final,metodo_clp&estado=eq.COMPLETED&tipo=eq.SELL'
-                         f'&clp_manual=is.null&metodo_clp=in.(estimado,sin_tasa)&order=creado.desc&limit={min(int(limite), 50)}'), ensure_ascii=False)
+                         f'&clp_manual=is.null&revision=is.null&metodo_clp=in.(estimado,sin_tasa)&order=creado.desc&limit={min(int(limite), 50)}'), ensure_ascii=False)
 
 
 if __name__ == '__main__':
