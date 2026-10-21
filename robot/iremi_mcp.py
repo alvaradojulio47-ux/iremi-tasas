@@ -269,5 +269,13 @@ def ordenes_por_corregir(limite: int = 20) -> str:
                          f'&clp_manual=is.null&revision=is.null&metodo_clp=in.(estimado,sin_tasa)&order=creado.desc&limit={min(int(limite), 50)}'), ensure_ascii=False)
 
 
+@mcp.tool()
+def dia_a_dia(dias: int = 15) -> str:
+    """Una fila por día: cambios, ganancia, gastos, utilidad acumulada (total y del mes), y el contraste Binance vs banco:
+    dif_pesos_acum (plata de clientes llegada al banco − lo cambiado en Binance), dif_compras_acum, dif_usdt y falta_sobra
+    (negativo = falta plata), saldo del banco y capital_real (banco + USDT × costo). Solo hay contraste hasta la última cartola."""
+    desde = hoy() - dt.timedelta(min(int(dias), 120))
+    return json.dumps(sb(f'v_diario?select=*&dia=gte.{desde}&order=dia.asc'), ensure_ascii=False)
+
 if __name__ == '__main__':
     mcp.run()

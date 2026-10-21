@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="IREMI">
 <title>IREMI Remesas</title>
-<meta name="version" content="5.1">
+<meta name="version" content="5.2">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -434,6 +434,17 @@ html[data-theme="light"] .lg-ob svg path[stroke]{stroke:#0f1f4b}
 .lx tr:nth-child(even) td{background:var(--zebra)} .lx tr:nth-child(even) td:first-child{background:var(--modal)}
 .lx td.neg{color:var(--red2)} .lx td.err{color:var(--mute2)} .lx tr.res td{font-weight:700;color:var(--gold)}
 .lx tr.hit td{background:rgba(245,197,24,.18)!important}
+/* v5.2 día a día + accesos directos */
+.kc.link,.panel.link{cursor:pointer;position:relative;transition:transform .08s}
+.kc.link:active,.panel.link:active{transform:scale(.97)}
+.kc.link::after{content:'›';position:absolute;right:10px;top:6px;color:var(--mute);font-size:18px;font-weight:700}
+#pg_dia.on{display:block}
+.fs-big{font-size:30px;font-weight:900;line-height:1.1}
+.fs-row{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--line2)}
+.fs-row b{white-space:nowrap}
+#dd_tabla tr{cursor:pointer} #dd_tabla td:first-child{white-space:nowrap}
+@media(max-width:520px){#dd_tabla .hs-opt{display:none}}
+.chipx{display:inline-flex;align-items:center;gap:6px;background:var(--gold);color:var(--on-gold);border-radius:14px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:8px}
 /* v4.1 tema claro/oscuro */
 /* v4.0 etapa 4 */
 /* v3.2 historial */
@@ -641,9 +652,13 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
     <div class="kc"><div class="kl">Recibido</div><div class="kv" id="k_mes_clp">—</div><div class="ks">CLP de clientes</div></div>
     <div class="kc g"><div class="kl">Ganancia bruta</div><div class="kv" id="k_mes_gan">—</div><div class="ks" id="k_mes_mg">—</div></div>
     <div class="kc"><div class="kl">Por revisar</div><div class="kv" id="k_mes_rev">—</div><div class="ks">CLP estimados</div></div>
+    <div class="kc"><div class="kl">Gastos del mes</div><div class="kv" id="k_gas">—</div><div class="ks" id="k_gas_s">—</div></div>
+    <div class="kc g"><div class="kl">Utilidad del mes</div><div class="kv" id="k_util">—</div><div class="ks" id="k_util_s">ganancia + 4% − gastos</div></div>
   </div>
   <div class="section">Capital y mercado</div>
   <div class="kgrid">
+    <div class="kc y"><div class="kl">Capital total</div><div class="kv" id="k_capt">—</div><div class="ks" id="k_capt_s">banco + USDT</div></div>
+    <div class="kc"><div class="kl">¿Falta plata?</div><div class="kv" id="k_falta">—</div><div class="ks" id="k_falta_s">Binance vs banco</div></div>
     <div class="kc y"><div class="kl">Capital USDT (JULIO + IREMI)</div><div class="kv" id="k_cap">—</div><div class="ks" id="k_cap_s">—</div></div>
     <div class="kc"><div class="kl">USDT/CLP ahora</div><div class="kv" id="k_px">—</div><div class="ks" id="k_px_s">—</div></div>
   </div>
@@ -759,6 +774,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
     <div class="fila"><span>Apariencia</span><select id="sel_tema" onchange="fijarTema(this.value)" style="background:var(--dark);border:1px solid var(--bord);border-radius:7px;color:var(--tx);padding:5px 8px;font-size:13px"><option value="auto">🕒 Automático (día/noche)</option><option value="light">☀️ Claro</option><option value="dark">🌙 Oscuro</option></select></div>
     <button type="button" class="btn b-gray" style="width:100%;margin-top:8px" onclick="salir()">Cerrar sesión</button></div>
   <div class="section">Gestión</div>
+  <button type="button" class="masbtn" onclick="irDia()">📈 Día a día <small>Utilidad acumulada, capital y si falta plata (Binance vs banco)</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_cuadre','nb_mas');cargarCuadre()">⚖️ Cuadre de caja <small>Libro vs. saldo real en Binance</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_hist','nb_mas');cargarHist()">📜 Historial de operaciones <small>Cada cambio y compra desde ago-2025, con filtros y buscador</small></button>
   <button type="button" class="masbtn" onclick="showPg('pg_hmes','nb_mas');cargarHMes()">📚 Historial mensual <small>Todos tus meses desde ago-2025: cambios, ganancia, gastos y utilidad</small></button>
@@ -981,13 +997,26 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
   <div class="lx-wrap"><table class="lx" id="lx_tabla"></table></div>
   <div style="font-size:11px;color:var(--mute);line-height:1.6;margin-top:8px">🔒 Solo el administrador ve esta pantalla. Es tu libro de cambios tal como quedó en el Excel (todas las hojas, fila por fila, con los resúmenes). Desliza hacia el lado para ver todas las columnas.</div>
 </div>
+<div class="pg" id="pg_dia" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
+  <div class="filtros"><select id="dd_per" onchange="pintarDia()"><option value="mes">Este mes</option><option value="mesant">Mes anterior</option><option value="30">Últimos 30 días</option><option value="ap">Desde la apertura del cuadre</option></select></div>
+  <div class="panel"><h3>🔍 ¿Falta plata? (Binance vs banco)</h3><div id="dd_falta">Cargando...</div></div>
+  <div class="panel"><h3>💰 Capital</h3><div id="dd_cap">Cargando...</div></div>
+  <div class="panel"><h3>📈 Utilidad acumulada y capital</h3><div id="dd_graf"></div></div>
+  <div class="panel" style="overflow-x:auto"><h3>📅 Día a día <small style="font-weight:400;color:var(--mute);text-transform:none;letter-spacing:0">toca un día para ver sus operaciones</small></h3><table class="tabla" id="dd_tabla"></table></div>
+  <div style="font-size:11px;color:var(--mute);line-height:1.6">
+    <b>Utilidad</b> = ganancia de los cambios + 4% Transf Local − gastos (igual que el "Acumulado" de tu Excel, pero restando gastos).<br>
+    <b>¿Falta plata?</b> suma tres cosas desde la apertura del cuadre: 1) pesos de clientes que debían llegar al banco según Binance, 2) compras de USDT pagadas en el banco vs USDT recibidos, 3) USDT reales vs los que deberían quedar. <b>Negativo = falta</b>, positivo = sobra. Solo se calcula hasta la última cartola cargada; si un cliente paga un día y la orden sale al siguiente, ese día se mueve pero el acumulado vuelve a 0.<br>
+    <b>Capital</b> = saldo del banco (última cartola) + USDT × último precio de compra. La apertura se ajusta en Más → Alertas.
+  </div>
+</div>
 <div class="pg" id="pg_hist" style="padding:12px 12px 90px">
   <div class="filtros">
-    <select id="hf_mes" onchange="cargarHist()"><option value="">Cargando meses...</option></select>
+    <select id="hf_mes" onchange="_hDia=null;cargarHist()"><option value="">Cargando meses...</option></select>
     <select id="hf_tipo" onchange="pintarHistOps()"><option value="VENTA">Cambios</option><option value="COMPRA">Compras USDT</option><option value="AJUSTE">Ajustes</option><option value="">Todo</option></select>
     <select id="hf_dest" onchange="pintarHistOps()"><option value="">Todos los países</option></select>
     <input type="search" id="hf_buscar" placeholder="🔎 Buscar (nombre, comentario, monto)" oninput="pintarHistOps()" style="flex:1 1 100%;background:var(--card);border:1px solid var(--bord);border-radius:8px;color:var(--tx);padding:8px 10px;font-size:13px">
   </div>
+  <div id="ho_chip"></div>
   <div class="kpis" id="ho_kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px"></div>
   <div id="ho_lista">Cargando...</div>
   <div style="font-size:11px;color:var(--mute);line-height:1.6;margin-top:8px">Hasta agosto 2026 las operaciones vienen de tu <b>libro de cambios</b> (📒); desde septiembre 2026, del <b>robot</b> (🤖). El país de destino del libro es estimado a partir de la tasa usada.</div>
@@ -2231,7 +2260,7 @@ function updateSesion(){
 // ══════════════════════════════════════════════════════════
 //  HISTORIAL
 // ══════════════════════════════════════════════════════════
-let _hOps=[], _hMesesListos=false;
+let _hOps=[], _hMesesListos=false, _hDia=null, _hMesPend=null;
 const BANDERA={VES:'🇻🇪',COP:'🇨🇴',PEN:'🇵🇪',ARS:'🇦🇷',EUR:'🇪🇸',DOP:'🇩🇴',MXN:'🇲🇽',BOB:'🇧🇴',USD:'🇺🇸',PAB:'🇵🇦',CLP:'🇨🇱'};
 async function cargarHist(){
   const selM=document.getElementById('hf_mes'), box=document.getElementById('ho_lista');
@@ -2240,6 +2269,8 @@ async function cargarHist(){
       const meses=((await sbPost('v_resumen_mensual?select=mes&order=mes.desc'))||[]).map(r=>r.mes);
       selM.innerHTML=meses.map(m=>'<option value="'+m+'">'+['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][+m.slice(5,7)-1]+' '+m.slice(0,4)+'</option>').join('')+'<option value="">Todos los meses</option>';
       _hMesesListos=true;
+    }
+    if(_hMesPend){ if([...selM.options].some(o=>o.value===_hMesPend)) selM.value=_hMesPend; _hMesPend=null;
     }
     box.innerHTML='<div style="color:var(--gold)">⏳ Cargando operaciones...</div>';
     const mes=selM.value; let filas=[];
@@ -2258,7 +2289,8 @@ async function cargarHist(){
 function pintarHistOps(){
   const tipo=document.getElementById('hf_tipo').value, dest=document.getElementById('hf_dest').value,
         q=(document.getElementById('hf_buscar').value||'').trim().toLowerCase();
-  const L=_hOps.filter(o=>(!tipo||o.tipo===tipo)&&(!dest||o.destino===dest)&&
+  const ch=document.getElementById('ho_chip'); if(ch) ch.innerHTML=_hDia?'<span class="chipx" onclick="_hDia=null;pintarHistOps()">Solo el '+_hDia.slice(8)+'/'+_hDia.slice(5,7)+' ✕</span>':'';
+  const L=_hOps.filter(o=>(!_hDia||o.fecha===_hDia)&&(!tipo||o.tipo===tipo)&&(!dest||o.destino===dest)&&
     (!q||String(o.detalle||'').toLowerCase().includes(q)||String(Math.round(o.monto_clp||0)).includes(q.replace(/\D/g,'')||'¬')));
   const V=L.filter(o=>o.tipo==='VENTA'), clp=V.reduce((s,o)=>s+(+o.monto_clp||0),0), g=V.reduce((s,o)=>s+(+o.ganancia_clp||0),0);
   const k=(t,v,c)=>'<div class="kc" style="padding:8px"><div class="kt" style="font-size:9px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em">'+t+'</div><div style="font-size:15px;font-weight:800;'+(c||'')+'">'+v+'</div></div>';
@@ -2570,6 +2602,7 @@ async function cargarInicio(){
       ' · última revisión '+(ok?ok.valor:'—')+(mins!=null?' (hace '+mins+' min)':'')+
       (E.ultimo_error&&!sano?'<br><span style="color:var(--red2);font-size:11px">Último error: '+E.ultimo_error.valor+'</span>':'');
     const a=(al||[])[0];
+    cargarInicioDia(); activarAccesos();
     set('ini_alerta',a?(new Date(a.fecha).toLocaleString('es-CL',{timeZone:'America/Santiago',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})+'\n'+a.mensaje):'Sin alertas todavía');
   }catch(e){
     if(aviso) aviso.innerHTML='<div class="panel" style="border-color:#7f1d1d;color:var(--red2);font-size:12px">✗ '+e.message+'</div>';
@@ -2808,7 +2841,7 @@ const PERMISOS=[['inicio','📊 Inicio'],['tasas','💱 Tasas'],['movimientos','
 const PERM_UI={
   inicio:{nav:'nb_i',abrir:()=>{showPg('pg_inicio','nb_i');cargarInicio();}}, tasas:{nav:'nb_t',abrir:()=>showPg('pg_tasas','nb_t')},
   movimientos:{nav:'nb_m',abrir:()=>{showPg('pg_mov','nb_m');cargarMov();}}, gastos:{nav:'nb_g',abrir:()=>{showPg('pg_gastos','nb_g');cargarGastos();}},
-  cuadre:{pg:['pg_cuadre']}, historial:{nav:'nb_h',pg:['pg_hmes','pg_hist']}, htasas:{pg:['pg_htasas']}, belkys:{pg:['pg_belkys']}, alertas:{pg:['pg_alertas']},
+  cuadre:{pg:['pg_cuadre','pg_dia']}, historial:{nav:'nb_h',pg:['pg_hmes','pg_hist']}, htasas:{pg:['pg_htasas']}, belkys:{pg:['pg_belkys']}, alertas:{pg:['pg_alertas']},
   banco:{pg:['pg_banco']}, reportes:{pg:['pg_rep']}, herramientas:{pg:['pg_reg','pg_exp','pg_p2p']}};
 function puede(p){ if(!YO) return false; if(p==='usuarios') return YO.rol==='admin'; return YO.rol==='admin'||!YO.permisos||YO.permisos.includes(p); }
 async function aplicarPermisos(){
@@ -2966,6 +2999,115 @@ async function cargarRevisar(){
 function editarBk(i){ const b=_bkRev[i]; if(!b) return; _bkSel=b;
   document.getElementById('mb_info').innerHTML=b.fecha.split('-').reverse().join('/')+' · cartola '+b.cartola+'<br><b>'+esc(b.descripcion)+'</b><br>'+(+b.abono?'Depósito '+$clp(b.abono):'Cargo '+$clp(b.cargo))+(b.orden_binance?'<br>Orden: '+esc(b.orden_binance):'');
   document.getElementById('mb_cat').innerHTML=catOpts(b.categoria); document.getElementById('mb_nota').value=b.nota||''; document.getElementById('mb_acc').innerHTML=''; openModal('modal_bk'); accionesBk(b); }
+
+
+// ══════════════════════════════════════════════════════════
+//  v5.2 · DÍA A DÍA (utilidad acumulada, capital, ¿falta plata?)
+// ══════════════════════════════════════════════════════════
+let _dd=[];
+const fechaCorta=d=>d?d.slice(8)+'/'+d.slice(5,7):'—';
+const conSigno=v=>v==null?'—':(v<0?'−'+$clp(-v):(v>0?'+':'')+$clp(v));
+const colorFalta=v=>v==null?'var(--mute)':(Math.abs(v)<50000?'var(--green)':(Math.abs(v)<300000?'var(--amber)':'var(--red2)'));
+async function datosDia(){ _dd=(await sbPost('v_diario?select=*&dia=gte.'+sumarDias(hoyChile(),-430)+'&order=dia.asc'))||[]; return _dd; }
+function ultimo(f){ for(let i=_dd.length-1;i>=0;i--) if(f(_dd[i])) return _dd[i]; return null; }
+async function cargarInicioDia(){
+  const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v;};
+  try{
+    await datosDia(); const hoy=hoyChile(), mes=hoy.slice(0,7);
+    const h=ultimo(r=>r.dia<=hoy); if(!h) return;
+    const g=_dd.filter(r=>r.dia.startsWith(mes)).reduce((s,r)=>s+(+r.gastos||0),0);
+    set('k_gas',$clp(g)); set('k_gas_s','ver detalle en Gastos');
+    set('k_util',$clp(h.utilidad_mes)); const ku=document.getElementById('k_util'); if(ku) ku.parentElement.className=ku.parentElement.className.replace(/\b[gr]\b/,'')+' '+((+h.utilidad_mes)<0?'r':'g');
+    const c=ultimo(r=>r.capital_real!=null);
+    set('k_capt',c?$clp(c.capital_real):'—'); set('k_capt_s',c?'banco al '+fechaCorta(c.banco_hasta)+' + USDT':'falta saldo del robot');
+    const f=ultimo(r=>r.falta_sobra!=null), kf=document.getElementById('k_falta');
+    if(f){ kf.textContent=conSigno(+f.falta_sobra); kf.style.color=colorFalta(+f.falta_sobra);
+           set('k_falta_s',(Math.abs(f.falta_sobra)<50000?'✓ cuadra':((+f.falta_sobra)<0?'falta':'sobra'))+' · al '+fechaCorta(f.dia)); }
+    else { kf.textContent='—'; set('k_falta_s','sube cartolas para calcular'); }
+  }catch(e){ set('k_util','—'); set('k_util_s',/v_diario/.test(e.message)?'falta IREMI_etapa7.sql':'✗ error'); }
+  activarAccesos();
+}
+function irDia(){ showPg('pg_dia','nb_mas'); cargarDia(); }
+async function cargarDia(){
+  ['dd_falta','dd_cap'].forEach(i=>document.getElementById(i).innerHTML='Cargando...');
+  try{ await datosDia(); pintarDia(); }
+  catch(e){ document.getElementById('dd_falta').innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+(/v_diario/.test(e.message)?' · Falta correr IREMI_etapa7.sql en Supabase':'')+'</span>'; }
+}
+function pintarDia(){
+  if(!_dd.length) return;
+  const per=document.getElementById('dd_per').value, hoy=hoyChile(), mes=hoy.slice(0,7);
+  const mesAnt=mesDe(hoy.slice(0,8)+'01',-1).slice(0,7);
+  const f0=(_dd.find(r=>r.usdt_esperado!=null)||{}).dia;
+  const L=_dd.filter(r=>r.dia<=hoy&&(per==='mes'?r.dia.startsWith(mes):per==='mesant'?r.dia.startsWith(mesAnt):per==='30'?r.dia>=sumarDias(hoy,-29):(f0&&r.dia>=f0)));
+  if(!L.length){ document.getElementById('dd_tabla').innerHTML='<tr><td>Sin datos en este período</td></tr>'; return; }
+  const fin=L[L.length-1];
+  // ¿Falta plata?
+  const f=[...L].reverse().find(r=>r.falta_sobra!=null)||ultimo(r=>r.falta_sobra!=null);
+  const box=document.getElementById('dd_falta');
+  if(!f){ box.innerHTML='<div style="font-size:12px;color:var(--mute)">Todavía no se puede calcular: faltan cartolas o saldos del robot para estas fechas. Sube la última cartola en <b>Más → Banco</b>.</div>'; }
+  else {
+    const v=+f.falta_sobra, p=+f.dif_pesos_acum, c=-(+f.dif_compras_acum), u=(+f.dif_usdt)*(+f.costo_usdt);
+    box.innerHTML='<div class="fs-big" style="color:'+colorFalta(v)+'">'+conSigno(v)+'</div>'+
+      '<div style="font-size:12px;color:var(--silver);margin:2px 0 8px">'+(Math.abs(v)<50000?'✅ Cuadra':(v<0?'⚠ Falta plata':'Sobra plata'))+' desde el '+fechaCorta(f0)+' hasta el '+fechaCorta(f.dia)+' (última cartola: '+fechaCorta(f.banco_hasta)+')</div>'+
+      '<div class="fs-row"><span>💵 Pesos de clientes: llegó al banco vs lo cambiado en Binance</span><b style="color:'+colorFalta(p)+'">'+conSigno(p)+'</b></div>'+
+      '<div class="fs-row"><span>🛒 Compras de USDT: recibido vs pagado en el banco</span><b style="color:'+colorFalta(c)+'">'+conSigno(c)+'</b></div>'+
+      '<div class="fs-row"><span>🪙 USDT reales vs esperados ('+num(f.usdt_real)+' vs '+num(f.usdt_esperado)+')</span><b style="color:'+colorFalta(u)+'">'+conSigno(Math.round(u))+'</b></div>'+
+      ((+f.sin_clp)?'<div style="font-size:11px;color:var(--amber);margin-top:6px">⚠ Hay órdenes sin monto en CLP: corrígelas en Movimientos para que el cálculo sea exacto.</div>':'')+
+      '<div class="brow" style="margin-top:10px;gap:6px"><button type="button" class="btn b-gold" style="flex:1;padding:9px" onclick="irRevision()">🔎 Revisar en Banco</button>'+
+      '<button type="button" class="btn b-gray" style="flex:1;padding:9px" onclick="showPg(\'pg_cuadre\',\'nb_mas\');cargarCuadre()">⚖️ Cuadre USDT</button></div>';
+  }
+  // Capital
+  const c1=[...L].reverse().find(r=>r.capital_real!=null), c0=L.find(r=>r.capital_real!=null);
+  const uIni=(L[0].utilidad_acum-L[0].utilidad_dia), util=fin.utilidad_acum-uIni;
+  document.getElementById('dd_cap').innerHTML=c1?
+    '<div class="fs-big" style="color:var(--gold)">'+$clp(c1.capital_real)+'</div>'+
+    '<div class="fs-row"><span>🏦 Banco (saldo al '+fechaCorta(c1.banco_hasta)+')</span><b>'+$clp(c1.banco_saldo)+'</b></div>'+
+    '<div class="fs-row"><span>🪙 '+num(c1.usdt_real)+' USDT × $'+num(c1.costo_usdt)+'</span><b>'+$clp(c1.capital_real-c1.banco_saldo)+'</b></div>'+
+    (c0&&c0!==c1?'<div class="fs-row"><span>Cambio del capital desde el '+fechaCorta(c0.dia)+'</span><b style="color:'+((c1.capital_real-c0.capital_real)>=0?'var(--green)':'var(--red2)')+'">'+conSigno(c1.capital_real-c0.capital_real)+'</b></div>':'')+
+    '<div class="fs-row"><span>Utilidad del período (ganancia + 4% − gastos)</span><b style="color:'+(util>=0?'var(--green)':'var(--red2)')+'">'+conSigno(util)+'</b></div>'+
+    '<div style="font-size:11px;color:var(--mute);margin-top:6px">Si el capital sube menos que la utilidad, la diferencia es plata que falta, retiros o el precio del USDT.</div>'
+    :'<div style="font-size:12px;color:var(--mute)">Sin saldos del robot en este período.</div>';
+  // Gráfico: utilidad acumulada del período y capital
+  const g=document.getElementById('dd_graf'), W=600, H=180, P=26, B=22;
+  const lin=(vals,color,lab)=>{ const pts=vals.map((v,i)=>v==null?null:[i,v]).filter(Boolean); if(pts.length<2) return '';
+    const mn=Math.min(...pts.map(p=>p[1])), mx=Math.max(...pts.map(p=>p[1])), rg=(mx-mn)||Math.abs(mx)||1;
+    const X=i=>P+i*(W-2*P)/Math.max(1,vals.length-1), Y=v=>H-B-(v-mn)*(H-B-P)/rg;
+    return '<polyline fill="none" stroke="'+color+'" stroke-width="2.5" points="'+pts.map(p=>X(p[0])+','+Y(p[1])).join(' ')+'"/>'+
+      '<text x="'+(X(pts[pts.length-1][0])-4)+'" y="'+(Y(pts[pts.length-1][1])-6)+'" fill="'+color+'" font-size="12" text-anchor="end">'+lab+' '+$clp(pts[pts.length-1][1])+'</text>'; };
+  g.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto">'+lin(L.map(r=>r.utilidad_acum-uIni),'#f5c518','Utilidad')+lin(L.map(r=>r.capital_real==null?null:+r.capital_real),'#22c55e','Capital')+
+    '<text x="'+P+'" y="'+(H-4)+'" fill="var(--mute)" font-size="12">'+fechaCorta(L[0].dia)+'</text><text x="'+(W-P)+'" y="'+(H-4)+'" fill="var(--mute)" font-size="12" text-anchor="end">'+fechaCorta(fin.dia)+'</text></svg>'+
+    '<div style="font-size:11px;color:var(--silver)"><span style="color:#f5c518">━</span> Utilidad acumulada del período (cada línea con su propia escala) &nbsp; <span style="color:#22c55e">━</span> Capital total</div>';
+  // Tabla
+  document.getElementById('dd_tabla').innerHTML='<tr><th>Día</th><th class="hs-opt">Cambios</th><th>Ganancia</th><th class="hs-opt">Gastos</th><th>Utilidad acum.</th><th>Banco vs Binance</th><th class="hs-opt">Capital</th></tr>'+
+    [...L].reverse().map(r=>'<tr onclick="irHist(\''+r.dia+'\')"><td>'+fechaCorta(r.dia)+'</td><td class="hs-opt">'+(r.cambios||'—')+'</td><td class="mg-ok">'+(+r.ganancia?$clp(r.ganancia):'—')+'</td>'+
+      '<td class="hs-opt">'+(+r.gastos?'<span style="color:var(--red2)">−'+$clp(r.gastos)+'</span>':'—')+'</td><td><b>'+$clp(r.utilidad_acum-uIni)+'</b></td>'+
+      '<td style="color:'+colorFalta(r.dif_pesos_acum==null?null:+r.dif_pesos_acum)+'">'+(r.dif_pesos_acum==null?(r.dia>(r.banco_hasta||'')?'<span style="color:var(--mute)">sin cartola</span>':'—'):conSigno(+r.dif_pesos_acum))+'</td>'+
+      '<td class="hs-opt">'+(r.capital_real!=null?$clp(r.capital_real):'—')+'</td></tr>').join('');
+}
+
+// ══════════════════════════════════════════════════════════
+//  v5.2 · ACCESOS DIRECTOS
+// ══════════════════════════════════════════════════════════
+function irHist(dia){
+  _hDia=dia||null;
+  const m=(dia||hoyChile()).slice(0,8)+'01', sel=document.getElementById('hf_mes');
+  if(_hMesesListos&&[...sel.options].some(o=>o.value===m)) sel.value=m; else _hMesPend=m;
+  document.getElementById('hf_tipo').value=''; showPg('pg_hist','nb_h'); cargarHist();
+}
+function irRevision(){ showPg('pg_banco','nb_mas'); cargarCartolas(); tabRev(1); }
+function irPorRevisar(){ document.getElementById('mv_per').value='mes'; document.getElementById('mv_tipo').value='SELL';
+  document.getElementById('mv_rev').checked=true; showPg('pg_mov','nb_m'); cargarMov(); }
+function activarAccesos(){
+  const A={k_hoy_n:['historial',()=>irHist(hoyChile())],k_hoy_clp:['historial',()=>irHist(hoyChile())],k_hoy_gan:['cuadre',irDia],
+    k_hoy_tasa:['tasas',()=>showPg('pg_tasas','nb_t')],k_mes_n:['historial',()=>irHist(null)],k_mes_clp:['historial',()=>irHist(null)],
+    k_mes_gan:['cuadre',irDia],k_mes_rev:['movimientos',irPorRevisar],k_gas:['gastos',()=>{showPg('pg_gastos','nb_g');cargarGastos();}],
+    k_util:['cuadre',irDia],k_capt:['cuadre',irDia],k_falta:['cuadre',irDia],k_cap:['cuadre',()=>{showPg('pg_cuadre','nb_mas');cargarCuadre();}],
+    k_px:['alertas',()=>{showPg('pg_alertas','nb_mas');cargarAlertas();}],ini_robot:['alertas',()=>{showPg('pg_alertas','nb_mas');cargarAlertas();}],
+    ini_alerta:['alertas',()=>{showPg('pg_alertas','nb_mas');cargarAlertas();}]};
+  Object.entries(A).forEach(([id,[perm,fn]])=>{ const e=document.getElementById(id); if(!e) return; const box=e.closest('.kc,.panel'); if(!box) return;
+    if(typeof puede==='function'&&!puede(perm)){ box.classList.remove('link'); box.onclick=null; return; }
+    box.classList.add('link'); box.onclick=fn; });
+}
 
 // ══════════════════════════════════════════════════════════
 //  v4.9 · REVISIÓN: órdenes sin depósito y depósitos por revisar
@@ -3303,7 +3445,7 @@ async function cargarBelkys(){
 //  ALERTAS (configuración)
 // ══════════════════════════════════════════════════════════
 const CFG_NOM={alerta_precio_max:'Precio objetivo USDT/CLP',alerta_pct_bajo_promedio:'% bajo el promedio de 30 días',alerta_minimo_7d:'Avisar mínimo de 7 días',
-  capital_minimo_usdt:'Capital mínimo (USDT)',callmebot_phone:'WhatsApp (número)',callmebot_apikey:'CallMeBot API key',telegram_token:'Telegram token',telegram_chat:'Telegram chat',costo_inicial_usdt:'Costo USDT inicial',tasas_msg_activo:'Mensaje de tasas 08:30 y 15:30',tasas_msg_margenes:'Márgenes del mensaje de tasas'};
+  capital_minimo_usdt:'Capital mínimo (USDT)',callmebot_phone:'WhatsApp (número)',callmebot_apikey:'CallMeBot API key',telegram_token:'Telegram token',telegram_chat:'Telegram chat',costo_inicial_usdt:'Costo USDT inicial',apertura_fecha:'Apertura del cuadre: fecha',apertura_cartola:'Apertura: primera cartola',apertura_banco_clp:'Apertura: saldo banco (CLP)',apertura_usdt:'Apertura: USDT reales',tasas_msg_activo:'Mensaje de tasas 08:30 y 15:30',tasas_msg_margenes:'Márgenes del mensaje de tasas'};
 async function cargarAlertas(){
   const box=document.getElementById('al_cfg');
   try{
