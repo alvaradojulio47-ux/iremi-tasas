@@ -277,5 +277,17 @@ def dia_a_dia(dias: int = 15) -> str:
     desde = hoy() - dt.timedelta(min(int(dias), 120))
     return json.dumps(sb(f'v_diario?select=*&dia=gte.{desde}&order=dia.asc'), ensure_ascii=False)
 
+@mcp.tool()
+def estado_caja(desde: str = '', hasta: str = '') -> str:
+    """Estado de caja real de un período (fechas YYYY-MM-DD; por defecto el mes actual): banco al peso (saldo inicial, entradas,
+    salidas, saldo final), USDT (inicial, comprados, vendidos, esperado vs real), clientes (ventas Binance vs depósitos, cambios sin
+    depósito, depósitos sin cambio, Transf Local), compras (Binance vs banco) y capital (debería ser vs es). capital.gap negativo =
+    falta plata; se descompone en gap_clientes + gap_compras + gap_usdt_clp. Solo compara hasta la última cartola cargada (banco_hasta)."""
+    h = hoy(); d0 = desde or h.replace(day=1).isoformat(); d1 = hasta or h.isoformat()
+    req = urllib.request.Request(f'{SB_URL}/rest/v1/rpc/estado_caja', data=json.dumps({'p_desde': d0, 'p_hasta': d1}).encode(),
+                                 headers={'apikey': SB_ANON, 'Authorization': 'Bearer ' + _token(), 'Content-Type': 'application/json'}, method='POST')
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return r.read().decode()
+
 if __name__ == '__main__':
     mcp.run()

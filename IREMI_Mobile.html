@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="IREMI">
 <title>IREMI Remesas</title>
-<meta name="version" content="5.2">
+<meta name="version" content="5.3">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -445,6 +445,13 @@ html[data-theme="light"] .lg-ob svg path[stroke]{stroke:#0f1f4b}
 #dd_tabla tr{cursor:pointer} #dd_tabla td:first-child{white-space:nowrap}
 @media(max-width:520px){#dd_tabla .hs-opt{display:none}}
 .chipx{display:inline-flex;align-items:center;gap:6px;background:var(--gold);color:var(--on-gold);border-radius:14px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:8px}
+/* v5.3 estado de caja */
+.ec-t{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);margin:10px 0 2px}
+.ec-r{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--line2)}
+.ec-r.sub{font-size:11.5px;color:var(--silver);padding-left:12px}
+.ec-r.tot{font-weight:800;border-top:1.5px solid var(--bord);border-bottom:none;padding-top:7px}
+.ec-r b{white-space:nowrap} .ec-r.lk{cursor:pointer} .ec-r.lk span:first-child::after{content:' ›';color:var(--gold)}
+.ec-ok{color:var(--green)} .ec-bad{color:var(--red2)} .ec-warn{color:var(--amber)}
 /* v4.1 tema claro/oscuro */
 /* v4.0 etapa 4 */
 /* v3.2 historial */
@@ -999,13 +1006,13 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
 </div>
 <div class="pg" id="pg_dia" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
   <div class="filtros"><select id="dd_per" onchange="pintarDia()"><option value="mes">Este mes</option><option value="mesant">Mes anterior</option><option value="30">Últimos 30 días</option><option value="ap">Desde la apertura del cuadre</option></select></div>
-  <div class="panel"><h3>🔍 ¿Falta plata? (Binance vs banco)</h3><div id="dd_falta">Cargando...</div></div>
-  <div class="panel"><h3>💰 Capital</h3><div id="dd_cap">Cargando...</div></div>
+  <div class="panel"><h3>🧾 Estado de caja real</h3><div id="dd_falta">Cargando...</div></div>
+  <div class="panel" style="display:none"><div id="dd_cap"></div></div>
   <div class="panel"><h3>📈 Utilidad acumulada y capital</h3><div id="dd_graf"></div></div>
   <div class="panel" style="overflow-x:auto"><h3>📅 Día a día <small style="font-weight:400;color:var(--mute);text-transform:none;letter-spacing:0">toca un día para ver sus operaciones</small></h3><table class="tabla" id="dd_tabla"></table></div>
   <div style="font-size:11px;color:var(--mute);line-height:1.6">
     <b>Utilidad</b> = ganancia de los cambios + 4% Transf Local − gastos (igual que el "Acumulado" de tu Excel, pero restando gastos).<br>
-    <b>¿Falta plata?</b> suma tres cosas desde la apertura del cuadre: 1) pesos de clientes que debían llegar al banco según Binance, 2) compras de USDT pagadas en el banco vs USDT recibidos, 3) USDT reales vs los que deberían quedar. <b>Negativo = falta</b>, positivo = sobra. Solo se calcula hasta la última cartola cargada; si un cliente paga un día y la orden sale al siguiente, ese día se mueve pero el acumulado vuelve a 0.<br>
+    <b>Estado de caja real:</b> el banco cuadra al peso (saldo inicial + entradas − salidas = saldo final de la cartola). Lo que puede faltar es plata que <i>debía</i> llegar y no llegó: cambios sin depósito, compras pagadas de más o USDT que no están. Cada línea con › abre la lista para revisarla. Si un cliente paga un día y la orden sale al siguiente, aparece como diferencia hasta que subes la cartola siguiente.<br>
     <b>Capital</b> = saldo del banco (última cartola) + USDT × último precio de compra. La apertura se ajusta en Más → Alertas.
   </div>
 </div>
@@ -1228,6 +1235,12 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
       <div class="full"><label>Nota</label><input type="text" id="mb_nota" placeholder="Ej: cambio de Juan a tasa especial"></div>
     </div>
     <button type="button" class="btn b-gold" style="width:100%;margin-top:10px" onclick="guardarBk()">💾 Guardar</button>
+  </div>
+</div>
+<!-- v5.3: listas del estado de caja -->
+<div class="modal" id="modal_ec">
+  <div class="mbox"><div class="mtit" id="ec_tit">Detalle <button type="button" class="mcl" onclick="closeModal('modal_ec')">✕</button></div>
+    <div id="ec_lista" style="max-height:60vh;overflow-y:auto;font-size:12px"></div>
   </div>
 </div>
 <!-- v4.9: unir orden con depósito -->
@@ -3020,10 +3033,12 @@ async function cargarInicioDia(){
     set('k_util',$clp(h.utilidad_mes)); const ku=document.getElementById('k_util'); if(ku) ku.parentElement.className=ku.parentElement.className.replace(/\b[gr]\b/,'')+' '+((+h.utilidad_mes)<0?'r':'g');
     const c=ultimo(r=>r.capital_real!=null);
     set('k_capt',c?$clp(c.capital_real):'—'); set('k_capt_s',c?'banco al '+fechaCorta(c.banco_hasta)+' + USDT':'falta saldo del robot');
-    const f=ultimo(r=>r.falta_sobra!=null), kf=document.getElementById('k_falta');
-    if(f){ kf.textContent=conSigno(+f.falta_sobra); kf.style.color=colorFalta(+f.falta_sobra);
-           set('k_falta_s',(Math.abs(f.falta_sobra)<50000?'✓ cuadra':((+f.falta_sobra)<0?'falta':'sobra'))+' · al '+fechaCorta(f.dia)); }
-    else { kf.textContent='—'; set('k_falta_s','sube cartolas para calcular'); }
+    try{ const ap=((await sbPost('robot_config?select=valor&clave=eq.apertura_fecha'))||[{}])[0].valor||'2026-09-01';
+         const d0=hoy.slice(0,8)+'01'<ap?ap:hoy.slice(0,8)+'01';
+         const E=await sbPost('rpc/estado_caja','POST',{p_desde:d0,p_hasta:hoy}); const kf=document.getElementById('k_falta'), gp=E&&E.capital&&!E.sin_banco?E.capital.gap:null;
+         if(gp==null){ kf.textContent='—'; set('k_falta_s',E&&E.sin_banco?'sube la cartola de este mes':(E&&E.parcial?'sube la cartola para calcular':'faltan saldos del robot')); }
+         else { kf.textContent=conSigno(+gp); kf.style.color=colorFalta(+gp); set('k_falta_s',(Math.abs(gp)<50000?'✓ cuadra':(gp<0?'falta':'sobra'))+' · hasta '+fechaCorta(E.banco_hasta<hoy?E.banco_hasta:hoy)); }
+    }catch(e){ set('k_falta','—'); set('k_falta_s',/estado_caja/.test(e.message)?'falta IREMI_etapa8.sql':'✗ error'); }
   }catch(e){ set('k_util','—'); set('k_util_s',/v_diario/.test(e.message)?'falta IREMI_etapa7.sql':'✗ error'); }
   activarAccesos();
 }
@@ -3041,32 +3056,9 @@ function pintarDia(){
   const L=_dd.filter(r=>r.dia<=hoy&&(per==='mes'?r.dia.startsWith(mes):per==='mesant'?r.dia.startsWith(mesAnt):per==='30'?r.dia>=sumarDias(hoy,-29):(f0&&r.dia>=f0)));
   if(!L.length){ document.getElementById('dd_tabla').innerHTML='<tr><td>Sin datos en este período</td></tr>'; return; }
   const fin=L[L.length-1];
-  // ¿Falta plata?
-  const f=[...L].reverse().find(r=>r.falta_sobra!=null)||ultimo(r=>r.falta_sobra!=null);
-  const box=document.getElementById('dd_falta');
-  if(!f){ box.innerHTML='<div style="font-size:12px;color:var(--mute)">Todavía no se puede calcular: faltan cartolas o saldos del robot para estas fechas. Sube la última cartola en <b>Más → Banco</b>.</div>'; }
-  else {
-    const v=+f.falta_sobra, p=+f.dif_pesos_acum, c=-(+f.dif_compras_acum), u=(+f.dif_usdt)*(+f.costo_usdt);
-    box.innerHTML='<div class="fs-big" style="color:'+colorFalta(v)+'">'+conSigno(v)+'</div>'+
-      '<div style="font-size:12px;color:var(--silver);margin:2px 0 8px">'+(Math.abs(v)<50000?'✅ Cuadra':(v<0?'⚠ Falta plata':'Sobra plata'))+' desde el '+fechaCorta(f0)+' hasta el '+fechaCorta(f.dia)+' (última cartola: '+fechaCorta(f.banco_hasta)+')</div>'+
-      '<div class="fs-row"><span>💵 Pesos de clientes: llegó al banco vs lo cambiado en Binance</span><b style="color:'+colorFalta(p)+'">'+conSigno(p)+'</b></div>'+
-      '<div class="fs-row"><span>🛒 Compras de USDT: recibido vs pagado en el banco</span><b style="color:'+colorFalta(c)+'">'+conSigno(c)+'</b></div>'+
-      '<div class="fs-row"><span>🪙 USDT reales vs esperados ('+num(f.usdt_real)+' vs '+num(f.usdt_esperado)+')</span><b style="color:'+colorFalta(u)+'">'+conSigno(Math.round(u))+'</b></div>'+
-      ((+f.sin_clp)?'<div style="font-size:11px;color:var(--amber);margin-top:6px">⚠ Hay órdenes sin monto en CLP: corrígelas en Movimientos para que el cálculo sea exacto.</div>':'')+
-      '<div class="brow" style="margin-top:10px;gap:6px"><button type="button" class="btn b-gold" style="flex:1;padding:9px" onclick="irRevision()">🔎 Revisar en Banco</button>'+
-      '<button type="button" class="btn b-gray" style="flex:1;padding:9px" onclick="showPg(\'pg_cuadre\',\'nb_mas\');cargarCuadre()">⚖️ Cuadre USDT</button></div>';
-  }
-  // Capital
-  const c1=[...L].reverse().find(r=>r.capital_real!=null), c0=L.find(r=>r.capital_real!=null);
-  const uIni=(L[0].utilidad_acum-L[0].utilidad_dia), util=fin.utilidad_acum-uIni;
-  document.getElementById('dd_cap').innerHTML=c1?
-    '<div class="fs-big" style="color:var(--gold)">'+$clp(c1.capital_real)+'</div>'+
-    '<div class="fs-row"><span>🏦 Banco (saldo al '+fechaCorta(c1.banco_hasta)+')</span><b>'+$clp(c1.banco_saldo)+'</b></div>'+
-    '<div class="fs-row"><span>🪙 '+num(c1.usdt_real)+' USDT × $'+num(c1.costo_usdt)+'</span><b>'+$clp(c1.capital_real-c1.banco_saldo)+'</b></div>'+
-    (c0&&c0!==c1?'<div class="fs-row"><span>Cambio del capital desde el '+fechaCorta(c0.dia)+'</span><b style="color:'+((c1.capital_real-c0.capital_real)>=0?'var(--green)':'var(--red2)')+'">'+conSigno(c1.capital_real-c0.capital_real)+'</b></div>':'')+
-    '<div class="fs-row"><span>Utilidad del período (ganancia + 4% − gastos)</span><b style="color:'+(util>=0?'var(--green)':'var(--red2)')+'">'+conSigno(util)+'</b></div>'+
-    '<div style="font-size:11px;color:var(--mute);margin-top:6px">Si el capital sube menos que la utilidad, la diferencia es plata que falta, retiros o el precio del USDT.</div>'
-    :'<div style="font-size:12px;color:var(--mute)">Sin saldos del robot en este período.</div>';
+  // Estado de caja real del período (banco al peso + USDT + clientes + compras + capital)
+  estadoCaja(L[0].dia, fin.dia, 'dd_falta');
+  const uIni=(L[0].utilidad_acum-L[0].utilidad_dia);
   // Gráfico: utilidad acumulada del período y capital
   const g=document.getElementById('dd_graf'), W=600, H=180, P=26, B=22;
   const lin=(vals,color,lab)=>{ const pts=vals.map((v,i)=>v==null?null:[i,v]).filter(Boolean); if(pts.length<2) return '';
@@ -3085,6 +3077,91 @@ function pintarDia(){
       '<td class="hs-opt">'+(r.capital_real!=null?$clp(r.capital_real):'—')+'</td></tr>').join('');
 }
 
+
+// ══════════════════════════════════════════════════════════
+//  v5.3 · ESTADO DE CAJA REAL
+// ══════════════════════════════════════════════════════════
+let _ec=null;
+async function estadoCaja(desde,hasta,boxId){
+  const box=document.getElementById(boxId); box.innerHTML='Calculando...';
+  try{
+    const E=await sbPost('rpc/estado_caja','POST',{p_desde:desde,p_hasta:hasta}); _ec=E;
+    if(E.sin_banco){ box.innerHTML='<div style="font-size:12px;color:var(--amber)">⚠ No hay cartola del banco para este período (la última cargada llega al '+(E.banco_hasta?fechaCorta(E.banco_hasta):'—')+'). Súbela en <b>Más → Banco</b> y vuelve aquí.</div>'; return; }
+    const B=E.banco,U=E.usdt,C=E.clientes,P=E.compras,K=E.capital, h=E.parcial&&E.banco_hasta?E.banco_hasta:hasta;
+    const r=(t,v,cls,sub,onc)=>'<div class="ec-r'+(sub?' sub':'')+(onc?' lk':'')+'"'+(onc?' onclick="'+onc+'"':'')+'><span>'+t+'</span><b class="'+(cls||'')+'">'+v+'</b></div>';
+    const tot=(t,v,cls)=>'<div class="ec-r tot"><span>'+t+'</span><b class="'+(cls||'')+'">'+v+'</b></div>';
+    const cl=v=>v==null?'':(Math.abs(v)<50000?'ec-ok':(Math.abs(v)<300000?'ec-warn':'ec-bad'));
+    const gap=K.gap;
+    box.innerHTML=
+      '<div style="font-size:12px;color:var(--silver);margin-bottom:4px">Del '+fechaCorta(desde)+' al '+fechaCorta(h)+(E.parcial?' <span class="ec-warn">(hasta la última cartola; sube la siguiente para completar)</span>':'')+(E.usdt_fecha&&E.usdt_fecha<h?' <span class="ec-warn">· USDT según el saldo del '+fechaCorta(E.usdt_fecha)+'</span>':'')+'</div>'+
+      '<div class="fs-big" style="color:'+colorFalta(gap)+'">'+(gap==null?'—':conSigno(gap))+'</div>'+
+      '<div style="font-size:12px;margin-bottom:6px">'+(gap==null?'Faltan saldos de USDT del robot para este período.':(Math.abs(gap)<50000?'✅ El capital real coincide con lo que dicen los libros.':(gap<0?'⚠ El capital real es <b>menor</b> que lo que dicen los libros. Las causas, abajo:':'El capital real es <b>mayor</b> que lo que dicen los libros:')))+'</div>'+
+      r('💵 Clientes: llegó al banco vs cambiado en Binance',conSigno(K.gap_clientes),cl(K.gap_clientes))+
+      r('Cambios sin depósito en el banco ('+C.sin_deposito_n+')','−'+$clp(C.sin_deposito_clp),'ec-bad',1,'irRevision()')+
+      r('Depósitos sin cambio en Binance ('+C.depositos_sin_orden_n+')','+'+$clp(C.depositos_sin_orden),'ec-ok',1,'verDepSinOrden(\''+desde+'\',\''+h+'\')')+
+      r('Transf Local: resto enviado a Venezuela por Binance','+'+$clp(C.resto_tl),'',1)+
+      r('🛒 Compras de USDT: Binance vs pagado por banco',conSigno(K.gap_compras),cl(K.gap_compras),0,'verCompras(\''+desde+'\',\''+h+'\')')+
+      r('🪙 USDT que faltan o sobran ('+num(U.real)+' reales vs '+num(U.esperado)+' esperados)',U.diferencia==null?'—':conSigno(K.gap_usdt_clp),cl(K.gap_usdt_clp),0,'showPg(\'pg_cuadre\',\'nb_mas\');cargarCuadre()')+
+      '<div class="ec-t">🏦 Banco (cuadra al peso '+(B.cuadra?'✅':'⚠')+')</div>'+
+      r('Saldo inicial ('+fechaCorta(sumarDias(desde,-1))+')',$clp(B.inicial))+
+      r('+ Depósitos de clientes con cambio','+'+$clp(B.entradas.clientes_con_orden),'',1)+
+      r('+ Depósitos de clientes sin cambio ('+B.entradas.clientes_sin_orden_n+')','+'+$clp(B.entradas.clientes_sin_orden),'',1,'verDepSinOrden(\''+desde+'\',\''+h+'\')')+
+      r('+ Transf Local (Fidel, Angélica, Lilibeth)','+'+$clp(B.entradas.transf_local),'',1)+
+      (B.entradas.aportes_propios?r('+ Aportes propios ('+B.entradas.aportes_n+')','+'+$clp(B.entradas.aportes_propios),'',1):'')+
+      r('− Compras de USDT ('+B.salidas.compras_n+')','−'+$clp(B.salidas.compras_usdt),'',1,'verCompras(\''+desde+'\',\''+h+'\')')+
+      r('− Pagos Transf Local (Florelvis / Belkys)','−'+$clp(B.salidas.transf_local_pagos),'',1)+
+      r('− Gastos y retiros ('+B.salidas.gastos_n+')','−'+$clp(B.salidas.gastos),'',1,'verCargos(\''+desde+'\',\''+h+'\',\'gasto\')')+
+      (B.salidas.otros?r('− Otras salidas sin clasificar ('+B.salidas.otros_n+')','−'+$clp(B.salidas.otros),'ec-warn',1,'verCargos(\''+desde+'\',\''+h+'\',\'otros\')'):'')+
+      (B.salidas.traspasos_salida?r('− Traspasos a otra cuenta propia','−'+$clp(B.salidas.traspasos_salida),'',1):'')+
+      tot('= Saldo final ('+fechaCorta(h)+')',$clp(B.final))+
+      '<div class="ec-t">🪙 USDT (JULIO + IREMI)</div>'+
+      r('Inicial',num(U.inicial))+r('+ Comprados','+'+num(U.comprados),'',1)+r('− Vendidos a clientes','−'+num(U.vendidos),'',1)+
+      (U.envio_familia?r('− Envíos a familia','−'+num(U.envio_familia),'',1):'')+r('− Comisiones Binance','−'+num(U.comisiones),'',1)+
+      (U.binance_pay?r('± Binance Pay / retiros con terceros',(U.binance_pay>0?'+':'')+num(U.binance_pay),'',1):'')+
+      r('= Deberían quedar',num(U.esperado))+tot('Hay según el robot',U.real==null?'—':num(U.real),cl(K.gap_usdt_clp))+
+      '<div class="ec-t">💰 Capital (banco + USDT × $'+num(E.costo_usdt)+')</div>'+
+      r('Inicial',$clp(K.inicial))+
+      r('+ Ganancia de los cambios ('+C.ventas_n+' cambios, '+$clp(C.ventas_clp)+')','+'+$clp(K.ganancia_libro),'ec-ok',1)+
+      r('+ 4% Transf Local','+'+$clp(K.comision_tl),'',1)+
+      r('− Gastos, retiros y otras salidas','−'+$clp(K.gastos_banco),'',1)+
+      (K.ajuste_usdt?r('± Precio del USDT (costo de reposición)',conSigno(K.ajuste_usdt),'',1):'')+
+      (K.ajuste_compras?r('± Compras valoradas al costo actual',conSigno(K.ajuste_compras),'',1):'')+
+      (K.otros_usdt?r('± Comisiones, familia y Pay en pesos',conSigno(K.otros_usdt),'',1):'')+
+      (K.aportes?r('+ Aportes propios',conSigno(K.aportes),'',1):'')+
+      r('= Debería ser',$clp(K.inicial+K.delta_libros))+
+      tot('Es (banco '+$clp(K.banco_final)+' + USDT '+$clp(K.usdt_final_clp)+')',$clp(K.final),cl(gap));
+  }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+(/estado_caja/.test(e.message)?' · Falta correr IREMI_etapa8.sql en Supabase':'')+'</span>'; }
+}
+function ecModal(tit,html){ document.getElementById('ec_tit').firstChild.textContent=tit+' '; document.getElementById('ec_lista').innerHTML=html; openModal('modal_ec'); }
+async function verDepSinOrden(d0,d1){
+  ecModal('Depósitos sin cambio','Cargando...');
+  const L=(await sbPost('banco_movimientos?select=id,fecha,cartola,descripcion,abono,categoria,nota&abono=gt.0&categoria=in.(cambio_sin_orden,por_revisar)&fecha=gte.'+d0+'&fecha=lte.'+d1+'&order=fecha.desc'))||[];
+  _bkRev=L;
+  document.getElementById('ec_lista').innerHTML='<div style="color:var(--mute);margin-bottom:6px">Plata que entró al banco y no tiene una orden de Binance unida. Toca uno para unirlo a su cambio o clasificarlo.</div>'+
+    (L.length?L.map((b,i)=>'<div class="mv" onclick="closeModal(\'modal_ec\');editarBk('+i+')"><div class="bk-d">'+esc(b.descripcion)+'</div><div class="bk-s">'+fechaCorta(b.fecha)+' · c.'+b.cartola+' · <span class="m-in">+'+$clp(b.abono)+'</span> · '+BK_CAT[b.categoria]+(b.nota?' · '+esc(b.nota):'')+'</div></div>').join('')
+      +'<div class="ec-r tot"><span>Total</span><b>'+$clp(L.reduce((s,b)=>s+(+b.abono),0))+'</b></div>':'Ninguno en este período.');
+}
+async function verCargos(d0,d1,tipo){
+  ecModal(tipo==='gasto'?'Gastos y retiros del banco':'Salidas sin clasificar','Cargando...');
+  const f=tipo==='gasto'?'&categoria=eq.gasto':'&categoria=not.in.(compra_usdt,belkys_pago,gasto,traspaso_propio)';
+  const L=(await sbPost('banco_movimientos?select=id,fecha,cartola,descripcion,cargo,categoria,nota&cargo=gt.0'+f+'&fecha=gte.'+d0+'&fecha=lte.'+d1+'&order=fecha.desc'))||[];
+  _bkRev=L;
+  document.getElementById('ec_lista').innerHTML=(tipo==='gasto'?'':'<div style="color:var(--amber);margin-bottom:6px">Plata que salió del banco y no está clasificada como compra, Transf Local, gasto ni traspaso. Toca una para decir qué fue.</div>')+
+    (L.length?L.map((b,i)=>'<div class="mv" onclick="closeModal(\'modal_ec\');editarBk('+i+')"><div class="bk-d">'+esc(b.descripcion)+'</div><div class="bk-s">'+fechaCorta(b.fecha)+' · c.'+b.cartola+' · <span class="m-out">−'+$clp(b.cargo)+'</span> · '+(BK_CAT[b.categoria]||b.categoria)+(b.nota?' · '+esc(b.nota):'')+'</div></div>').join('')
+      +'<div class="ec-r tot"><span>Total</span><b>'+$clp(L.reduce((s,b)=>s+(+b.cargo),0))+'</b></div>':'Ninguna en este período.');
+}
+async function verCompras(d0,d1){
+  ecModal('Compras de USDT: Binance vs banco','Cargando...');
+  const [O,B]=await Promise.all([sbPost('v_ordenes?select=creado,cuenta,monto_fiat,usdt,precio,contraparte&tipo=eq.BUY&estado=eq.COMPLETED&creado=gte.'+tz(d0)+'&creado=lt.'+tz(sumarDias(d1,1))+'&order=creado.asc'),
+    sbPost('banco_movimientos?select=id,fecha,descripcion,cargo,nota,categoria&categoria=eq.compra_usdt&cargo=gt.0&fecha=gte.'+d0+'&fecha=lte.'+d1+'&order=fecha.asc')]);
+  _bkRev=B||[];
+  const so=(O||[]).reduce((s,o)=>s+(+o.monto_fiat),0), sb_=(B||[]).reduce((s,b)=>s+(+b.cargo),0);
+  document.getElementById('ec_lista').innerHTML='<div class="ec-t">Binance: '+(O||[]).length+' compras · '+$clp(so)+'</div>'+(O||[]).map(o=>'<div class="ec-r sub"><span>'+fh(o.creado)+' · '+o.cuenta+' · '+esc((o.contraparte||'').slice(0,16))+' · '+num(o.usdt)+' USDT a $'+num(o.precio)+'</span><b>'+$clp(o.monto_fiat)+'</b></div>').join('')+
+    '<div class="ec-t">Banco: '+(B||[]).length+' pagos · '+$clp(sb_)+'</div>'+(B||[]).map((b,i)=>'<div class="ec-r sub lk" onclick="closeModal(\'modal_ec\');editarBk('+i+')"><span>'+fechaCorta(b.fecha)+' · '+esc(b.descripcion)+(b.nota?' · '+esc(b.nota):'')+'</span><b>'+$clp(b.cargo)+'</b></div>').join('')+
+    '<div class="ec-r tot"><span>Diferencia (Binance − banco)</span><b class="'+(Math.abs(so-sb_)<1000?'ec-ok':'ec-bad')+'">'+conSigno(so-sb_)+'</b></div>'+
+    '<div style="color:var(--mute);margin-top:6px">Si un pago del banco no fue una compra de USDT (por ejemplo, un pago a otra persona), tócalo y cámbiale el tipo. Si compraste USDT con plata de otra cuenta, sale como diferencia positiva.</div>';
+}
+
 // ══════════════════════════════════════════════════════════
 //  v5.2 · ACCESOS DIRECTOS
 // ══════════════════════════════════════════════════════════
@@ -3101,7 +3178,7 @@ function activarAccesos(){
   const A={k_hoy_n:['historial',()=>irHist(hoyChile())],k_hoy_clp:['historial',()=>irHist(hoyChile())],k_hoy_gan:['cuadre',irDia],
     k_hoy_tasa:['tasas',()=>showPg('pg_tasas','nb_t')],k_mes_n:['historial',()=>irHist(null)],k_mes_clp:['historial',()=>irHist(null)],
     k_mes_gan:['cuadre',irDia],k_mes_rev:['movimientos',irPorRevisar],k_gas:['gastos',()=>{showPg('pg_gastos','nb_g');cargarGastos();}],
-    k_util:['cuadre',irDia],k_capt:['cuadre',irDia],k_falta:['cuadre',irDia],k_cap:['cuadre',()=>{showPg('pg_cuadre','nb_mas');cargarCuadre();}],
+    k_util:['cuadre',irDia],k_capt:['cuadre',irDia],k_falta:['cuadre',()=>{irDia();setTimeout(()=>{const x=document.getElementById('dd_per'); if(x){x.value='ap'; pintarDia();}},700);}],k_cap:['cuadre',()=>{showPg('pg_cuadre','nb_mas');cargarCuadre();}],
     k_px:['alertas',()=>{showPg('pg_alertas','nb_mas');cargarAlertas();}],ini_robot:['alertas',()=>{showPg('pg_alertas','nb_mas');cargarAlertas();}],
     ini_alerta:['alertas',()=>{showPg('pg_alertas','nb_mas');cargarAlertas();}]};
   Object.entries(A).forEach(([id,[perm,fn]])=>{ const e=document.getElementById(id); if(!e) return; const box=e.closest('.kc,.panel'); if(!box) return;
