@@ -2203,9 +2203,9 @@ async function cargarInicioDia(){
   try{
     await datosDia(); const hoy=hoyChile(), mes=hoy.slice(0,7);
     const h=ultimo(r=>r.dia<=hoy); if(!h) return;
-    const g=_dd.filter(r=>r.dia.startsWith(mes)).reduce((s,r)=>s+(+r.gastos||0),0);
+    const M=_dd.filter(r=>r.dia.startsWith(mes)&&r.dia<=hoy), g=M.reduce((s,r)=>s+(+r.gastos||0),0), c4=M.reduce((s,r)=>s+(+r.comision_tl||0),0), gn=M.reduce((s,r)=>s+(+r.ganancia||0),0);
     set('k_gas',$clp(g)); set('k_gas_s','ver detalle en Gastos');
-    set('k_util',$clp(h.utilidad_mes)); set('k_util_s','ganancia + 4% TL − gastos y retiros '+$clp(g)); const ku=document.getElementById('k_util'); if(ku) ku.parentElement.className=ku.parentElement.className.replace(/\b[gr]\b/,'')+' '+((+h.utilidad_mes)<0?'r':'g');
+    set('k_util',$clp(h.utilidad_mes)); set('k_util_s','ganancia '+$clp(gn)+' + 4% TL '+$clp(c4)+' − gastos '+$clp(g)); const ku=document.getElementById('k_util'); if(ku) ku.parentElement.className=ku.parentElement.className.replace(/\b[gr]\b/,'')+' '+((+h.utilidad_mes)<0?'r':'g');
     set('k_capt','…'); set('k_capt_s','banco + USDT');
     try{ const ap=((await sbPost('robot_config?select=valor&clave=eq.apertura_fecha'))||[{}])[0].valor||'2026-09-01';
          const d0=hoy.slice(0,8)+'01'<ap?ap:hoy.slice(0,8)+'01';
