@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="IREMI">
 <title>IREMI Remesas</title>
-<meta name="version" content="5.3">
+<meta name="version" content="6.0">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -103,22 +103,9 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
   #pg_tasas .right-panel{
     padding:16px;overflow-y:auto;
   }
-  /* REGISTRAR: P2P list izq + form der */
-  #pg_reg.on{
-    grid-template-columns:1fr 1fr;
-    gap:0;align-items:start;
-  }
-  #pg_reg .reg-left{
-    border-right:1px solid var(--line);padding:16px;
-    min-height:calc(100vh - 94px);
-  }
-  #pg_reg .reg-right{
-    padding:16px;
-  }
   /* HISTORIAL: full width table */
   #pg_hist.on{display:block}
   /* EXPORTAR */
-  #pg_exp.on{display:block;padding:16px;max-width:800px;margin:0 auto}
   /* Nav horizontal on desktop */
   .nav{top:52px}
   .nb{padding:10px 20px;flex-direction:row;gap:8px;font-size:11px}
@@ -129,7 +116,6 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:'Bar
 @media(max-width:899px){
   #pg_tasas .left-panel{display:none}
   #pg_tasas.on{display:block}
-  #pg_reg.on{display:block}
   .right-panel,.reg-left,.reg-right{padding:10px 12px 80px}
   body{padding-bottom:env(safe-area-inset-bottom)}
 }
@@ -565,71 +551,6 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
 
 <!-- ══ NAV ═════════════════════════════════════════════════ -->
 
-<!-- ══ PAGE: P2P DIAGNÓSTICO ══════════════════════════════ -->
-<div class="pg" id="pg_p2p" style="padding:12px">
-
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-    <div style="font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)">
-      🔬 Diagnóstico P2P — Valores Brutos API
-    </div>
-    <button type="button" id="btn_diag" onclick="diagP2P()"
-      style="background:#166534;color:#fff;border:none;border-radius:8px;padding:8px 14px;
-             font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;cursor:pointer">
-      ↻ Actualizar
-    </button>
-  </div>
-
-  <div style="font-size:9px;color:var(--mute2);margin-bottom:10px;line-height:1.5">
-    Valores directos de la API Binance P2P sin ningún procesamiento.<br>
-    <b style="color:var(--green)">VENTA</b> = anunciantes vendiendo USDT (tú compras) → primer valor = más barato<br>
-    <b style="color:var(--red2)">COMPRA</b> = anunciantes comprando USDT (tú vendes) → primer valor = más caro
-  </div>
-
-  <div id="diag_grid" style="display:flex;flex-direction:column;gap:6px">
-    <div style="text-align:center;color:var(--mute2);padding:20px">Presiona ↻ Actualizar</div>
-  </div>
-
-  <div id="diag_raw" style="margin-top:12px;display:none">
-    <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--silver);margin-bottom:6px">
-      📋 Log completo
-    </div>
-    <pre id="diag_log" style="background:var(--dark);border:1px solid var(--line);border-radius:8px;
-      padding:10px;font-size:8px;color:var(--silver);overflow-x:auto;max-height:300px;
-      overflow-y:auto;white-space:pre-wrap;word-break:break-all"></pre>
-  </div>
-</div>
-
-<!-- ── FIXED ACTION BAR (tasas only) ─────────────────── -->
-<div id="action_bar" style="
-  position:fixed;bottom:64px;left:0;right:0;
-  display:flex;gap:8px;padding:8px 12px;
-  background:linear-gradient(0deg,var(--dark) 60%,transparent);
-  z-index:90;
-  padding-bottom:max(8px,env(safe-area-inset-bottom,8px))
-">
-  <button type="button" id="btn_upd" onclick="fetchAllRates()"
-    style="flex:1;padding:13px 8px;border-radius:10px;border:none;
-           background:#0039A6;color:#fff;font-family:'Barlow Condensed',sans-serif;
-           font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
-           cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
-    🔄 Actualizar
-  </button>
-  <button type="button" onclick="doChangeBg()"
-    style="flex:1;padding:13px 8px;border-radius:10px;border:none;
-           background:#b45309;color:#fff;font-family:'Barlow Condensed',sans-serif;
-           font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
-           cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
-    🌄 Fondo
-  </button>
-  <button type="button" onclick="doShare()"
-    style="flex:1;padding:13px 8px;border-radius:10px;border:none;
-           background:#166534;color:#fff;font-family:'Barlow Condensed',sans-serif;
-           font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
-           cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
-    📤 Compartir
-  </button>
-</div>
-
 <nav class="nav">
   <button type="button" class="nb active" id="nb_i" onclick="showPg('pg_inicio','nb_i');cargarInicio()"><span class="ni">📊</span><span>Inicio</span></button>
   <button type="button" class="nb" id="nb_t" onclick="showPg('pg_tasas','nb_t')"><span class="ni">💱</span><span>Tasas</span></button>
@@ -720,7 +641,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
     <div id="rv_p1">
       <div class="filtros"><label><input type="checkbox" id="rv_hechas" onchange="cargarSinDeposito()"> Ver también las ya revisadas</label></div>
       <div id="rv_ord">Cargando...</div>
-      <div style="font-size:11px;color:var(--mute);line-height:1.6;margin-top:6px">Ventas de USDT del robot que no tienen un depósito en el banco. <b>✅ Aceptar</b>: fue un cambio (pagó en efectivo u otra cuenta). <b>💸 Familia</b>: fue un envío tuyo a Venezuela: se quita la ganancia y los USDT pasan a Gastos. <b>🔗 Unir</b>: elige el depósito que le corresponde.</div>
+      <div style="font-size:11px;color:var(--mute);line-height:1.6;margin-top:6px">Ventas de USDT del robot que no tienen un depósito en el banco. <b>✅ Aceptar</b>: fue un cambio (pagó en efectivo u otra cuenta). <b>💸 Familia</b>: envío tuyo a Venezuela: sin ganancia, los USDT pasan a Gastos. <b>🤝 TL</b>: es el resto de Transf Local enviado a Venezuela (la plata entró de Fidel, Angélica o Lilibeth). <b>🔗 Unir</b>: elige el depósito que le corresponde.</div>
     </div>
     <div id="rv_p2" style="display:none">
       <div class="filtros"><select id="bk_cat" onchange="cargarRevisar()"><option value="por_revisar">Por revisar</option><option value="cambio_sin_orden">Cambio sin orden</option><option value="todos">Todos (últimos 150)</option></select></div>
@@ -878,120 +799,6 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
-     PAGE: REGISTRAR
-════════════════════════════════════════════════════════════ -->
-<div class="pg" id="pg_reg">
-
-  <!-- LEFT: P2P Binance transactions -->
-  <div class="reg-left">
-    <div class="section">
-      🔄 Operaciones P2P Detectadas
-      <span class="badge" id="p2p_count">0</span>
-      <button type="button" onclick="cargarP2P()" id="btn_p2p_load"
-        style="margin-left:auto;background:var(--blue);color:#fff;border:none;border-radius:6px;
-               padding:3px 10px;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;cursor:pointer">
-        ↻ Actualizar
-      </button>
-    </div>
-    <!-- Filters -->
-    <div style="display:flex;gap:6px;margin-bottom:8px">
-      <select id="p2p_dest" style="flex:1;background:var(--card);border:1.5px solid var(--bord);border-radius:7px;
-        color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;padding:7px 8px;outline:none">
-        <option value="">Todos los destinos</option>
-        <option value="VES">🇻🇪 VES</option>
-        <option value="COP">🇨🇴 COP</option>
-        <option value="PEN">🇵🇪 PEN</option>
-        <option value="ARS">🇦🇷 ARS</option>
-      </select>
-      <select id="p2p_period" style="flex:1;background:var(--card);border:1.5px solid var(--bord);border-radius:7px;
-        color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;padding:7px 8px;outline:none">
-        <option value="1">Últimas 24h</option>
-        <option value="7" selected>Últimos 7 días</option>
-        <option value="30">Últimos 30 días</option>
-      </select>
-    </div>
-    <div style="font-size:9px;color:var(--silver);margin-bottom:6px">👆 Clic en una operación para precargar el formulario</div>
-    <div id="p2p_list" style="max-height:60vh;overflow-y:auto">
-      <div style="text-align:center;color:var(--mute2);font-size:10px;padding:20px">
-        Presiona "Actualizar" para cargar operaciones de Binance
-      </div>
-    </div>
-  </div>
-
-  <!-- RIGHT: Form -->
-  <div class="reg-right">
-    <div class="section">✏️ Nueva Operación <span id="form_mes_badge" style="color:var(--silver);font-size:10px;font-weight:600">Marzo 2026</span></div>
-    <div id="sbar_reg" class="sbar"></div>
-
-    <!-- Mes selector -->
-    <div class="mes-grid">
-      <button type="button" class="mb" onclick="selMes(this,'Agosto 2025')">Ago 25</button>
-      <button type="button" class="mb" onclick="selMes(this,'Septiembre 2025')">Sep 25</button>
-      <button type="button" class="mb" onclick="selMes(this,'Octubre 2025')">Oct 25</button>
-      <button type="button" class="mb" onclick="selMes(this,'Noviembre 2025')">Nov 25</button>
-      <button type="button" class="mb" onclick="selMes(this,'Diciembre 2025')">Dic 25</button>
-      <button type="button" class="mb" onclick="selMes(this,'Enero 2026')">Ene 26</button>
-      <button type="button" class="mb" onclick="selMes(this,'Febrero 2026')">Feb 26</button>
-      <button type="button" class="mb active" onclick="selMes(this,'Marzo 2026')">Mar 26 ★</button>
-    </div>
-
-    <div class="g2" style="margin-bottom:8px">
-      <div class="field"><label>📅 Fecha *</label><input type="date" id="rf_fecha"></div>
-      <div class="field"><label>🌍 Destino</label>
-        <select id="rf_fiat">
-          <option value="VES">🇻🇪 VES</option><option value="COP">🇨🇴 COP</option>
-          <option value="PEN">🇵🇪 PEN</option><option value="ARS">🇦🇷 ARS</option>
-          <option value="MXN">🇲🇽 MXN</option><option value="USD">🇺🇸 USD</option>
-          <option value="EUR">🇪🇸 EUR</option>
-        </select>
-      </div>
-    </div>
-    <div class="g2" style="margin-bottom:8px">
-      <div class="field"><label>💰 Monto CLP *</label><input type="number" id="rf_monto" placeholder="ej: 60000" inputmode="numeric" oninput="calcPrev()"></div>
-      <div class="field"><label>🔄 USDT Mov *</label><input type="number" id="rf_usdt" placeholder="-61.95" step="0.001" oninput="calcPrev()"><div class="hint">Negativo = venta USDT</div></div>
-    </div>
-    <div class="g2" style="margin-bottom:8px">
-      <div class="field"><label>📈 USDT/CLP Compra</label><input type="number" id="rf_dc" value="914" step="0.01" oninput="calcPrev()"></div>
-      <div class="field"><label>📉 USDT/CLP Venta</label><input type="number" id="rf_dv" value="914" step="0.01" oninput="calcPrev()"></div>
-    </div>
-    <div class="g2" style="margin-bottom:8px">
-      <div class="field"><label>🌍 Tasa Destino</label><input type="number" id="rf_dest" placeholder="ej: 649000" step="0.001"></div>
-      <div class="field"><label>💱 Tasa IREMI</label><input type="number" id="rf_tiremi" placeholder="ej: 0.671" step="0.000001"></div>
-    </div>
-    <div class="g2" style="margin-bottom:8px">
-      <div class="field"><label>🏦 Tax Binance</label><input type="number" id="rf_tax" value="0.06" step="0.001"></div>
-      <div class="field"><label>💬 Comentario</label><input type="text" id="rf_coment" placeholder="cambio María..."></div>
-    </div>
-
-    <!-- Preview -->
-    <div class="prev-box" id="prev_box" style="display:none">
-      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--silver);margin-bottom:6px">⚡ Ganancia estimada</div>
-      <div class="prev-row"><span class="pr-l">Ganancia USDT</span><span class="pr-v" id="pv_u">—</span></div>
-      <div class="prev-row"><span class="pr-l">Ganancia CLP</span><span class="pr-v" id="pv_c" style="color:var(--green)">—</span></div>
-      <div class="prev-row" style="border:none"><span class="pr-l">% Ganancia</span><span class="pr-v" id="pv_p" style="color:var(--gold)">—</span></div>
-    </div>
-
-    <div class="brow" style="margin-bottom:12px">
-      <button type="button" class="btn b-blue" onclick="calcPrev()" style="flex:0;padding:12px 14px">🔢</button>
-      <button type="button" class="btn b-green" id="btn_save" onclick="guardar()" style="flex:1">💾 Guardar en BD</button>
-      <button type="button" class="btn b-red" onclick="resetReg()" style="flex:0;padding:12px 14px">🗑</button>
-    </div>
-
-    <!-- Session history -->
-    <div class="section">
-      📜 Guardados esta sesión
-      <span class="badge" id="hist_n">0</span>
-      <button type="button" onclick="borrarUltima()"
-        style="margin-left:auto;background:#7f1d1d;color:#fff;border:none;border-radius:6px;
-               padding:3px 10px;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;cursor:pointer">
-        🗑 Borrar última
-      </button>
-    </div>
-    <div id="hist_list"><div style="text-align:center;color:var(--mute2);font-size:10px;padding:14px">Sin operaciones aún</div></div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════
      PAGE: HISTORIAL
 ════════════════════════════════════════════════════════════ -->
 <div class="pg" id="pg_libro" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
@@ -1006,12 +813,14 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
 </div>
 <div class="pg" id="pg_dia" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
   <div class="filtros"><select id="dd_per" onchange="pintarDia()"><option value="mes">Este mes</option><option value="mesant">Mes anterior</option><option value="30">Últimos 30 días</option><option value="ap">Desde la apertura del cuadre</option></select></div>
-  <div class="panel"><h3>🧾 Estado de caja real</h3><div id="dd_falta">Cargando...</div></div>
+  <div class="panel"><h3>⚖️ Cuadre</h3><div id="dd_cuadre">Cargando...</div></div>
+  <div class="panel"><h3 style="display:flex;justify-content:space-between;align-items:center">🧾 Detalle del período <button type="button" class="lnk" style="font-size:12px" onclick="const d=document.getElementById('dd_falta');d.style.display=d.style.display==='none'?'':'none';this.textContent=d.style.display==='none'?'ver':'ocultar'">ver</button></h3><div id="dd_falta" style="display:none">Cargando...</div></div>
   <div class="panel" style="display:none"><div id="dd_cap"></div></div>
   <div class="panel"><h3>📈 Utilidad acumulada y capital</h3><div id="dd_graf"></div></div>
-  <div class="panel" style="overflow-x:auto"><h3>📅 Día a día <small style="font-weight:400;color:var(--mute);text-transform:none;letter-spacing:0">toca un día para ver sus operaciones</small></h3><table class="tabla" id="dd_tabla"></table></div>
+  <div class="panel" style="overflow-x:auto"><h3>📅 Día a día <small style="font-weight:400;color:var(--mute);text-transform:none;letter-spacing:0">toca un día para ver su detalle</small></h3><table class="tabla" id="dd_tabla"></table></div>
   <div style="font-size:11px;color:var(--mute);line-height:1.6">
     <b>Utilidad</b> = ganancia de los cambios + 4% Transf Local − gastos (igual que el "Acumulado" de tu Excel, pero restando gastos).<br>
+    <b>Cuadre:</b> <i>Debería</i> es lo que los libros dicen (Binance + lo que anotaste); <i>Hay</i> es lo real (cartola y saldo del robot). <b>Transf Local pendiente</b> es plata de Fidel, Angélica o Lilibeth que ya entró y todavía no se paga ni se envía: está en el banco pero no es tuya, por eso no cuenta en el total.<br>
     <b>Estado de caja real:</b> el banco cuadra al peso (saldo inicial + entradas − salidas = saldo final de la cartola). Lo que puede faltar es plata que <i>debía</i> llegar y no llegó: cambios sin depósito, compras pagadas de más o USDT que no están. Cada línea con › abre la lista para revisarla. Si un cliente paga un día y la orden sale al siguiente, aparece como diferencia hasta que subes la cartola siguiente.<br>
     <b>Capital</b> = saldo del banco (última cartola) + USDT × último precio de compra. La apertura se ajusta en Más → Alertas.
   </div>
@@ -1032,66 +841,6 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
 <!-- ══════════════════════════════════════════════════════════
      PAGE: EXPORTAR
 ════════════════════════════════════════════════════════════ -->
-<div class="pg" id="pg_exp" style="padding:12px">
-  <div class="section">📤 Exportar Reporte .xlsx</div>
-  <div style="background:var(--modal);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px">
-    <div class="g2" style="margin-bottom:10px">
-      <div class="field"><label>Desde</label>
-        <select id="exp_mes_ini" style="width:100%;background:var(--card);border:1.5px solid var(--bord);border-radius:8px;color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:9px 10px;outline:none">
-          <option value="Agosto 2025">Ago 2025</option><option value="Septiembre 2025">Sep 2025</option>
-          <option value="Octubre 2025">Oct 2025</option><option value="Noviembre 2025">Nov 2025</option>
-          <option value="Diciembre 2025">Dic 2025</option><option value="Enero 2026">Ene 2026</option>
-          <option value="Febrero 2026">Feb 2026</option><option value="Marzo 2026">Mar 2026</option>
-          <option value="Abril 2026" selected>Abr 2026</option>
-        </select></div>
-      <div class="field"><label>Hasta</label>
-        <select id="exp_mes_fin" style="width:100%;background:var(--card);border:1.5px solid var(--bord);border-radius:8px;color:var(--tx);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:9px 10px;outline:none">
-          <option value="Agosto 2025">Ago 2025</option><option value="Septiembre 2025">Sep 2025</option>
-          <option value="Octubre 2025">Oct 2025</option><option value="Noviembre 2025">Nov 2025</option>
-          <option value="Diciembre 2025">Dic 2025</option><option value="Enero 2026">Ene 2026</option>
-          <option value="Febrero 2026">Feb 2026</option><option value="Marzo 2026">Mar 2026</option>
-          <option value="Abril 2026" selected>Abr 2026</option>
-        </select></div>
-    </div>
-    <div class="brow">
-      <button type="button" class="btn b-blue" onclick="previewReporte()" style="flex:1">👁 Vista previa</button>
-      <button type="button" class="btn b-gold" id="btn_exp" onclick="exportarXLS()" style="flex:1">📥 Descargar .xlsx</button>
-    </div>
-  </div>
-  <div id="exp_preview" style="display:none">
-    <div style="background:var(--modal);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px">
-      <div class="section" style="margin-top:0">📊 Resumen del período</div>
-      <div id="exp_stats_grid" class="stats4"></div>
-    </div>
-    <div style="background:var(--modal);border:1px solid var(--line);border-radius:12px;padding:14px">
-      <div class="section" style="margin-top:0">Detalle mensual</div>
-      <div id="exp_table"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ MODALS ═══════════════════════════════════════════════ -->
-<!-- API Keys -->
-<div class="modal" id="modal_api">
-  <div class="mbox">
-    <div class="mtit">🔑 Credenciales Binance <button type="button" class="mcl" onclick="closeModal('modal_api')">✕</button></div>
-    <div class="key-saved" id="key_saved_msg">✓ Claves guardadas en este dispositivo</div>
-    <div class="field" style="margin-bottom:8px"><label>API Key</label>
-      <input type="text" id="k_api" placeholder="Tu API Key de Binance" autocomplete="off">
-      <div class="hint">Solo permiso "Leer información" — nunca Trading ni Retiros</div></div>
-    <div class="field" style="margin-bottom:10px"><label>Secret Key</label>
-      <input type="password" id="k_sec" placeholder="Tu Secret Key" autocomplete="off">
-      <div class="hint">Se guarda en este dispositivo (localStorage). La firma HMAC se calcula aquí.</div></div>
-    <div class="brow">
-      <button type="button" class="btn b-gold" onclick="saveKeys()" style="flex:2">💾 Guardar</button>
-      <button type="button" class="btn b-gray" onclick="closeModal('modal_api')" style="flex:1">✕</button>
-    </div>
-    <div style="text-align:center;margin-top:8px">
-      <button type="button" onclick="clearKeys()" style="background:none;border:none;color:var(--mute2);font-size:10px;cursor:pointer;font-family:'Barlow Condensed',sans-serif">🗑 Olvidar claves</button>
-    </div>
-  </div>
-</div>
-
 <!-- Config (mobile) -->
 <div class="modal" id="modal_cfg" style="z-index:200">
   <div class="mbox" style="max-width:540px;width:calc(100% - 32px);max-height:90vh;overflow-y:auto">
@@ -1221,6 +970,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
     <div class="brow" style="margin-top:8px">
       <button type="button" class="btn b-green" style="flex:1" onclick="revisarOrden(_movSel.order_number,'cambio')">✅ Aceptar cambio</button>
       <button type="button" class="btn b-red" style="flex:1" onclick="revisarOrden(_movSel.order_number,'gasto')">💸 Envío familia (gasto)</button>
+      <button type="button" class="btn b-gray" style="flex:1" onclick="revisarOrden(_movSel.order_number,'transf_local')">🤝 Transf Local</button>
     </div>
     <div id="mm_rev" style="font-size:11px;color:var(--mute);margin-top:6px"></div>
   </div>
@@ -1235,6 +985,12 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
       <div class="full"><label>Nota</label><input type="text" id="mb_nota" placeholder="Ej: cambio de Juan a tasa especial"></div>
     </div>
     <button type="button" class="btn b-gold" style="width:100%;margin-top:10px" onclick="guardarBk()">💾 Guardar</button>
+  </div>
+</div>
+<!-- v6.0: detalle de un día -->
+<div class="modal" id="modal_dia">
+  <div class="mbox"><div class="mtit" id="md_tit">Día <button type="button" class="mcl" onclick="closeModal('modal_dia')">✕</button></div>
+    <div id="md_body" style="max-height:65vh;overflow-y:auto;font-size:12px"></div>
   </div>
 </div>
 <!-- v5.3: listas del estado de caja -->
@@ -1292,7 +1048,6 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 const MONTHS_ORDER = ['Agosto 2025','Septiembre 2025','Octubre 2025','Noviembre 2025',
   'Diciembre 2025','Enero 2026','Febrero 2026','Marzo 2026','Abril 2026','Mayo 2026'];
 const GASTOS_EST = 47600;
-let selMes_v = 'Mayo 2026';
 let sessionOps = [];
 let cachedCLP = '914';
 let allP2POps = []; // P2P ops loaded from Binance
@@ -1437,46 +1192,6 @@ async function sbPost(path, method='GET', body=null, prefer=null) {
   }
   const text = await res.text();
   return text ? JSON.parse(text) : [];
-}
-
-// ══════════════════════════════════════════════════════════
-//  API KEYS
-// ══════════════════════════════════════════════════════════
-async function saveKeys() {
-  const k=document.getElementById('k_api').value.trim();
-  const s=document.getElementById('k_sec').value.trim();
-  if(!k||!s){toast('⚠ Ingresa ambas claves');return;}
-  localStorage.setItem('iremi_key',k); localStorage.setItem('iremi_sec',s);
-  document.getElementById('key_saved_msg').style.display='block';
-  toast('✓ Claves guardadas');
-  closeModal('modal_api');
-  document.getElementById('sdot').className='sdot spin';
-  await fetchAllRates();
-}
-function loadKeys() {
-  // v3.0: las llaves de Binance ya no se guardan en el celular (el robot lee Binance de forma segura).
-  try{ localStorage.removeItem('iremi_key'); localStorage.removeItem('iremi_sec'); }catch{}
-  const k='', s='';
-  if(k){document.getElementById('k_api').value=k;document.getElementById('key_saved_msg').style.display='block';}
-  if(s) document.getElementById('k_sec').value=s;
-  return {apiKey:k,secret:s};
-}
-function clearKeys() {
-  if(!confirm('¿Eliminar las claves guardadas?'))return;
-  localStorage.removeItem('iremi_key');localStorage.removeItem('iremi_sec');
-  document.getElementById('k_api').value='';document.getElementById('k_sec').value='';
-  document.getElementById('key_saved_msg').style.display='none';
-  toast('✓ Claves eliminadas');
-}
-
-// ══════════════════════════════════════════════════════════
-//  HMAC SHA256
-// ══════════════════════════════════════════════════════════
-async function hmac256(secret,msg) {
-  const enc=new TextEncoder();
-  const key=await crypto.subtle.importKey('raw',enc.encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);
-  const sig=await crypto.subtle.sign('HMAC',key,enc.encode(msg));
-  return Array.from(new Uint8Array(sig)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1962,315 +1677,6 @@ async function doShare(){
 }
 
 // ══════════════════════════════════════════════════════════
-//  P2P BINANCE LOADER (para Registrar)
-// ══════════════════════════════════════════════════════════
-async function cargarP2P(){
-  const btn   = document.getElementById('btn_p2p_load');
-  const list  = document.getElementById('p2p_list');
-  const cnt   = document.getElementById('p2p_count');
-  const days  = parseInt(document.getElementById('p2p_period').value||'7');
-  const fiatF = document.getElementById('p2p_dest').value;
-  if(btn){btn.innerHTML='<span class="spin">⏳</span>';btn.disabled=true;}
-  list.innerHTML='<div style="text-align:center;color:var(--gold);padding:20px"><span class="spin">⏳</span> Cargando operaciones Binance...</div>';
-
-  const keys = loadKeys();
-
-  // ── Opción A: API real de Binance con firma HMAC ──────
-  if(keys.apiKey && keys.secret){
-    try{
-      const startTs = Date.now() - days*86400000;
-      const ts      = Date.now();
-      const params  = `tradeType=ALL&startTimestamp=${startTs}&page=1&rows=100&timestamp=${ts}`;
-      const sig     = await hmac256(keys.secret, params);
-      const apiUrl  = `https://api.binance.com/sapi/v1/c2c/orderMatch/listUserOrderHistory?${params}&signature=${sig}`;
-
-      // Try direct then via proxy
-      let data = null;
-      for(const reqFn of [
-        ()=>fetch(apiUrl,{headers:{'X-MBX-APIKEY':keys.apiKey}}),
-      ]){
-        try{
-          const res=await reqFn();
-          if(!res.ok) continue;
-          const d=await res.json();
-          if(d.data){ data=d; break; }
-        }catch{}
-      }
-
-      if(data && data.data){
-        const completed = data.data.filter(o=>o.orderStatus==='COMPLETED');
-        // Filter by fiat if selected
-        const filtered  = fiatF ? completed.filter(o=>o.fiat===fiatF) : completed;
-        allP2POps = filtered.map(o=>({
-          fecha:     new Date(o.createTime).toISOString().split('T')[0],
-          tipo:      o.tradeType==='SELL'?'SELL':'BUY',
-          fiat:      o.fiat||'VES',
-          monto_clp: null, // not in Binance response, user fills it
-          dc:        cachedCLP||'884.99',
-          dv:        cachedCLP||'884.99',
-          usdt_mov:  o.tradeType==='SELL'?-parseFloat(o.amount):parseFloat(o.amount),
-          tasa_destino: parseFloat(o.unitPrice||0),
-          comentario:   (o.counterPartNickName||'').substring(0,30),
-          tax_binance:  o.commission?parseFloat(o.commission):0.06,
-          _binance_order: o.orderNumber
-        }));
-
-        if(cnt) cnt.textContent=allP2POps.length;
-        if(!allP2POps.length){
-          list.innerHTML='<div style="text-align:center;color:var(--mute2);padding:20px">Sin operaciones completadas en los últimos '+days+' días</div>';
-        }else{
-          renderP2PList(allP2POps);
-        }
-        if(btn){btn.innerHTML='↻ Actualizar';btn.disabled=false;}
-        return;
-      }
-    }catch(e){ console.warn('Binance API error:',e.message); }
-  }
-
-  // ── Opción B: Sin API Key → mostrar aviso y cargar desde Supabase ──
-  try{
-    let query='operaciones?select=id,fecha,mes,tipo,monto_clp,dc,dv,usdt_mov,tax_binance,tasa_destino,tasa_iremi,fiat,comentario,gan_clp&order=fecha.desc,created_at.desc&limit=50';
-    if(fiatF) query+='&fiat=eq.'+fiatF;
-
-    const ops=await sbPost(query);
-    allP2POps=ops;
-    if(cnt) cnt.textContent=ops.length;
-
-    if(!keys.apiKey){
-      list.innerHTML='<div style="background:var(--warn-bg);border:1px solid #b45309;border-radius:8px;padding:10px;margin-bottom:8px;font-size:9px;color:var(--amber)">⚠ Sin API Key configurada — mostrando historial de la BD.<br>Las operaciones reales de Binance ahora las registra el robot (pantalla Movimientos).</div>';
-    }
-
-    if(!ops.length && !keys.apiKey){
-      list.innerHTML+='<div style="text-align:center;color:var(--mute2);padding:16px">Sin operaciones en la BD</div>';
-    }else if(ops.length){
-      const container=document.getElementById('p2p_list');
-      const warning=container.innerHTML;
-      renderP2PList(ops);
-      if(!keys.apiKey) container.innerHTML=warning+container.innerHTML;
-    }
-  }catch(e){
-    list.innerHTML='<div style="text-align:center;color:var(--red);padding:16px;font-size:10px">✗ '+e.message+'</div>';
-  }
-  if(btn){btn.innerHTML='↻ Actualizar';btn.disabled=false;}
-}
-
-function renderP2PList(ops){
-  const list=document.getElementById('p2p_list');
-  const fmt=n=>new Intl.NumberFormat('es-CL').format(Math.round(n));
-  const flags={VES:'🇻🇪',COP:'🇨🇴',PEN:'🇵🇪',ARS:'🇦🇷',MXN:'🇲🇽',USD:'🇺🇸',EUR:'🇪🇸'};
-  list.innerHTML=ops.map(op=>`
-    <div class="p2p-card" onclick="precargarOp(${JSON.stringify(op).replace(/"/g,'&quot;')})">
-      <div class="pc-top">
-        <span class="pc-date">${op.fecha} &nbsp; ${flags[op.fiat]||'🌍'} ${op.fiat}</span>
-        <span class="pc-tipo ${(op.tipo||'SELL').toLowerCase()}">${op.tipo||'SELL'}</span>
-      </div>
-      <div class="pc-mid">
-        <span class="pc-usdt">${op.usdt_mov<0?'':'+'}<b>${parseFloat(op.usdt_mov||0).toFixed(3)}</b> USDT</span>
-        <span class="pc-rate">${fmt(op.tasa_destino||0)} ${op.fiat}/U<br><span style="font-size:10px;color:var(--silver)">dc: ${op.dc||'—'}</span></span>
-      </div>
-      <div class="pc-bot">${fmt(op.monto_clp||0)} CLP &nbsp;·&nbsp; Gan: ${op.gan_clp!=null?'$'+fmt(op.gan_clp):'—'} &nbsp;·&nbsp; ${op.comentario||'—'}</div>
-    </div>`).join('');
-}
-
-function precargarOp(op){
-  document.getElementById('rf_fecha').value  = op.fecha||new Date().toISOString().split('T')[0];
-  document.getElementById('rf_fiat').value   = op.fiat||'VES';
-  document.getElementById('rf_dc').value     = op.dc||cachedCLP||'914';
-  document.getElementById('rf_dv').value     = op.dv||op.dc||cachedCLP||'914';
-  if(op.usdt_mov!=null) document.getElementById('rf_usdt').value = op.usdt_mov;
-  if(op.tasa_destino)   document.getElementById('rf_dest').value  = op.tasa_destino;
-  if(op.tasa_iremi)     document.getElementById('rf_tiremi').value = op.tasa_iremi;
-  if(op.comentario)     document.getElementById('rf_coment').value = op.comentario;
-  if(op.tax_binance)    document.getElementById('rf_tax').value    = Math.abs(op.tax_binance);
-  // Auto-select mes
-  const mesMap={'2026-5':'Mayo 2026','2026-4':'Abril 2026','2026-3':'Marzo 2026','2026-2':'Febrero 2026',
-    '2026-1':'Enero 2026','2025-12':'Diciembre 2025','2025-11':'Noviembre 2025',
-    '2025-10':'Octubre 2025','2025-9':'Septiembre 2025','2025-8':'Agosto 2025'};
-  if(op.fecha){
-    const dt=new Date(op.fecha+'T12:00:00');
-    const key=dt.getFullYear()+'-'+( dt.getMonth()+1);
-    const mes=op.mes||mesMap[key];
-    if(mes){
-      document.querySelectorAll('.mb').forEach(b=>{
-        if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(mes)) selMes(b,mes);
-      });
-    }
-  }
-  // Highlight selected card
-  document.querySelectorAll('.p2p-card').forEach(c=>c.classList.remove('selected'));
-  event&&event.currentTarget&&event.currentTarget.classList.add('selected');
-  calcPrev();
-  showSbar('✓ Operación precargada — revisa y ajusta los datos','info');
-  // On mobile, switch to form view
-  if(window.innerWidth<900){
-    document.querySelector('.reg-right').scrollIntoView({behavior:'smooth'});
-  }
-}
-
-// ══════════════════════════════════════════════════════════
-//  REGISTRO — Guardar
-// ══════════════════════════════════════════════════════════
-function selMes(btn,mes){
-  document.querySelectorAll('.mb').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); selMes_v=mes;
-  const badge=document.getElementById('form_mes_badge');
-  if(badge) badge.textContent=mes;
-}
-
-function calcPrev(){
-  const monto=parseFloat(document.getElementById('rf_monto').value)||0;
-  const dc   =parseFloat(document.getElementById('rf_dc').value)||0;
-  const dv   =parseFloat(document.getElementById('rf_dv').value)||0;
-  const usdt =parseFloat(document.getElementById('rf_usdt').value)||0;
-  if(!monto||!dc||!usdt){document.getElementById('prev_box').style.display='none';return;}
-  const ganU=(monto/dc)+usdt, ganC=ganU*dv, pct=monto>0?(ganC/monto)*100:0;
-  const fmt=n=>new Intl.NumberFormat('es-CL').format(Math.round(n));
-  document.getElementById('pv_u').textContent=(ganU>=0?'+':'')+ganU.toFixed(4)+' USDT';
-  document.getElementById('pv_c').textContent='$'+fmt(ganC)+' CLP';
-  document.getElementById('pv_c').style.color=ganC>=0?'var(--green)':'var(--red)';
-  document.getElementById('pv_p').textContent=pct.toFixed(2)+'%';
-  document.getElementById('prev_box').style.display='block';
-}
-
-async function guardar(){
-  const btn   =document.getElementById('btn_save');
-  const fecha =document.getElementById('rf_fecha').value;
-  const monto =parseFloat(document.getElementById('rf_monto').value);
-  const dc    =parseFloat(document.getElementById('rf_dc').value);
-  const dv    =parseFloat(document.getElementById('rf_dv').value);
-  const usdt  =parseFloat(document.getElementById('rf_usdt').value);
-  const tax   =parseFloat(document.getElementById('rf_tax').value)||0.06;
-  const dest  =parseFloat(document.getElementById('rf_dest').value)||null;
-  const tiremi=parseFloat(document.getElementById('rf_tiremi').value)||null;
-  const coment=document.getElementById('rf_coment').value.trim()||null;
-  const fiat  =document.getElementById('rf_fiat').value;
-
-  if(!fecha)       return showSbar('⚠ Ingresa la fecha','err');
-  if(!monto||monto<=0) return showSbar('⚠ Ingresa el monto CLP (mayor a 0)','err');
-  if(!dc||dc<=0)   return showSbar('⚠ Ingresa USDT/CLP Compra','err');
-  if(!dv||dv<=0)   return showSbar('⚠ Ingresa USDT/CLP Venta','err');
-  if(isNaN(usdt))  return showSbar('⚠ Ingresa USDT Movimiento','err');
-  if(usdt===0)     return showSbar('⚠ USDT no puede ser 0 (negativo=SELL, positivo=BUY)','err');
-
-  btn.disabled=true; btn.innerHTML='<span class="spin">⏳</span> Guardando...';
-  showSbar('Conectando con Supabase...','info');
-
-  // Ping Supabase
-  try{
-    const ping=await sbPost('operaciones?select=id&limit=1');
-    if(!Array.isArray(ping)) throw new Error('Respuesta inesperada');
-  }catch(e){
-    btn.disabled=false; btn.innerHTML='💾 Guardar en BD';
-    showSbar('✗ Sin conexión a Supabase — verifica internet','err'); return;
-  }
-
-  const tipo=usdt<0?'SELL':'BUY';
-  const gan_usdt=round6((monto/dc)+usdt);
-  const gan_clp =round2(gan_usdt*dv);
-  const row={fecha,mes:selMes_v,tipo,monto_clp:monto,dc,dv,usdt_mov:usdt,
-              tax_binance:-Math.abs(tax),tasa_destino:dest,tasa_iremi:tiremi,
-              fiat,comentario:coment,gan_usdt,gan_clp};
-
-  try{
-    showSbar('Insertando en base de datos...','info');
-    const result=await sbPost('operaciones','POST',row);
-    if(!result||(Array.isArray(result)&&result.length===0)) throw new Error('Sin confirmación de Supabase');
-    const inserted=Array.isArray(result)?result[0]:result;
-    const newId=inserted?.id;
-    sessionOps.push({...row,id:newId});
-    updateSesion();
-    resetReg();
-    const fmt=n=>new Intl.NumberFormat('es-CL').format(Math.round(n));
-    showSbar('✅ GUARDADO · ID #'+newId+' · '+tipo+' · $'+fmt(monto)+' CLP · Gan: $'+fmt(gan_clp)+' CLP','ok');
-    toast('✓ #'+newId+' guardado');
-  }catch(e){
-    showSbar('✗ Error: '+e.message,'err');
-  }
-  btn.disabled=false; btn.innerHTML='💾 Guardar en BD';
-}
-
-async function borrarUltima(){
-  if(!sessionOps.length){showSbar('⚠ Sin operaciones en esta sesión','err');return;}
-  const last=sessionOps[sessionOps.length-1];
-  const fmt=n=>new Intl.NumberFormat('es-CL').format(Math.round(n));
-  if(!confirm('¿Borrar de Supabase?\n📅 '+last.fecha+'\n💰 $'+fmt(last.monto_clp)+' CLP\n🔑 ID: #'+(last.id||'sin ID')+'\n\n¡No se puede deshacer!')) return;
-  if(!last.id){showSbar('⚠ Sin ID — solo eliminado de la sesión local','err');sessionOps.pop();updateSesion();return;}
-  showSbar('Eliminando ID #'+last.id+'...','info');
-  try{
-    const check=await sbPost('operaciones?id=eq.'+last.id+'&select=id');
-    if(!check||check.length===0){showSbar('⚠ ID #'+last.id+' no encontrado en BD','err');sessionOps.pop();updateSesion();return;}
-    await sbPost('operaciones?id=eq.'+last.id,'DELETE');
-    const verify=await sbPost('operaciones?id=eq.'+last.id+'&select=id');
-    if(verify&&verify.length>0) throw new Error('El registro sigue en BD después del borrado');
-    sessionOps.pop();updateSesion();
-    showSbar('✅ ELIMINADO · ID #'+last.id+' borrado de Supabase','ok');
-    toast('✓ #'+last.id+' eliminado');
-  }catch(e){showSbar('✗ '+e.message,'err');}
-}
-
-async function borrarPorId(){
-  const idStr=prompt('ID de la operación a borrar:');
-  if(!idStr||!idStr.trim()) return;
-  const id=parseInt(idStr.trim());
-  if(!id||isNaN(id)) return showSbar('⚠ ID inválido','err','sbar_hist');
-  if(!confirm('¿Borrar operación #'+id+' de Supabase?\n¡No se puede deshacer!')) return;
-  showSbar('Verificando ID #'+id+'...','info','sbar_hist');
-  try{
-    const check=await sbPost('operaciones?id=eq.'+id+'&select=id,fecha,monto_clp,fiat');
-    if(!check||check.length===0) return showSbar('✗ ID #'+id+' no existe en la BD','err','sbar_hist');
-    const op=check[0];
-    const fmt=n=>new Intl.NumberFormat('es-CL').format(Math.round(n));
-    if(!confirm('Confirmar:\n📅 '+op.fecha+'\n💰 $'+fmt(op.monto_clp)+' CLP · '+op.fiat+'\nID #'+id)) return;
-    await sbPost('operaciones?id=eq.'+id,'DELETE');
-    showSbar('✅ ID #'+id+' eliminado de Supabase','ok','sbar_hist');
-    toast('✓ #'+id+' eliminado');
-    setTimeout(cargarHist,500);
-  }catch(e){showSbar('✗ '+e.message,'err','sbar_hist');}
-}
-
-function round6(n){return Math.round(n*1000000)/1000000;}
-function round2(n){return Math.round(n*100)/100;}
-
-function resetReg(){
-  ['rf_monto','rf_usdt','rf_dest','rf_tiremi','rf_coment'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('rf_dc').value=cachedCLP;
-  document.getElementById('rf_dv').value=cachedCLP;
-  document.getElementById('rf_tax').value='0.06';
-  document.getElementById('rf_fecha').value=new Date().toISOString().split('T')[0];
-// Action bar visible by default (starts on tasas)
-const _bar=document.getElementById('action_bar');
-if(_bar) _bar.style.display='flex';
-  document.getElementById('prev_box').style.display='none';
-  document.querySelectorAll('.p2p-card').forEach(c=>c.classList.remove('selected'));
-}
-
-function showSbar(msg,type,id){
-  const el=document.getElementById(id||'sbar_reg');
-  if(!el){toast(msg);return;}
-  el.textContent=msg; el.className='sbar '+type;
-  if(type==='ok') setTimeout(()=>{el.style.display='none';},5000);
-}
-
-function updateSesion(){
-  document.getElementById('hist_n').textContent=sessionOps.length;
-  const el=document.getElementById('hist_list');
-  if(!sessionOps.length){el.innerHTML='<div style="text-align:center;color:var(--mute2);font-size:10px;padding:14px">Sin operaciones aún</div>';return;}
-  const fmt=n=>new Intl.NumberFormat('es-CL').format(Math.round(n));
-  el.innerHTML=sessionOps.slice().reverse().map(op=>`
-    <div class="p2p-card">
-      <div class="pc-top">
-        <span class="pc-date">${op.fecha} · ${op.mes} · ID #${op.id||'?'}</span>
-        <span class="pc-tipo ${op.tipo.toLowerCase()}">${op.tipo}</span>
-      </div>
-      <div class="pc-mid">
-        <span class="pc-usdt">${fmt(op.monto_clp)} CLP</span>
-        <span class="pc-rate" style="color:var(--green)">+${fmt(op.gan_clp||0)} CLP</span>
-      </div>
-      <div class="pc-bot">USDT: ${op.usdt_mov} · ${op.fiat} · ${op.comentario||'—'}</div>
-    </div>`).join('');
-}
-
-// ══════════════════════════════════════════════════════════
 //  HISTORIAL
 // ══════════════════════════════════════════════════════════
 let _hOps=[], _hMesesListos=false, _hDia=null, _hMesPend=null;
@@ -2322,237 +1728,6 @@ function pintarHistOps(){
       (esV?'<b style="color:'+((+o.ganancia_clp)>=0?'var(--green)':'var(--red2)')+';white-space:nowrap">'+((+o.ganancia_clp)>=0?'+':'')+$clp(o.ganancia_clp)+'</b>':'')+'</div></div>';}).join('')+
     (L.length>MAX?'<div style="font-size:11px;color:var(--mute);text-align:center;padding:8px">Mostrando las '+MAX+' más recientes de '+L.length+'. Usa el filtro de mes o el buscador para ver las demás (los totales de arriba sí consideran todas).</div>':'')
     :'<div style="font-size:12px;color:var(--mute);padding:14px;text-align:center">Sin operaciones con estos filtros.</div>';
-}
-
-// ══════════════════════════════════════════════════════════
-//  DIAGNÓSTICO P2P — valores brutos sin procesamiento
-// ══════════════════════════════════════════════════════════
-const DIAG_PAIRS = [
-  {fiat:'CLP', label:'USDT/CLP', flag:'🇨🇱'},
-  {fiat:'VES', label:'USDT/VES', flag:'🇻🇪'},
-  {fiat:'COP', label:'USDT/COP', flag:'🇨🇴'},
-  {fiat:'ARS', label:'USDT/ARS', flag:'🇦🇷'},
-  {fiat:'PEN', label:'USDT/PEN', flag:'🇵🇪'},
-  {fiat:'MXN', label:'USDT/MXN', flag:'🇲🇽'},
-];
-
-
-async function diagP2P(){
-  const btn  = document.getElementById('btn_diag');
-  const grid = document.getElementById('diag_grid');
-  const log  = document.getElementById('diag_log');
-  const raw  = document.getElementById('diag_raw');
-
-  btn.innerHTML='<span class="spin">⏳</span>';
-  btn.disabled=true;
-  grid.innerHTML='<div style="text-align:center;color:var(--gold);padding:20px"><span class="spin">⏳</span> Consultando API...</div>';
-
-  const fmt = n=>parseFloat(n).toLocaleString('es-CL',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const results = [];
-  let logText = '';
-
-  for(const pair of DIAG_PAIRS){
-    try{
-      // Fetch SELL side: all advertisers (what API returns without filter)
-      const sellAds     = await diagP2PFetch(pair.fiat,'SELL',10,null);
-      const sellMerchant= pair.fiat==='CLP' ? await diagP2PFetch(pair.fiat,'SELL',10,'merchant') : null;
-      const sellPrices  = sellAds.map(a=>a.price).sort((a,b)=>a-b);
-      const sellMerchantPrices = sellMerchant ? sellMerchant.map(a=>a.price).sort((a,b)=>a-b) : null;
-
-      // Fetch BUY side: all advertisers
-      const buyAds    = await diagP2PFetch(pair.fiat,'BUY',5,null);
-      const buyPrices = buyAds.map(a=>a.price).sort((a,b)=>b-a);
-
-      results.push({
-        ...pair,
-        sell1: sellPrices[0], sell2: sellPrices[1], sell3: sellPrices[2],
-        sellM1: sellMerchantPrices?.[0], sellM2: sellMerchantPrices?.[1],
-        buy1:  buyPrices[0],  buy2:  buyPrices[1],  buy3:  buyPrices[2],
-        sellAds, sellMerchantAds: sellMerchant||[], buyAds, ok:true
-      });
-
-      logText += `\n${pair.label} (${pair.fiat})\n`;
-      logText += `  VENTA (tú compras): ${sellPrices.slice(0,5).map(fmt).join(' | ')}\n`;
-      logText += `  COMPRA (tú vendes): ${buyPrices.slice(0,5).map(fmt).join(' | ')}\n`;
-      logText += `  Top VENTA: ${sellAds[0]?.nick} @ ${fmt(sellAds[0]?.price||0)}\n`;
-      logText += `  Top COMPRA: ${buyAds[0]?.nick} @ ${fmt(buyAds[0]?.price||0)}\n`;
-
-    }catch(e){
-      results.push({...pair, error:e.message, ok:false});
-      logText += `\n${pair.label}: ERROR ${e.message}\n`;
-    }
-  }
-
-  // Render grid
-  grid.innerHTML = results.map(r=>{
-    if(!r.ok) return `
-      <div style="background:var(--modal);border:1px solid var(--line);border-radius:10px;padding:10px 12px">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-          <span style="font-size:14px">${r.flag}</span>
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;color:var(--tx)">${r.label}</span>
-          <span style="font-size:9px;color:#ef4444;margin-left:auto">✗ ${r.error}</span>
-        </div>
-      </div>`;
-
-    return `
-      <div style="background:var(--modal);border:1px solid var(--line);border-radius:10px;padding:10px 12px">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-          <span style="font-size:14px">${r.flag}</span>
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:var(--tx)">${r.label}</span>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-
-          <!-- VENTA = anunciantes vendiendo USDT → tú COMPRAS -->
-          <div style="background:var(--ok-bg);border:1px solid #166534;border-radius:8px;padding:8px">
-            <div style="font-size:8px;font-weight:700;text-transform:uppercase;color:var(--green);margin-bottom:5px">
-              📗 VENTA (tú compras USDT)
-            </div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--green)">
-              ${fmt(r.sell1||0)}
-            </div>
-            <div style="font-size:8px;color:#166534;margin-top:2px">
-              2°: ${fmt(r.sell2||0)} · 3°: ${fmt(r.sell3||0)}
-            </div>
-            <div style="font-size:8px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-              ${r.sellAds[0]?.classify==='promoted'?'<span style="color:#f59e0b;font-size:7px">★PROMO </span>':''}
-              <span style="color:var(--mute2)">${r.sellAds[0]?.nick||'—'}</span>
-            </div>
-            ${r.sellM1!=null?'<div style="margin-top:5px;padding-top:5px;border-top:1px solid #166534"><div style="font-size:7px;color:var(--green2);font-weight:700">★ Merchants = Binance Compra:</div><div style="font-family:Barlow Condensed,sans-serif;font-size:16px;font-weight:800;color:var(--green2)">'+fmt(r.sellM1)+'</div><div style="font-size:7px;color:var(--mute2)">'+( r.sellMerchantAds[0]?.nick||'')+'</div></div>':''}
-          </div>
-
-          <!-- COMPRA = anunciantes comprando USDT → tú VENDES -->
-          <div style="background:var(--err-bg);border:1px solid #7f1d1d;border-radius:8px;padding:8px">
-            <div style="font-size:8px;font-weight:700;text-transform:uppercase;color:var(--red2);margin-bottom:5px">
-              📕 COMPRA (tú vendes USDT)
-            </div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--red2)">
-              ${fmt(r.buy1||0)}
-            </div>
-            <div style="font-size:8px;color:#7f1d1d;margin-top:2px">
-              2°: ${fmt(r.buy2||0)} · 3°: ${fmt(r.buy3||0)}
-            </div>
-            <div style="font-size:8px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-              ${r.buyAds[0]?.classify==='promoted'?'<span style="color:#f59e0b;font-size:7px">★PROMO </span>':''}
-              <span style="color:var(--mute2)">${r.buyAds[0]?.nick||'—'}</span>
-            </div>
-          </div>
-
-        </div>
-      </div>`;
-  }).join('');
-
-  // Show log
-  log.textContent = logText;
-  raw.style.display='block';
-
-  btn.innerHTML='↻ Actualizar';
-  btn.disabled=false;
-
-  // Update time
-  const hm=new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
-  toast('✓ Diagnóstico P2P actualizado · '+hm);
-}
-
-// ══════════════════════════════════════════════════════════
-//  EXPORTAR
-// ══════════════════════════════════════════════════════════
-async function getOpsForExport(mesIni,mesFin){
-  const idxIni=MONTHS_ORDER.indexOf(mesIni),idxFin=MONTHS_ORDER.indexOf(mesFin);
-  const meses=MONTHS_ORDER.slice(idxIni>=0?idxIni:0,idxFin>=0?idxFin+1:MONTHS_ORDER.length);
-  const all=[];
-  for(const mes of meses){
-    try{const ops=await sbPost('operaciones?select=*&mes=eq.'+encodeURIComponent(mes)+'&order=fecha.asc&limit=500');all.push(...ops);}
-    catch(e){console.warn(mes,e.message);}
-  }
-  return {ops:all,meses};
-}
-
-async function previewReporte(){
-  const mesIni=document.getElementById('exp_mes_ini').value;
-  const mesFin=document.getElementById('exp_mes_fin').value;
-  toast('⏳ Cargando...');
-  const {ops,meses}=await getOpsForExport(mesIni,mesFin);
-  if(!ops.length){toast('⚠ Sin datos');return;}
-  const sells=ops.filter(o=>o.tipo==='SELL');
-  const vol=sells.reduce((s,o)=>s+(o.monto_clp||0),0);
-  const gan=sells.reduce((s,o)=>s+(o.gan_clp||0),0);
-  const gastos=meses.length*GASTOS_EST;
-  const neta=gan-gastos;
-  const fmt=n=>new Intl.NumberFormat('es-CL').format(Math.round(n));
-  document.getElementById('exp_stats_grid').innerHTML=[
-    {l:'Ops SELL',v:sells.length,c:'white'},
-    {l:'Vol. CLP',v:'$'+fmt(vol),c:'white'},
-    {l:'Ganancia bruta',v:'$'+fmt(gan),c:'var(--green)'},
-    {l:'Ganancia neta',v:'$'+fmt(neta),c:neta>=0?'var(--green)':'var(--red)'},
-  ].map(s=>`<div class="stat"><div class="stat-v" style="color:${s.c}">${s.v}</div><div class="stat-l">${s.l}</div></div>`).join('');
-  document.getElementById('exp_table').innerHTML=meses.map(mes=>{
-    const m=ops.filter(o=>o.mes===mes);
-    const ms=m.filter(o=>o.tipo==='SELL');
-    const mv=ms.reduce((s,o)=>s+(o.monto_clp||0),0);
-    const mg=ms.reduce((s,o)=>s+(o.gan_clp||0),0);
-    return `<div style="display:flex;justify-content:space-between;align-items:center;
-                         padding:7px 8px;background:var(--card);border:1px solid var(--line);
-                         border-radius:7px;margin-bottom:4px">
-      <span style="font-size:11px;font-weight:700">${mes}</span>
-      <span style="color:var(--silver);font-size:10px">${ms.length} ops</span>
-      <span style="color:var(--silver);font-size:10px">${fmt(mv)}</span>
-      <span style="font-size:11px;font-weight:700;color:${mg>0?'var(--green)':'var(--red)'}">${mg>0?'+':''}${fmt(mg)}</span>
-    </div>`;
-  }).join('');
-  document.getElementById('exp_preview').style.display='block';
-  toast('✓ '+ops.length+' ops · '+meses.length+' meses');
-}
-
-async function exportarXLS(){
-  const mesIni=document.getElementById('exp_mes_ini').value;
-  const mesFin=document.getElementById('exp_mes_fin').value;
-  const btn=document.getElementById('btn_exp');
-  btn.innerHTML='<span class="spin">⏳</span> Generando...';btn.disabled=true;
-  try{
-    if(!window.XLSX){
-      await new Promise((res,rej)=>{
-        const s=document.createElement('script');
-        s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-        s.onload=res;s.onerror=rej;document.head.appendChild(s);
-      });
-    }
-    const {ops,meses}=await getOpsForExport(mesIni,mesFin);
-    if(!ops.length){toast('⚠ Sin datos');btn.innerHTML='📥 Descargar .xlsx';btn.disabled=false;return;}
-    const wb=XLSX.utils.book_new();
-    // P&L sheet
-    const plr=[['IREMI REMESAS — REPORTE FINANCIERO'],
-      ['Período: '+mesIni+' a '+mesFin+' | Generado: '+new Date().toLocaleDateString('es-CL')],[],
-      ['Mes','Ops SELL','Ops BUY','Vol CLP','Ganancia Bruta','% Margen','Gastos Est.','Ganancia Neta']];
-    let tv=0,tg=0,to=0;
-    for(const mes of meses){
-      const mo=ops.filter(o=>o.mes===mes);
-      const s=mo.filter(o=>o.tipo==='SELL'),b=mo.filter(o=>o.tipo==='BUY');
-      const v=s.reduce((x,o)=>x+(o.monto_clp||0),0);
-      const g=s.reduce((x,o)=>x+(o.gan_clp||0),0);
-      plr.push([mes,s.length,b.length,v,g,v>0?g/v:0,GASTOS_EST,g-GASTOS_EST]);
-      tv+=v;tg+=g;to+=s.length;
-    }
-    plr.push([],[' TOTAL',to,'',tv,tg,tv>0?tg/tv:0,meses.length*GASTOS_EST,tg-meses.length*GASTOS_EST]);
-    const ws1=XLSX.utils.aoa_to_sheet(plr);
-    ws1['!cols']=[{wch:20},{wch:10},{wch:8},{wch:14},{wch:16},{wch:10},{wch:14},{wch:16}];
-    XLSX.utils.book_append_sheet(wb,ws1,'Resumen P&L');
-    // Detail sheet
-    const dr=[['Fecha','Mes','Tipo','Monto CLP','USDT/CLP Compra','USDT/CLP Venta',
-      'USDT Mov','Tax','Tasa Destino','Tasa IREMI','Fiat','Comentario','Gan USDT','Gan CLP','Capital USDT']];
-    for(const op of ops) dr.push([op.fecha,op.mes,op.tipo,op.monto_clp,op.dc,op.dv,op.usdt_mov,
-      op.tax_binance,op.tasa_destino,op.tasa_iremi,op.fiat,op.comentario,op.gan_usdt,op.gan_clp,op.capital_usdt]);
-    const ws2=XLSX.utils.aoa_to_sheet(dr);
-    ws2['!cols']=[{wch:12},{wch:16},{wch:6},{wch:12},{wch:14},{wch:14},{wch:11},{wch:8},{wch:13},{wch:11},{wch:6},{wch:20},{wch:13},{wch:12},{wch:13}];
-    XLSX.utils.book_append_sheet(wb,ws2,'Operaciones');
-    // Gastos sheet
-    const gr=[['Mes','Categoría','Descripción','Monto CLP','Estado'],
-      ...meses.flatMap(mes=>[[mes,'Contador','Honorarios contador',40000,'Pagado'],[mes,'IVA SII','IVA 19% contador',7600,'Pagado']])];
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(gr),'Gastos');
-    const fname='IREMI_Reporte_'+mesIni.replace(/ /g,'_')+'_'+mesFin.replace(/ /g,'_')+'.xlsx';
-    XLSX.writeFile(wb,fname);
-    toast('✅ '+fname+' descargado');
-  }catch(e){toast('✗ '+e.message);console.error(e);}
-  btn.innerHTML='📥 Descargar .xlsx';btn.disabled=false;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2676,7 +1851,7 @@ function pintarMov(){
       '<div class="r1"><span>'+fh(o.creado)+'</span><span><span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+(buy?'<span class="tag buy">Compra USDT</span>':'')+'</span></div>'+
       '<div class="r2"><span class="a">'+(buy?'Pagaste':o.fiat+' '+monto)+'</span><span class="b">'+(o.clp_final==null?'<span style="color:var(--red2)">sin CLP</span>':$clp(o.clp_final))+'</span></div>'+
       '<div class="r3"><span>'+num(o.usdt)+' USDT · '+esc((o.contraparte||'').slice(0,18))+(o.nota?' · 📝':'')+'</span><span>'+
-      (g!=null?'<b style="color:'+(g>=0?'var(--green)':'var(--red2)')+'">'+$clp(g)+'</b> ':'')+(fam?'<span class="tag w">💸 Envío familia</span>':(o.revision==='cambio'?'<span class="tag ok">✅ Revisado</span>':'<span class="tag '+met[1]+'">'+met[0]+'</span>'))+'</span></div></div>';
+      (g!=null?'<b style="color:'+(g>=0?'var(--green)':'var(--red2)')+'">'+$clp(g)+'</b> ':'')+(fam?'<span class="tag w">💸 Envío familia</span>':(o.revision==='cambio'?'<span class="tag ok">✅ Revisado</span>':(o.revision==='transf_local'?'<span class="tag m">🤝 Transf Local</span>':'<span class="tag '+met[1]+'">'+met[0]+'</span>')))+'</span></div></div>';
   }).join('');
 }
 let _movSel=null;
@@ -2855,7 +2030,7 @@ const PERM_UI={
   inicio:{nav:'nb_i',abrir:()=>{showPg('pg_inicio','nb_i');cargarInicio();}}, tasas:{nav:'nb_t',abrir:()=>showPg('pg_tasas','nb_t')},
   movimientos:{nav:'nb_m',abrir:()=>{showPg('pg_mov','nb_m');cargarMov();}}, gastos:{nav:'nb_g',abrir:()=>{showPg('pg_gastos','nb_g');cargarGastos();}},
   cuadre:{pg:['pg_cuadre','pg_dia']}, historial:{nav:'nb_h',pg:['pg_hmes','pg_hist']}, htasas:{pg:['pg_htasas']}, belkys:{pg:['pg_belkys']}, alertas:{pg:['pg_alertas']},
-  banco:{pg:['pg_banco']}, reportes:{pg:['pg_rep']}, herramientas:{pg:['pg_reg','pg_exp','pg_p2p']}};
+  banco:{pg:['pg_banco']}, reportes:{pg:['pg_rep']}, herramientas:{pg:[]}};
 function puede(p){ if(!YO) return false; if(p==='usuarios') return YO.rol==='admin'; return YO.rol==='admin'||!YO.permisos||YO.permisos.includes(p); }
 async function aplicarPermisos(){
   const em=((sesion()||{}).email||'').toLowerCase();
@@ -3032,10 +2207,10 @@ async function cargarInicioDia(){
     set('k_gas',$clp(g)); set('k_gas_s','ver detalle en Gastos');
     set('k_util',$clp(h.utilidad_mes)); const ku=document.getElementById('k_util'); if(ku) ku.parentElement.className=ku.parentElement.className.replace(/\b[gr]\b/,'')+' '+((+h.utilidad_mes)<0?'r':'g');
     const c=ultimo(r=>r.capital_real!=null);
-    set('k_capt',c?$clp(c.capital_real):'—'); set('k_capt_s',c?'banco al '+fechaCorta(c.banco_hasta)+' + USDT':'falta saldo del robot');
+    set('k_capt',c?$clp(c.capital_real-(+c.tl_pendiente||0)):'—'); set('k_capt_s',c?'banco '+$clp(c.banco_real!=null?c.banco_real:c.banco_saldo)+' + USDT'+((+c.tl_pendiente)>0?' − TL pend.':''):'falta saldo del robot');
     try{ const ap=((await sbPost('robot_config?select=valor&clave=eq.apertura_fecha'))||[{}])[0].valor||'2026-09-01';
          const d0=hoy.slice(0,8)+'01'<ap?ap:hoy.slice(0,8)+'01';
-         const E=await sbPost('rpc/estado_caja','POST',{p_desde:d0,p_hasta:hoy}); const kf=document.getElementById('k_falta'), gp=E&&E.capital&&!E.sin_banco?E.capital.gap:null;
+         const E=await sbPost('rpc/estado_caja','POST',{p_desde:d0,p_hasta:hoy}); const kf=document.getElementById('k_falta'), gp=E&&E.resumen&&!E.sin_banco?E.resumen.total_dif:null;
          if(gp==null){ kf.textContent='—'; set('k_falta_s',E&&E.sin_banco?'sube la cartola de este mes':(E&&E.parcial?'sube la cartola para calcular':'faltan saldos del robot')); }
          else { kf.textContent=conSigno(+gp); kf.style.color=colorFalta(+gp); set('k_falta_s',(Math.abs(gp)<50000?'✓ cuadra':(gp<0?'falta':'sobra'))+' · hasta '+fechaCorta(E.banco_hasta<hoy?E.banco_hasta:hoy)); }
     }catch(e){ set('k_falta','—'); set('k_falta_s',/estado_caja/.test(e.message)?'falta IREMI_etapa8.sql':'✗ error'); }
@@ -3056,7 +2231,6 @@ function pintarDia(){
   const L=_dd.filter(r=>r.dia<=hoy&&(per==='mes'?r.dia.startsWith(mes):per==='mesant'?r.dia.startsWith(mesAnt):per==='30'?r.dia>=sumarDias(hoy,-29):(f0&&r.dia>=f0)));
   if(!L.length){ document.getElementById('dd_tabla').innerHTML='<tr><td>Sin datos en este período</td></tr>'; return; }
   const fin=L[L.length-1];
-  // Estado de caja real del período (banco al peso + USDT + clientes + compras + capital)
   estadoCaja(L[0].dia, fin.dia, 'dd_falta');
   const uIni=(L[0].utilidad_acum-L[0].utilidad_dia);
   // Gráfico: utilidad acumulada del período y capital
@@ -3069,12 +2243,34 @@ function pintarDia(){
   g.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto">'+lin(L.map(r=>r.utilidad_acum-uIni),'#f5c518','Utilidad')+lin(L.map(r=>r.capital_real==null?null:+r.capital_real),'#22c55e','Capital')+
     '<text x="'+P+'" y="'+(H-4)+'" fill="var(--mute)" font-size="12">'+fechaCorta(L[0].dia)+'</text><text x="'+(W-P)+'" y="'+(H-4)+'" fill="var(--mute)" font-size="12" text-anchor="end">'+fechaCorta(fin.dia)+'</text></svg>'+
     '<div style="font-size:11px;color:var(--silver)"><span style="color:#f5c518">━</span> Utilidad acumulada del período (cada línea con su propia escala) &nbsp; <span style="color:#22c55e">━</span> Capital total</div>';
-  // Tabla
-  document.getElementById('dd_tabla').innerHTML='<tr><th>Día</th><th class="hs-opt">Cambios</th><th>Ganancia</th><th class="hs-opt">Gastos</th><th>Utilidad acum.</th><th>Banco vs Binance</th><th class="hs-opt">Capital</th></tr>'+
-    [...L].reverse().map(r=>'<tr onclick="irHist(\''+r.dia+'\')"><td>'+fechaCorta(r.dia)+'</td><td class="hs-opt">'+(r.cambios||'—')+'</td><td class="mg-ok">'+(+r.ganancia?$clp(r.ganancia):'—')+'</td>'+
-      '<td class="hs-opt">'+(+r.gastos?'<span style="color:var(--red2)">−'+$clp(r.gastos)+'</span>':'—')+'</td><td><b>'+$clp(r.utilidad_acum-uIni)+'</b></td>'+
-      '<td style="color:'+colorFalta(r.dif_pesos_acum==null?null:+r.dif_pesos_acum)+'">'+(r.dif_pesos_acum==null?(r.dia>(r.banco_hasta||'')?'<span style="color:var(--mute)">sin cartola</span>':'—'):conSigno(+r.dif_pesos_acum))+'</td>'+
-      '<td class="hs-opt">'+(r.capital_real!=null?$clp(r.capital_real):'—')+'</td></tr>').join('');
+  // Tabla simple: lo que entró y salió del banco, saldo real, cambios y sobra/falta
+  document.getElementById('dd_tabla').innerHTML='<tr><th>Día</th><th>Entró</th><th>Salió</th><th class="hs-opt">Saldo banco</th><th>Cambios</th><th>Sobra / falta</th></tr>'+
+    [...L].reverse().map(r=>{ const sf=r.falta_sobra==null?null:+r.falta_sobra; const sinB=r.dia>(r.banco_hasta||'');
+      return '<tr onclick="detalleDia(\''+r.dia+'\')"><td>'+fechaCorta(r.dia)+'</td><td class="mg-ok">'+(+r.abonos?'+'+$clp(r.abonos):'—')+'</td><td style="color:var(--red2)">'+(+r.cargos?'−'+$clp(r.cargos):'—')+'</td>'+
+        '<td class="hs-opt">'+(r.banco_real!=null?$clp(r.banco_real):(sinB?'<span style="color:var(--mute)">sin cartola</span>':'—'))+'</td>'+
+        '<td>'+(r.cambios?r.cambios+' · '+$clp(r.clp_cambios):'—')+'</td>'+
+        '<td style="color:'+colorFalta(sf)+'">'+(sf==null?(sinB?'<span style="color:var(--mute)">sin cartola</span>':'—'):conSigno(sf))+'</td></tr>';}).join('');
+}
+async function detalleDia(dia){
+  const r=_dd.find(x=>x.dia===dia)||{}; const box=document.getElementById('md_body');
+  document.getElementById('md_tit').firstChild.textContent='📅 '+fechaCorta(dia)+' ';
+  box.innerHTML='Cargando...'; openModal('modal_dia');
+  try{
+    const [B,O]=await Promise.all([sbPost('banco_movimientos?select=id,descripcion,cargo,abono,categoria,orden_binance,nota&fecha=eq.'+dia+'&order=id.asc'),
+      sbPost('v_ordenes?select=order_number,cuenta,tipo,fiat,monto_fiat,usdt,contraparte,creado,clp_final,revision,metodo_clp&estado=eq.COMPLETED&creado=gte.'+tz(dia)+'&creado=lt.'+tz(sumarDias(dia,1))+'&order=creado.asc')]);
+    _bkRev=B||[];
+    const fila=(t,v,c)=>'<div class="ec-r"><span>'+t+'</span><b class="'+(c||'')+'">'+v+'</b></div>';
+    const ent=(B||[]).filter(b=>+b.abono>0), sal=(B||[]).filter(b=>+b.cargo>0);
+    const V=(O||[]).filter(o=>o.tipo==='SELL'), C=(O||[]).filter(o=>o.tipo==='BUY');
+    box.innerHTML=
+      fila('🏦 Entró al banco ('+ent.length+')','+'+$clp(ent.reduce((s,b)=>s+(+b.abono),0)),'ec-ok')+fila('🏦 Salió del banco ('+sal.length+')','−'+$clp(sal.reduce((s,b)=>s+(+b.cargo),0)),'ec-bad')+
+      fila('Saldo real al cierre',r.banco_real!=null?$clp(r.banco_real):'sin cartola')+
+      fila('🔄 Cambios en Binance ('+V.length+')',$clp(V.reduce((s,o)=>s+(+o.clp_final||0),0)))+(C.length?fila('🛒 Compras USDT ('+C.length+')',$clp(C.reduce((s,o)=>s+(+o.monto_fiat),0))):'')+
+      (r.tl_in||r.tl_pag?fila('🤝 Transf Local: entró '+$clp(r.tl_in)+' · pagado '+$clp(r.tl_pag),'pendiente '+$clp(r.tl_pendiente)):'')+
+      fila('Sobra / falta acumulado',r.falta_sobra==null?'—':conSigno(+r.falta_sobra),colorFalta(r.falta_sobra==null?null:+r.falta_sobra)==='var(--green)'?'ec-ok':'ec-bad')+
+      '<div class="ec-t">Banco</div>'+((B||[]).length?(B||[]).map((b,i)=>'<div class="mv" style="padding:6px 9px;margin-bottom:5px" onclick="closeModal(\'modal_dia\');editarBk('+i+')"><div class="bk-d">'+esc(b.descripcion)+'</div><div class="bk-s">'+(+b.abono?'<span class="m-in">+'+$clp(b.abono)+'</span>':'<span class="m-out">−'+$clp(b.cargo)+'</span>')+' · '+(BK_CAT[b.categoria]||b.categoria)+(b.orden_binance?' · 🔗':'')+(b.nota?' · '+esc(b.nota):'')+'</div></div>').join(''):'<div style="color:var(--mute)">Sin movimientos (o sin cartola de este día).</div>')+
+      '<div class="ec-t">Binance</div>'+((O||[]).length?(O||[]).map(o=>'<div class="ec-r sub"><span>'+fh(o.creado).slice(-5)+' · '+o.cuenta+' · '+(o.tipo==='BUY'?'🛒 compra '+num(o.usdt)+' USDT':o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+' · '+esc((o.contraparte||'').slice(0,12)))+(o.revision==='gasto'?' · 💸 familia':(o.revision==='transf_local'?' · 🤝 TL':(o.revision==='cambio'?' · ✅':'')))+'</span><b>'+(o.tipo==='BUY'?'−'+$clp(o.monto_fiat):(o.clp_final!=null?$clp(o.clp_final):'sin CLP'))+'</b></div>').join(''):'<div style="color:var(--mute)">Sin operaciones.</div>');
+  }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
 
 
@@ -3086,8 +2282,24 @@ async function estadoCaja(desde,hasta,boxId){
   const box=document.getElementById(boxId); box.innerHTML='Calculando...';
   try{
     const E=await sbPost('rpc/estado_caja','POST',{p_desde:desde,p_hasta:hasta}); _ec=E;
-    if(E.sin_banco){ box.innerHTML='<div style="font-size:12px;color:var(--amber)">⚠ No hay cartola del banco para este período (la última cargada llega al '+(E.banco_hasta?fechaCorta(E.banco_hasta):'—')+'). Súbela en <b>Más → Banco</b> y vuelve aquí.</div>'; return; }
-    const B=E.banco,U=E.usdt,C=E.clientes,P=E.compras,K=E.capital, h=E.parcial&&E.banco_hasta?E.banco_hasta:hasta;
+    if(E.sin_banco){ const cq0=document.getElementById('dd_cuadre'); if(cq0) cq0.innerHTML='<div style="font-size:12px;color:var(--amber)">⚠ Sube la cartola de este período en <b>Más → Banco</b>.</div>'; box.innerHTML='<div style="font-size:12px;color:var(--amber)">⚠ No hay cartola del banco para este período (la última cargada llega al '+(E.banco_hasta?fechaCorta(E.banco_hasta):'—')+'). Súbela en <b>Más → Banco</b> y vuelve aquí.</div>'; return; }
+    const B=E.banco,U=E.usdt,C=E.clientes,P=E.compras,K=E.capital,R=E.resumen||{}, h=E.parcial&&E.banco_hasta?E.banco_hasta:hasta;
+    const cq=document.getElementById('dd_cuadre');
+    if(cq){
+      const fila3=(ic,t,deb,hay,dif,fmt)=>'<div class="ec-r" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:6px;align-items:center"><span>'+ic+' '+t+'</span><span style="text-align:right;color:var(--mute)">'+fmt(deb)+'</span><span style="text-align:right">'+(hay==null?'—':fmt(hay))+'</span><b style="text-align:right;color:'+colorFalta(dif)+'">'+(dif==null?'—':conSigno(dif))+'</b></div>';
+      cq.innerHTML='<div style="font-size:11px;color:var(--mute);margin-bottom:2px">Del '+fechaCorta(desde)+' al '+fechaCorta(h)+(E.parcial?' · hasta la última cartola':'')+(E.usdt_fecha&&E.usdt_fecha<h?' · USDT al '+fechaCorta(E.usdt_fecha):'')+'</div>'+
+        '<div class="ec-r" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:6px;font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em"><span></span><span style="text-align:right">Debería</span><span style="text-align:right">Hay</span><span style="text-align:right">Diferencia</span></div>'+
+        fila3('🏦','Banco',R.banco_deberia,R.banco_hay,R.banco_dif,$clp)+
+        fila3('🪙','USDT',R.usdt_deberian,R.usdt_hay,R.usdt_dif,v=>num(v))+
+        '<div class="ec-r sub"><span>🤝 Transf Local pendiente de enviar (plata que no es tuya, está en el banco)</span><b>'+$clp(R.tl_pendiente)+'</b></div>'+
+        fila3('💰','Total (banco + USDT − pendiente)',R.total_deberia,R.total_hay,R.total_dif,$clp)+
+        '<div class="fs-big" style="color:'+colorFalta(R.total_dif)+';margin-top:6px">'+(R.total_dif==null?'—':conSigno(R.total_dif))+'</div>'+
+        '<div style="font-size:12px;color:var(--silver)">'+(R.total_dif==null?'Faltan saldos de USDT del robot.':(Math.abs(R.total_dif)<50000?'✅ Cuadra: lo que hay es lo que debería haber.':(R.total_dif<0?'⚠ Falta plata. Causas:':'Sobra plata. Causas:')))+'</div>'+
+        (R.total_dif!=null&&Math.abs(R.total_dif)>=50000?'<div class="ec-r sub lk" onclick="irRevision()"><span>Clientes: depósitos vs cambios ('+C.sin_deposito_n+' cambios sin depósito, '+C.depositos_sin_orden_n+' depósitos sin cambio)</span><b style="color:'+colorFalta(R.dif_clientes)+'">'+conSigno(R.dif_clientes)+'</b></div>'+
+          '<div class="ec-r sub lk" onclick="verCompras(\''+desde+'\',\''+h+'\')"><span>Compras de USDT: Binance vs banco</span><b style="color:'+colorFalta(R.dif_compras)+'">'+conSigno(R.dif_compras)+'</b></div>'+
+          '<div class="ec-r sub lk" onclick="showPg(\'pg_cuadre\',\'nb_mas\');cargarCuadre()"><span>USDT que faltan o sobran, en pesos</span><b style="color:'+colorFalta(R.usdt_dif_clp)+'">'+conSigno(R.usdt_dif_clp)+'</b></div>':'')+
+        (+R.tl_pendiente>0?'<div style="font-size:11px;color:var(--amber);margin-top:6px">Si ya enviaste a Venezuela parte de esos '+$clp(R.tl_pendiente)+', marca esos cambios como <b>🤝 Transf Local</b> en Banco → Revisión para que no cuenten como pendientes ni como cambios sin depósito.</div>':'');
+    }
     const r=(t,v,cls,sub,onc)=>'<div class="ec-r'+(sub?' sub':'')+(onc?' lk':'')+'"'+(onc?' onclick="'+onc+'"':'')+'><span>'+t+'</span><b class="'+(cls||'')+'">'+v+'</b></div>';
     const tot=(t,v,cls)=>'<div class="ec-r tot"><span>'+t+'</span><b class="'+(cls||'')+'">'+v+'</b></div>';
     const cl=v=>v==null?'':(Math.abs(v)<50000?'ec-ok':(Math.abs(v)<300000?'ec-warn':'ec-bad'));
@@ -3205,7 +2417,7 @@ async function cargarSinDeposito(){
     if(_sd.length) await tasasDelRango(_sd[_sd.length-1].dia,_sd[0].dia);
     document.getElementById('rv_t1').textContent='Órdenes sin depósito'+(todas?'':' ('+_sd.length+')');
     box.innerHTML=_sd.length?_sd.map((o,i)=>{
-      const est=o.revision==='gasto'?'<span class="tag w">💸 Envío familia</span>':(o.revision==='cambio'?'<span class="tag ok">✅ Aceptado</span>':'');
+      const est=o.revision==='gasto'?'<span class="tag w">💸 Envío familia</span>':(o.revision==='cambio'?'<span class="tag ok">✅ Aceptado</span>':(o.revision==='transf_local'?'<span class="tag m">🤝 Transf Local</span>':''));
       return '<div class="mv" style="cursor:default"><div class="r1"><span>'+fh(o.creado)+' · <span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+est+'</span>'+
         '<b>'+(o.clp_final!=null?$clp(o.clp_final):'sin CLP')+'</b></div>'+
         '<div class="r3" style="margin-top:3px"><span>'+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+' · <b>'+num(o.usdt)+' USDT</b> · '+esc((o.contraparte||'').slice(0,18))+
@@ -3214,6 +2426,7 @@ async function cargarSinDeposito(){
           '<button type="button" class="btn b-gray" style="flex:1;padding:7px" onclick="revisarOrden(\''+o.order_number+'\',\'deshacer\')">↺ Deshacer</button>':
           '<button type="button" class="btn b-green" style="flex:1;padding:7px" onclick="revisarOrden(\''+o.order_number+'\',\'cambio\')">✅ Aceptar</button>'+
           '<button type="button" class="btn b-red" style="flex:1;padding:7px" onclick="revisarOrden(\''+o.order_number+'\',\'gasto\')">💸 Familia</button>'+
+          '<button type="button" class="btn b-gray" style="flex:1;padding:7px" onclick="revisarOrden(\''+o.order_number+'\',\'transf_local\')">🤝 TL</button>'+
           '<button type="button" class="btn b-blue" style="flex:1;padding:7px" onclick="unirOrden('+i+')">🔗 Unir</button>')+'</div></div>';}).join('')
       :'<div style="font-size:12px;color:var(--green);padding:8px">🎉 Todas las ventas tienen su depósito o ya están revisadas.</div>';
   }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+(/v_ordenes_sin_deposito/.test(e.message)?' · Falta correr IREMI_etapa5.sql en Supabase':'')+'</span>'; }
@@ -3222,7 +2435,7 @@ async function revisarOrden(orden,accion){
   const o=_sd.find(x=>x.order_number===orden)||(_movSel&&_movSel.order_number===orden?_movSel:null);
   if(accion==='gasto'&&o&&!confirm('¿Marcar como ENVÍO A FAMILIA?\n\n'+num(o.usdt)+' USDT pasan a Gastos (≈ '+$clp(o.usdt*o.costo_usdt)+') y este movimiento deja de contar como cambio y de dar ganancia.')) return;
   try{ await sbPost('rpc/revisar_orden','POST',{p_orden:orden,p_accion:accion},'return=minimal');
-       toast(accion==='gasto'?'💸 Pasado a Gastos como envío a familia':(accion==='cambio'?'✅ Cambio aceptado':'↺ Deshecho'));
+       toast(accion==='gasto'?'💸 Pasado a Gastos como envío a familia':(accion==='cambio'?'✅ Cambio aceptado':(accion==='transf_local'?'🤝 Marcado como resto de Transf Local':'↺ Deshecho')));
        if(document.getElementById('modal_mov').classList.contains('on')){ closeModal('modal_mov'); cargarMov(); }
        if(document.getElementById('pg_banco').classList.contains('on')) cargarSinDeposito();
   }catch(e){ toast('✗ '+e.message); }
@@ -3565,10 +2778,8 @@ function toast(msg){
 // ══════════════════════════════════════════════════════════
 //  INIT (v3.0: primero la sesión)
 // ══════════════════════════════════════════════════════════
-loadKeys();
 recalc();
 loadBg(BG_IDS[bgIdx]);
-document.getElementById('rf_fecha').value=new Date().toISOString().split('T')[0];
 const _bar=document.getElementById('action_bar');
 if(_bar) _bar.style.display='none';
 cargarTasasGuardadas();
