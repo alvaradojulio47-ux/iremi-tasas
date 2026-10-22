@@ -207,3 +207,7 @@ end $$;
 
 
 select jsonb_pretty(estado_caja('2026-10-01', '2026-10-31') -> 'compras');
+
+-- 3) Ventas que Binance reporta directamente en pesos chilenos (fiat = CLP): su monto en CLP es el monto mismo
+update robot_ordenes set clp = monto_fiat, tasa_usada = 1, metodo_clp = 'clp'
+ where tipo = 'SELL' and fiat = 'CLP' and clp is null;
