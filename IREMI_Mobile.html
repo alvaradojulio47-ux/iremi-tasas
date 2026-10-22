@@ -999,6 +999,16 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
     <div id="ec_lista" style="max-height:60vh;overflow-y:auto;font-size:12px"></div>
   </div>
 </div>
+<!-- v6.6: ajuste de caja -->
+<div class="modal" id="modal_aj">
+  <div class="mbox"><div class="mtit">✍️ Registrar un ajuste de caja <button type="button" class="mcl" onclick="closeModal('modal_aj')">✕</button></div>
+    <div style="font-size:12px;color:var(--silver);margin-bottom:8px">Una diferencia que decides asumir y dejar escrita (como el "ajuste de Binance por transferencia" del Excel). Negativo = falta asumida, positivo = sobra asumida. Queda con tu nombre y fecha, y el cuadre la descuenta.</div>
+    <label style="font-size:11px">Fecha</label><input id="aj_fecha" type="date" style="width:100%;margin-bottom:6px">
+    <label style="font-size:11px">Monto (CLP, con signo)</label><input id="aj_monto" type="number" step="1" style="width:100%;margin-bottom:6px">
+    <label style="font-size:11px">Motivo</label><input id="aj_motivo" type="text" placeholder="Ej: ajuste Binance por transferencia, redondeos de tasa, cambio pagado en efectivo…" style="width:100%;margin-bottom:10px">
+    <button type="button" class="btn b-green" style="width:100%" onclick="guardarAjuste()">Guardar ajuste</button>
+  </div>
+</div>
 <!-- v4.9: unir orden con depósito -->
 <div class="modal" id="modal_unir">
   <div class="mbox"><div class="mtit">🔗 Unir con un depósito <button type="button" class="mcl" onclick="closeModal('modal_unir')">✕</button></div>
@@ -2209,7 +2219,7 @@ async function cargarInicioDia(){
     set('k_capt','…'); set('k_capt_s','banco + USDT');
     try{ const ap=((await sbPost('robot_config?select=valor&clave=eq.apertura_fecha'))||[{}])[0].valor||'2026-09-01';
          const d0=hoy.slice(0,8)+'01'<ap?ap:hoy.slice(0,8)+'01';
-         const E=await sbPost('rpc/estado_caja','POST',{p_desde:d0,p_hasta:hoy}); const kf=document.getElementById('k_falta'), gp=E&&E.resumen&&!E.sin_banco?E.resumen.total_dif:null;
+         const E=await sbPost('rpc/estado_caja','POST',{p_desde:d0,p_hasta:hoy}); const kf=document.getElementById('k_falta'), gp=E&&E.resumen&&!E.sin_banco?(E.resumen.total_dif_ajustado!=null?E.resumen.total_dif_ajustado:E.resumen.total_dif):null;
          if(E&&E.resumen&&!E.sin_banco){ const R=E.resumen, uc=(+R.usdt_hay||0)*(+E.costo_usdt||0);
            set('k_capt',$clp((+R.banco_hay||0)+uc)); set('k_capt_s','banco '+$clp(R.banco_hay)+' ('+fechaCorta(E.banco_hasta)+') + '+num(R.usdt_hay)+' USDT '+$clp(uc)+((+R.tl_pendiente)>0?' · incluye '+$clp(R.tl_pendiente)+' de TL pendiente':'')); }
          else { const c=ultimo(r=>r.banco_real!=null&&r.usdt_real!=null); set('k_capt',c?$clp(+c.banco_real+c.usdt_real*c.costo_usdt):'—'); set('k_capt_s',c?'banco '+$clp(c.banco_real)+' ('+fechaCorta(c.dia)+') + USDT':'sube la cartola'); }
@@ -2299,7 +2309,7 @@ async function estadoCaja(desde,hasta,boxId){
     }catch(e){}
     if(E.sin_banco){ const cq0=document.getElementById('dd_cuadre'); if(cq0) cq0.innerHTML='<div style="font-size:12px;color:var(--amber)">⚠ Sube la cartola de este período en <b>Más → Banco</b>.</div>'; box.innerHTML='<div style="font-size:12px;color:var(--amber)">⚠ No hay cartola del banco para este período (la última cargada llega al '+(E.banco_hasta?fechaCorta(E.banco_hasta):'—')+'). Súbela en <b>Más → Banco</b> y vuelve aquí.</div>'; return; }
     const B=E.banco,U=E.usdt,C=E.clientes,P=E.compras,K=E.capital,R=E.resumen||{}, h=E.parcial&&E.banco_hasta?E.banco_hasta:hasta;
-    const cq=document.getElementById('dd_cuadre');
+    const cq=document.getElementById('dd_cuadre'), DIF=(R.total_dif_ajustado!=null?R.total_dif_ajustado:R.total_dif);
     if(cq){
       const fila3=(ic,t,deb,hay,dif,fmt)=>'<div class="ec-r" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:6px;align-items:center"><span>'+ic+' '+t+'</span><span style="text-align:right;color:var(--mute)">'+fmt(deb)+'</span><span style="text-align:right">'+(hay==null?'—':fmt(hay))+'</span><b style="text-align:right;color:'+colorFalta(dif)+'">'+(dif==null?'—':conSigno(dif))+'</b></div>';
       const kp=(t,v,c)=>'<div class="kc" style="padding:7px 9px"><div class="kl">'+t+'</div><div class="kv" style="font-size:16px;'+(c||'')+'">'+v+'</div></div>';
@@ -2310,13 +2320,16 @@ async function estadoCaja(desde,hasta,boxId){
         fila3('🪙','USDT',R.usdt_deberian,R.usdt_hay,R.usdt_dif,v=>num(v))+
         '<div class="ec-r sub"><span>🤝 Transf Local pendiente de enviar (plata que no es tuya, está en el banco)</span><b>'+$clp(R.tl_pendiente)+'</b></div>'+
         fila3('💰','Total (banco + USDT − pendiente)',R.total_deberia,R.total_hay,R.total_dif,$clp)+
-        '<div class="fs-big" style="color:'+colorFalta(R.total_dif)+';margin-top:6px">'+(R.total_dif==null?'—':conSigno(R.total_dif))+'</div>'+
-        '<div style="font-size:12px;color:var(--silver)">'+(R.total_dif==null?'Faltan saldos de USDT del robot.':(Math.abs(R.total_dif)<50000?'✅ Cuadra: lo que hay es lo que debería haber.':(R.total_dif<0?'⚠ Falta plata. Causas:':'Sobra plata. Causas:')))+'</div>'+
-        (R.total_dif!=null&&Math.abs(R.total_dif)>=50000?'<div class="ec-r sub lk" onclick="irRevision(true)"><span>Clientes: depósitos vs cambios</span><b style="color:'+colorFalta(R.dif_clientes)+'">'+conSigno(R.dif_clientes)+'</b></div>'+
-          '<div class="ec-r sub lk" style="padding-left:18px" onclick="irRevision(true)"><span>'+C.sin_deposito_n+' cambios sin depósito'+(SD.n0?' · '+SD.n0+' sin revisar':'')+(SD.n1?' · '+SD.n1+' aceptados ✅ (el cuadre espera su plata en el banco)':'')+'</span><b style="color:var(--red2)">−'+$clp(C.sin_deposito_clp)+'</b></div>'+
-          '<div class="ec-r sub lk" style="padding-left:18px" onclick="verDepSinOrden(\''+desde+'\',\''+h+'\')"><span>'+C.depositos_sin_orden_n+' depósitos sin cambio (plata que entró y no está unida a ninguna orden)</span><b style="color:var(--green)">+'+$clp(C.depositos_sin_orden)+'</b></div>'+
+        (R.ajustes!=null&&R.ajustes_n>0?'<div class="ec-r sub"><span>Diferencia antes de ajustes</span><b style="color:'+colorFalta(R.total_dif)+'">'+conSigno(R.total_dif)+'</b></div><div class="ec-r sub lk" onclick="verAjustes(\''+desde+'\',\''+h+'\')"><span>✍️ Ajustes registrados ('+R.ajustes_n+') ›</span><b>'+conSigno(R.ajustes)+'</b></div>':'')+
+        '<div class="fs-big" style="color:'+colorFalta(DIF)+';margin-top:6px">'+(DIF==null?'—':conSigno(DIF))+'</div>'+
+        '<div style="font-size:12px;color:var(--silver)">'+(DIF==null?'Faltan saldos de USDT del robot.':(Math.abs(DIF)<50000?'✅ Cuadra: lo que hay es lo que debería haber.':(DIF<0?'⚠ Falta plata. Causas:':'Sobra plata. Causas:')))+'</div>'+
+        (DIF!=null&&Math.abs(DIF)>=50000?'<div class="ec-r sub lk" onclick="irRevision(true)"><span>Clientes: cambios y depósitos que no están unidos</span><b style="color:'+colorFalta(R.dif_clientes)+'">'+conSigno(R.dif_clientes)+'</b></div>'+
+          '<div class="ec-r sub lk" style="padding-left:18px" onclick="irRevision(true)"><span>'+C.sin_deposito_n+' cambios sin depósito'+(SD.n0?' · '+SD.n0+' sin revisar':'')+(SD.n1?' · '+SD.n1+' aceptados ✅':'')+'</span><b style="color:var(--red2)">−'+$clp(C.sin_deposito_clp)+'</b></div>'+
+          '<div class="ec-r sub lk" style="padding-left:18px" onclick="verDepSinOrden(\''+desde+'\',\''+h+'\')"><span>'+C.depositos_sin_orden_n+' depósitos sin cambio (entraron y no están unidos a ninguna orden)</span><b style="color:var(--green)">+'+$clp(C.depositos_sin_orden)+'</b></div>'+
+          ((+C.depositos_de_otro_periodo_n||+C.ventas_pagadas_otro_periodo_n)?'<div style="font-size:10.5px;color:var(--mute);padding:2px 0 4px 18px">Ya cuadrados y fuera de esta cuenta: '+(C.depositos_de_otro_periodo_n||0)+' depósitos de este período pagan cambios de otro período ('+$clp(C.depositos_de_otro_periodo||0)+') · '+(C.ventas_pagadas_otro_periodo_n||0)+' cambios de este período se pagaron en otro período ('+$clp(C.ventas_pagadas_otro_periodo||0)+').</div>':'')+
           '<div class="ec-r sub lk" onclick="verCompras(\''+desde+'\',\''+h+'\')"><span>Compras de USDT: Binance vs banco</span><b style="color:'+colorFalta(R.dif_compras)+'">'+conSigno(R.dif_compras)+'</b></div>'+
           '<div class="ec-r sub lk" onclick="showPg(\'pg_cuadre\',\'nb_mas\');cargarCuadre()"><span>USDT que faltan o sobran, en pesos</span><b style="color:'+colorFalta(R.usdt_dif_clp)+'">'+conSigno(R.usdt_dif_clp)+'</b></div>':'')+
+        (DIF!=null&&R.ajustes!=null?'<div style="margin-top:8px"><button type="button" class="btn b-gray" style="width:100%;padding:8px;font-size:12px" onclick="nuevoAjuste(\''+h+'\','+(DIF||0)+')">✍️ Registrar un ajuste por esta diferencia</button></div>':'')+
         (+R.tl_pendiente>0?'<div style="font-size:11px;color:var(--amber);margin-top:6px">Si ya enviaste a Venezuela parte de esos '+$clp(R.tl_pendiente)+' con cambios tuyos, marca esos cambios como <b>🤝 Transf Local</b> en Banco → Revisión (aunque ya estén aceptados ✅): dejan de contar como pendientes y como cambios sin depósito.</div>':'')+
         (SD.n1?'<div style="font-size:11px;color:var(--silver);margin-top:4px">Para cada cambio aceptado ✅ sin depósito: si la plata vino de Fidel, Angélica o Lilibeth → <b>🤝 TL</b>; si su depósito está en la lista de depósitos sin cambio → <b>🔗 Unir</b>; si te pagaron en efectivo u otra cuenta → déjalo ✅.</div>':'');
     }
@@ -2364,6 +2377,20 @@ async function estadoCaja(desde,hasta,boxId){
       tot('Es (banco '+$clp(K.banco_final)+' + USDT '+$clp(K.usdt_final_clp)+')',$clp(K.final),cl(gap));
   }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+(/estado_caja/.test(e.message)?' · Falta correr IREMI_etapa8.sql en Supabase':'')+'</span>'; }
 }
+function nuevoAjuste(fecha,monto){ document.getElementById('aj_fecha').value=fecha; document.getElementById('aj_monto').value=Math.round(monto||0); document.getElementById('aj_motivo').value=''; openModal('modal_aj'); }
+async function guardarAjuste(){
+  const f=document.getElementById('aj_fecha').value, m=+document.getElementById('aj_monto').value, mo=document.getElementById('aj_motivo').value.trim();
+  if(!f||!m||!mo){ toast('Falta la fecha, el monto o el motivo'); return; }
+  try{ await sbPost('caja_ajustes','POST',[{fecha:f,monto_clp:m,motivo:mo}],'return=minimal'); closeModal('modal_aj'); toast('✍️ Ajuste guardado'); if(document.getElementById('pg_dia').classList.contains('on')) pintarDia(); cargarInicioDia(); }
+  catch(e){ toast('✗ '+e.message+(/caja_ajustes/.test(e.message)?' · Falta correr IREMI_etapa11.sql':'')); }
+}
+async function verAjustes(d0,d1){
+  ecModal('Ajustes de caja','Cargando...');
+  const L=(await sbPost('caja_ajustes?select=*&fecha=gte.'+d0+'&fecha=lte.'+d1+'&order=fecha.desc'))||[];
+  document.getElementById('ec_lista').innerHTML=(L.length?L.map(a=>'<div class="mv" style="cursor:default"><div class="bk-d">'+esc(a.motivo)+'</div><div class="bk-s">'+fechaCorta(a.fecha)+' · <b style="color:'+colorFalta(+a.monto_clp)+'">'+conSigno(+a.monto_clp)+'</b> · '+esc(a.creado_por||'')+' <a href="#" style="margin-left:8px" onclick="borrarAjuste('+a.id+');return false">🗑 borrar</a></div></div>').join('')
+    +'<div class="ec-r tot"><span>Total</span><b>'+conSigno(L.reduce((s,a)=>s+(+a.monto_clp),0))+'</b></div>':'Ninguno en este período.');
+}
+async function borrarAjuste(id){ if(!confirm('¿Borrar este ajuste?')) return; try{ await sbPost('caja_ajustes?id=eq.'+id,'DELETE',null,'return=minimal'); closeModal('modal_ec'); toast('🗑 Ajuste borrado'); pintarDia(); }catch(e){ toast('✗ '+e.message); } }
 async function descargarCuadre(){
   try{ const E=_ec; if(!E||!E.desde){ toast('Primero carga el cuadre'); return; }
     const d0=E.desde, d1=E.hasta;
