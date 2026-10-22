@@ -2477,9 +2477,9 @@ async function revisarOrden(orden,accion){
 }
 async function unirOrden(i){
   const o=_sd[i]; _unirOrden=o; const box=document.getElementById('mu2_lista');
-  document.getElementById('mu2_info').innerHTML=fh(o.creado)+' · '+o.cuenta+' · '+esc(o.contraparte||'')+'<br><b>'+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+'</b> · '+num(o.usdt)+' USDT<br>Elige el depósito (±3 días). La tasa sale de dividir los '+o.fiat+' por el depósito:';
+  document.getElementById('mu2_info').innerHTML=fh(o.creado)+' · '+o.cuenta+' · '+esc(o.contraparte||'')+'<br><b>'+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+'</b> · '+num(o.usdt)+' USDT<br>Elige el depósito (3 días antes a 6 después). La tasa sale de dividir los '+o.fiat+' por el depósito:';
   box.innerHTML='Buscando...'; openModal('modal_unir');
-  try{ const d=(await sbPost('banco_movimientos?select=id,fecha,descripcion,abono&categoria=in.(por_revisar,cambio_sin_orden)&abono=gt.0&fecha=gte.'+sumarDias(o.dia,-3)+'&fecha=lte.'+sumarDias(o.dia,3)+'&order=fecha.asc'))||[];
+  try{ const d=(await sbPost('banco_movimientos?select=id,fecha,descripcion,abono&categoria=in.(por_revisar,cambio_sin_orden)&abono=gt.0&fecha=gte.'+sumarDias(o.dia,-3)+'&fecha=lte.'+sumarDias(o.dia,6)+'&order=fecha.asc'))||[];
     d.sort((a,b)=>Math.abs(a.abono-o.clp_final)-Math.abs(b.abono-o.clp_final));
     box.innerHTML=d.length?d.map(b=>'<div class="mv" onclick="confirmarUnion('+b.id+',[\''+o.order_number+'\'])"><div class="bk-d">'+esc(b.descripcion)+'</div><div class="bk-s">'+b.fecha.slice(8)+'/'+b.fecha.slice(5,7)+
       ' · <span class="m-in">+'+$clp(b.abono)+'</span> · tasa '+tasaTxt(o.fiat,o.monto_fiat,b.abono)+difTasa(o.fiat,o.monto_fiat,b.abono,o.dia)+'</div></div>').join('')
@@ -2497,12 +2497,12 @@ async function accionesBk(b){
     if(b.orden_binance){ box.innerHTML='<div style="font-size:12px">🔗 Unido a la orden '+esc(b.orden_binance)+'</div><button type="button" class="btn b-gray" style="width:100%;margin-top:6px" onclick="deshacerUnion('+b.id+')">↺ Deshacer la unión</button>'; return; }
     box.innerHTML='<div style="font-size:12px;font-weight:700;margin-bottom:4px">✅ ¿Es un cambio? Elige su orden (tasa propuesta):</div><div id="mb_cands">Buscando órdenes...</div>'+
       '<button type="button" class="btn b-green" style="width:100%;margin-top:6px" onclick="confirmarUnion('+b.id+',[...document.querySelectorAll(\'#mb_cands input:checked\')].map(x=>x.value))">✅ Confirmar cambio</button>'+
-      '<div style="font-size:10.5px;color:var(--mute);margin-top:3px">Sin marcar ninguna orden = cambio aceptado sin orden (efectivo, otra cuenta, cambio del libro).</div>';
-    try{ const c=(await sbPost('v_ordenes_sin_deposito?select=*&revision=is.null&dia=gte.'+sumarDias(b.fecha,-3)+'&dia=lte.'+sumarDias(b.fecha,3)))||[];
-      await tasasDelRango(sumarDias(b.fecha,-3),sumarDias(b.fecha,3));
+      '<div style="font-size:10.5px;color:var(--mute);margin-top:3px">Puedes marcar <b>varias órdenes</b> si un solo depósito pagó más de un cambio. Sin marcar ninguna = aceptado sin orden (no se une a ningún cambio; el cuadre no cambia).</div>';
+    try{ const c=(await sbPost('v_ordenes_sin_deposito?select=*&or=(revision.is.null,revision.eq.cambio)&dia=gte.'+sumarDias(b.fecha,-6)+'&dia=lte.'+sumarDias(b.fecha,3)))||[];
+      await tasasDelRango(sumarDias(b.fecha,-6),sumarDias(b.fecha,3));
       c.sort((x,y)=>Math.abs((x.clp_final||0)-b.abono)-Math.abs((y.clp_final||0)-b.abono));
-      document.getElementById('mb_cands').innerHTML=c.length?c.slice(0,12).map(o=>'<label class="mv" style="display:flex;gap:8px;align-items:center;cursor:pointer;margin-bottom:5px"><input type="checkbox" value="'+o.order_number+'" style="width:auto">'+
-        '<span style="font-size:11.5px">'+fh(o.creado)+' · '+o.cuenta+' · '+esc((o.contraparte||'').slice(0,14))+'<br><b>'+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+'</b> → tasa <b>'+tasaTxt(o.fiat,o.monto_fiat,b.abono)+'</b>'+difTasa(o.fiat,o.monto_fiat,b.abono,o.dia)+'</span></label>').join('')
+      document.getElementById('mb_cands').innerHTML=c.length?c.slice(0,20).map(o=>'<label class="mv" style="display:flex;gap:8px;align-items:center;cursor:pointer;margin-bottom:5px"><input type="checkbox" value="'+o.order_number+'" style="width:auto">'+
+        '<span style="font-size:11.5px">'+fh(o.creado)+' · '+o.cuenta+' · '+esc((o.contraparte||'').slice(0,14))+(o.revision==='cambio'?' · <span class="tag ok">✅</span>':'')+'<br><b>'+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+'</b> ≈ '+(o.clp_final!=null?$clp(o.clp_final):'?')+' → tasa <b>'+tasaTxt(o.fiat,o.monto_fiat,b.abono)+'</b>'+difTasa(o.fiat,o.monto_fiat,b.abono,o.dia)+'</span></label>').join('')
         :'<div style="font-size:12px;color:var(--mute)">No hay órdenes pendientes cerca de esa fecha.</div>';
     }catch(e){ document.getElementById('mb_cands').innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
   } else {
