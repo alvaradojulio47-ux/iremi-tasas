@@ -2326,6 +2326,7 @@ async function estadoCaja(desde,hasta,boxId){
         (DIF!=null&&Math.abs(DIF)>=50000?'<div class="ec-r sub lk" onclick="irRevision(true)"><span>Clientes: cambios y depósitos que no están unidos</span><b style="color:'+colorFalta(R.dif_clientes)+'">'+conSigno(R.dif_clientes)+'</b></div>'+
           '<div class="ec-r sub lk" style="padding-left:18px" onclick="irRevision(true)"><span>'+C.sin_deposito_n+' cambios sin depósito'+(SD.n0?' · '+SD.n0+' sin revisar':'')+(SD.n1?' · '+SD.n1+' aceptados ✅':'')+'</span><b style="color:var(--red2)">−'+$clp(C.sin_deposito_clp)+'</b></div>'+
           '<div class="ec-r sub lk" style="padding-left:18px" onclick="verDepSinOrden(\''+desde+'\',\''+h+'\')"><span>'+C.depositos_sin_orden_n+' depósitos sin cambio (entraron y no están unidos a ninguna orden)</span><b style="color:var(--green)">+'+$clp(C.depositos_sin_orden)+'</b></div>'+
+          (+C.uniones_dif_n?'<div class="ec-r sub lk" style="padding-left:18px" onclick="verUnionesDif(\''+desde+'\',\''+h+'\')"><span>'+C.uniones_dif_n+' depósitos unidos que valen más o menos que sus cambios ›</span><b style="color:'+colorFalta(+C.uniones_dif)+'">'+conSigno(+C.uniones_dif)+'</b></div>':'')+
           ((+C.depositos_de_otro_periodo_n||+C.ventas_pagadas_otro_periodo_n)?'<div style="font-size:10.5px;color:var(--mute);padding:2px 0 4px 18px">Ya cuadrados y fuera de esta cuenta: '+(C.depositos_de_otro_periodo_n||0)+' depósitos de este período pagan cambios de otro período ('+$clp(C.depositos_de_otro_periodo||0)+') · '+(C.ventas_pagadas_otro_periodo_n||0)+' cambios de este período se pagaron en otro período ('+$clp(C.ventas_pagadas_otro_periodo||0)+').</div>':'')+
           '<div class="ec-r sub lk" onclick="verCompras(\''+desde+'\',\''+h+'\')"><span>Compras de USDT: Binance vs banco</span><b style="color:'+colorFalta(R.dif_compras)+'">'+conSigno(R.dif_compras)+'</b></div>'+
           '<div class="ec-r sub lk" onclick="showPg(\'pg_cuadre\',\'nb_mas\');cargarCuadre()"><span>USDT que faltan o sobran, en pesos</span><b style="color:'+colorFalta(R.usdt_dif_clp)+'">'+conSigno(R.usdt_dif_clp)+'</b></div>':'')+
@@ -2383,6 +2384,18 @@ async function guardarAjuste(){
   if(!f||!m||!mo){ toast('Falta la fecha, el monto o el motivo'); return; }
   try{ await sbPost('caja_ajustes','POST',[{fecha:f,monto_clp:m,motivo:mo}],'return=minimal'); closeModal('modal_aj'); toast('✍️ Ajuste guardado'); if(document.getElementById('pg_dia').classList.contains('on')) pintarDia(); cargarInicioDia(); }
   catch(e){ toast('✗ '+e.message+(/caja_ajustes/.test(e.message)?' · Falta correr IREMI_etapa11.sql':'')); }
+}
+async function verUnionesDif(d0,d1){
+  ecModal('Depósitos unidos con diferencia de monto','Cargando...');
+  const B=(await sbPost('banco_movimientos?select=id,fecha,cartola,descripcion,abono,categoria,nota,orden_binance&abono=gt.0&categoria=eq.cambio&orden_binance=not.is.null&fecha=gte.'+d0+'&fecha=lte.'+d1+'&order=fecha.desc'))||[];
+  const nums=[...new Set(B.flatMap(b=>b.orden_binance.split(',').map(x=>x.trim()).filter(Boolean)))];
+  const O=nums.length?((await sbPost('v_ordenes?select=order_number,creado,cuenta,fiat,monto_fiat,usdt,clp_final,contraparte&order_number=in.('+nums.join(',')+')'))||[]):[];
+  const om={}; O.forEach(o=>om[o.order_number]=o);
+  const L=B.map(b=>{ const os=b.orden_binance.split(',').map(x=>om[x.trim()]).filter(Boolean); const s=os.reduce((a,o)=>a+(+o.clp_final||0),0); return {b,os,s,d:b.abono-s}; }).filter(x=>Math.abs(x.d)>=1);
+  _bkRev=L.map(x=>x.b);
+  document.getElementById('ec_lista').innerHTML='<div style="color:var(--mute);margin-bottom:6px">Positivo: el depósito trae más plata que lo que valen sus cambios (puede ser aporte tuyo o un cambio que falta unir). Negativo: pagaron menos de lo que vale el cambio.</div>'+
+    (L.length?L.map((x,i)=>'<div class="mv" onclick="closeModal(\'modal_ec\');editarBk('+i+')"><div class="bk-d">'+esc(x.b.descripcion)+'</div><div class="bk-s">'+fechaCorta(x.b.fecha)+' · <span class="m-in">+'+$clp(x.b.abono)+'</span> · cambios: '+x.os.map(o=>fechaCorta(o.creado.slice(0,10))+' '+$clp(o.clp_final)).join(' + ')+' = '+$clp(x.s)+' · <b style="color:'+colorFalta(x.d)+'">'+conSigno(x.d)+'</b></div></div>').join('')
+      +'<div class="ec-r tot"><span>Total</span><b>'+conSigno(L.reduce((a,x)=>a+x.d,0))+'</b></div>':'Ninguno en este período.');
 }
 async function verAjustes(d0,d1){
   ecModal('Ajustes de caja','Cargando...');
@@ -2525,8 +2538,8 @@ async function accionesBk(b){
     box.innerHTML='<div style="font-size:12px;font-weight:700;margin-bottom:4px">✅ ¿Es un cambio? Elige su orden (tasa propuesta):</div><div id="mb_cands">Buscando órdenes...</div>'+
       '<button type="button" class="btn b-green" style="width:100%;margin-top:6px" onclick="confirmarUnion('+b.id+',[...document.querySelectorAll(\'#mb_cands input:checked\')].map(x=>x.value))">✅ Confirmar cambio</button>'+
       '<div style="font-size:10.5px;color:var(--mute);margin-top:3px">Puedes marcar <b>varias órdenes</b> si un solo depósito pagó más de un cambio. Sin marcar ninguna = aceptado sin orden (no se une a ningún cambio; el cuadre no cambia).</div>';
-    try{ const c=(await sbPost('v_ordenes_sin_deposito?select=*&or=(revision.is.null,revision.eq.cambio)&dia=gte.'+sumarDias(b.fecha,-6)+'&dia=lte.'+sumarDias(b.fecha,3)))||[];
-      await tasasDelRango(sumarDias(b.fecha,-6),sumarDias(b.fecha,3));
+    try{ const c=(await sbPost('v_ordenes_sin_deposito?select=*&or=(revision.is.null,revision.eq.cambio)&dia=gte.'+sumarDias(b.fecha,-8)+'&dia=lte.'+sumarDias(b.fecha,3)))||[];
+      await tasasDelRango(sumarDias(b.fecha,-8),sumarDias(b.fecha,3));
       c.sort((x,y)=>Math.abs((x.clp_final||0)-b.abono)-Math.abs((y.clp_final||0)-b.abono));
       document.getElementById('mb_cands').innerHTML=c.length?c.slice(0,20).map(o=>'<label class="mv" style="display:flex;gap:8px;align-items:center;cursor:pointer;margin-bottom:5px"><input type="checkbox" value="'+o.order_number+'" style="width:auto">'+
         '<span style="font-size:11.5px">'+fh(o.creado)+' · '+o.cuenta+' · '+esc((o.contraparte||'').slice(0,14))+(o.revision==='cambio'?' · <span class="tag ok">✅</span>':'')+'<br><b>'+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+'</b> ≈ '+(o.clp_final!=null?$clp(o.clp_final):'?')+' → tasa <b>'+tasaTxt(o.fiat,o.monto_fiat,b.abono)+'</b>'+difTasa(o.fiat,o.monto_fiat,b.abono,o.dia)+'</span></label>').join('')

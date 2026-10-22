@@ -2,7 +2,8 @@
 -- Se puede correr más de una vez (va después de la etapa 10).
 -- 1) Un cambio unido a su depósito cuadra solo, aunque el depósito sea de otro día o de otro mes (ej.: cambio del 30/09 pagado el 01/10).
 --    Antes esas uniones cruzadas descuadraban los dos meses a la vez. Ahora "Clientes" = depósitos sin cambio − cambios sin depósito.
--- 2) Tabla caja_ajustes: diferencias que decides asumir y dejar registradas (como el "ajuste de Binance por transferencia" del Excel).
+-- 2) Si un depósito unido vale más o menos que sus cambios (ej.: $360.000 que pagan $310.000), la diferencia se muestra aparte.
+-- 3) Tabla caja_ajustes: diferencias que decides asumir y dejar registradas (como el "ajuste de Binance por transferencia" del Excel).
 
 create table if not exists caja_ajustes (
   id bigserial primary key,
@@ -31,7 +32,7 @@ declare
   v_clp numeric; v_usdt numeric; v_n int; v_fam_usdt numeric; v_gan numeric; v_condep_n int; v_condep_clp numeric; v_sindep_n int; v_sindep_clp numeric;
   c_clp numeric; c_usdt numeric; c_n int; com numeric; pay numeric; cb_in numeric; cb_in_n int; dep_sin numeric; dep_sin_n int; dep_con numeric;
   comp_b numeric; comp_b_n int; gas_b numeric; gas_b_n int; otros_b numeric; otros_b_n int; aportes numeric; ap_n int; trasp_out numeric;
-  usdt_esp numeric; bh date; parcial boolean; dep_otro numeric; dep_otro_n int; v_otro_clp numeric; v_otro_n int; ajustes numeric; ajustes_n int; dif_cli numeric; tl_n int; tl_env numeric; tl_usdt numeric; tl_gan numeric; tl_pend numeric; b_deb numeric;
+  usdt_esp numeric; bh date; parcial boolean; dep_otro numeric; dep_otro_n int; v_otro_clp numeric; v_otro_n int; ajustes numeric; ajustes_n int; dif_cli numeric; uni_dif numeric; uni_n int; tl_n int; tl_env numeric; tl_usdt numeric; tl_gan numeric; tl_pend numeric; b_deb numeric;
 begin
   select coalesce((select b.precio from robot_ordenes b where b.tipo = 'BUY' and b.estado = 'COMPLETED'
                      and (b.creado at time zone 'America/Santiago')::date <= p_hasta order by b.creado desc limit 1),
@@ -95,8 +96,13 @@ begin
    and not exists (select 1 from robot_ordenes o where position(o.order_number in b.orden_binance) > 0
                    and (o.creado at time zone 'America/Santiago')::date between p_desde and p_hasta);
   select count(*), coalesce(sum(monto_clp), 0) into ajustes_n, ajustes from caja_ajustes where fecha between p_desde and p_hasta;
-  -- clientes: solo cuenta lo que NO está unido (un cambio unido a su depósito cuadra solo, sea cual sea la fecha del depósito)
-  dif_cli := dep_sin - v_sindep_clp;
+  -- depósitos unidos del período que valen más (+) o menos (−) que los cambios a los que están unidos (ej.: $360.000 que pagan $310.000 de cambios)
+  select count(*), coalesce(sum(b.abono - coalesce((select sum(o.clp_final) from v_ordenes o where position(o.order_number in b.orden_binance) > 0), 0)), 0)
+    into uni_n, uni_dif
+  from banco_movimientos b where b.fecha between p_desde and p_hasta and b.abono > 0 and b.categoria = 'cambio' and b.orden_binance is not null
+   and abs(b.abono - coalesce((select sum(o.clp_final) from v_ordenes o where position(o.order_number in b.orden_binance) > 0), 0)) >= 1;
+  -- clientes: solo cuenta lo que NO está unido (un cambio unido a su depósito cuadra solo, sea cual sea la fecha del depósito) + las diferencias de monto en uniones
+  dif_cli := dep_sin - v_sindep_clp + uni_dif;
   tl_pend := tl_in - tl_pag / 0.96 - tl_env;                      -- plata de Transf Local que aún no se envía (no es tuya)
   b_deb := coalesce(fin_b, 0) - dif_cli - (c_clp - comp_b);   -- lo que debería haber en el banco: lo que hay, más lo que falta por explicar
   r := jsonb_build_object(
@@ -116,7 +122,8 @@ begin
        'transf_local_in', round(tl_in), 'transf_local_pagos', round(tl_pag), 'comision_tl', round(tl_pag / 0.96 * 0.04), 'resto_tl', round(tl_in - tl_pag / 0.96),
        'diferencia', round(dif_cli),
        'depositos_de_otro_periodo', round(dep_otro), 'depositos_de_otro_periodo_n', dep_otro_n,
-       'ventas_pagadas_otro_periodo', round(v_otro_clp), 'ventas_pagadas_otro_periodo_n', v_otro_n),
+       'ventas_pagadas_otro_periodo', round(v_otro_clp), 'ventas_pagadas_otro_periodo_n', v_otro_n,
+       'uniones_dif', round(uni_dif), 'uniones_dif_n', uni_n),
     'compras', jsonb_build_object('binance_n', c_n, 'binance_clp', round(c_clp), 'binance_usdt', round(c_usdt, 2), 'banco_n', comp_b_n, 'banco_clp', round(comp_b),
        'diferencia', round(c_clp - comp_b)),
     'resumen', jsonb_build_object(
