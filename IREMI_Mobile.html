@@ -2504,12 +2504,12 @@ async function revisarOrden(orden,accion){
 }
 async function unirOrden(i){
   const o=_sd[i]; _unirOrden=o; const box=document.getElementById('mu2_lista');
-  document.getElementById('mu2_info').innerHTML=fh(o.creado)+' · '+o.cuenta+' · '+esc(o.contraparte||'')+'<br><b>'+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+'</b> · '+num(o.usdt)+' USDT<br>Elige el depósito (3 días antes a 6 después). La tasa sale de dividir los '+o.fiat+' por el depósito:';
+  document.getElementById('mu2_info').innerHTML=fh(o.creado)+' · '+o.cuenta+' · '+esc(o.contraparte||'')+'<br><b>'+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+'</b> · '+num(o.usdt)+' USDT<br>Elige el depósito (3 días antes a 8 después; incluye depósitos desde tu cuenta personal si pagaste tú el efectivo). La tasa sale de dividir los '+o.fiat+' por el depósito:';
   box.innerHTML='Buscando...'; openModal('modal_unir');
-  try{ const d=(await sbPost('banco_movimientos?select=id,fecha,descripcion,abono&categoria=in.(por_revisar,cambio_sin_orden)&abono=gt.0&fecha=gte.'+sumarDias(o.dia,-3)+'&fecha=lte.'+sumarDias(o.dia,6)+'&order=fecha.asc'))||[];
+  try{ const d=(await sbPost('banco_movimientos?select=id,fecha,descripcion,abono,categoria&categoria=in.(por_revisar,cambio_sin_orden,traspaso_propio)&abono=gt.0&fecha=gte.'+sumarDias(o.dia,-3)+'&fecha=lte.'+sumarDias(o.dia,8)+'&order=fecha.asc'))||[];
     d.sort((a,b)=>Math.abs(a.abono-o.clp_final)-Math.abs(b.abono-o.clp_final));
     box.innerHTML=d.length?d.map(b=>'<div class="mv" onclick="confirmarUnion('+b.id+',[\''+o.order_number+'\'])"><div class="bk-d">'+esc(b.descripcion)+'</div><div class="bk-s">'+b.fecha.slice(8)+'/'+b.fecha.slice(5,7)+
-      ' · <span class="m-in">+'+$clp(b.abono)+'</span> · tasa '+tasaTxt(o.fiat,o.monto_fiat,b.abono)+difTasa(o.fiat,o.monto_fiat,b.abono,o.dia)+'</div></div>').join('')
+      ' · <span class="m-in">+'+$clp(b.abono)+'</span>'+(b.categoria==='traspaso_propio'?' · <span class="tag j">tu cuenta</span>':'')+' · tasa '+tasaTxt(o.fiat,o.monto_fiat,b.abono)+difTasa(o.fiat,o.monto_fiat,b.abono,o.dia)+'</div></div>').join('')
       :'<div style="font-size:12px;color:var(--mute)">No hay depósitos pendientes cerca de esa fecha.</div>';
   }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
