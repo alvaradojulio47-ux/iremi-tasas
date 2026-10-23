@@ -835,7 +835,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
   </div>
   <div style="font-size:11px;color:var(--mute);line-height:1.6">
     Cada fila es un <b>depósito del banco unido a su cambio en Binance</b> (o un movimiento que todavía no tiene pareja). <b>Tasa</b> = Bs por cada $1.000 (o COP/USD por peso). <b>CLP cambio</b> = lo que pagó el cliente (el depósito real si está unido; si no, el estimado por la tasa). <b>Ganancia</b> = CLP − USDT × costo. <b>Acum.</b> = ganancia acumulada del período, como el "Acumulado" del Excel.<br>
-    <b>Tasa IREMI</b> = la tasa real que publicaste ese día (base / preferencial), del histórico de tasas; <b>Tasa</b> = la que resultó en la operación. Estados: <span class="tag ok">unido</span> depósito y cambio pegados · <span class="tag w">sin unir</span> falta su pareja · <span class="tag m">TL</span> Transf Local · <span class="tag j">aporte</span> plata tuya · 💸 familia · 🛒 compra de USDT.
+    <b>Tasa del día</b> = la tasa real que publicaste ese día para esa moneda (VES en Bs por $1.000 con la preferencial al lado; COP por $1; PEN, USD, EUR, MXN en pesos por unidad), del histórico; debajo, en gris, la que resultó en la operación si fue distinta. <b>CLP → USDT</b> = los pesos pagados divididos por el costo del USDT de ese momento. <b>Ganancia USDT</b> = CLP→USDT − USDT a destino. <b>Capital USDT</b> = saldo esperado del robot: parte del último saldo real antes del mes, suma compras y resta envíos y comisiones. Estados: <span class="tag ok">unido</span> depósito y cambio pegados · <span class="tag w">sin unir</span> falta su pareja · <span class="tag m">TL</span> Transf Local · <span class="tag j">aporte</span> plata tuya · 💸 familia · 🛒 compra de USDT.
   </div>
 </div>
 <div class="pg" id="pg_dia" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
@@ -2245,10 +2245,12 @@ async function cargarConc(){
   document.getElementById('lb_resumen').textContent='Cargando...';
   try{
     const w0=sumarDias(d0,-10), w1=sumarDias(d1,10);
-    const [BW,TW,OW]=await Promise.all([
-      sbPost('banco_movimientos?select=id,fecha,cartola,descripcion,abono,cargo,saldo,categoria,nota,orden_binance&fecha=gte.'+w0+'&fecha=lte.'+w1+'&order=fecha.asc,id.asc&limit=5000'),
-      sbPost('tasas_diarias?select=fecha,ves,ves_pref,cop,zelle,hora,fuente&fecha=gte.'+sumarDias(w0,-3)+'&fecha=lte.'+w1+'&order=fecha.asc'),
-      sbPost('v_ordenes?select=order_number,cuenta,tipo,fiat,monto_fiat,precio,usdt,comision,creado,clp,clp_manual,clp_final,tasa_usada,metodo_clp,revision,contraparte,costo_usdt,nota&estado=eq.COMPLETED&creado=gte.'+tz(w0)+'&creado=lt.'+tz(sumarDias(w1,1))+'&order=creado.asc&limit=5000')]);
+    const [BW,TW,OW,SW]=await Promise.all([
+      sbPost('banco_movimientos?select=id,fecha,cartola,n_operacion,descripcion,abono,cargo,saldo,categoria,nota,orden_binance&fecha=gte.'+w0+'&fecha=lte.'+w1+'&order=fecha.asc,id.asc&limit=5000'),
+      sbPost('tasas_diarias?select=fecha,ves,ves_pref,cop,pen,ars,eur,dop,mxn,bob,zelle,usdt,hora,fuente&fecha=gte.'+sumarDias(w0,-3)+'&fecha=lte.'+w1+'&order=fecha.asc'),
+      sbPost('v_ordenes?select=order_number,cuenta,tipo,fiat,monto_fiat,precio,usdt,comision,creado,clp,clp_manual,clp_final,tasa_usada,metodo_clp,revision,contraparte,costo_usdt,nota&estado=eq.COMPLETED&creado=gte.'+tz(w0)+'&creado=lt.'+tz(sumarDias(w1,1))+'&order=creado.asc&limit=5000'),
+      sbPost('robot_saldos?select=cuenta,total,fecha&fecha=lt.'+tz(d0)+'&order=fecha.desc&limit=12')]);
+    const u0={}; (SW||[]).forEach(x=>{ if(u0[x.cuenta]==null) u0[x.cuenta]=+x.total; }); const usdt0=Object.values(u0).reduce((a,v)=>a+v,0), usdt0ok=Object.keys(u0).length>0;
     const om={}; (OW||[]).forEach(o=>om[o.order_number]=o);
     const tasas={}; (TW||[]).forEach(t=>{ const p=tasas[t.fecha]; if(!p||(t.fuente!=='libro'&&p.fuente==='libro')||(+t.ves&&!+p.ves)) tasas[t.fecha]=t; });
     // órdenes referenciadas por el banco que quedaron fuera de la ventana
@@ -2273,8 +2275,21 @@ async function cargarConc(){
       filas.push({t:o.creado,fecha:lbDia(o.creado),b:null,o,estado:o.tipo==='BUY'?'compra_sin_banco':(o.revision==='gasto'?'familia':(o.revision==='transf_local'?'tl':(o.revision==='cambio'?'aceptado':'sin_deposito'))),clp:o.clp_final});
     });
     filas.sort((a,b)=>a.t<b.t?-1:(a.t>b.t?1:0));
-    let acum=0; filas.forEach(f=>{ f.gan=(f.estado==='unido'||f.estado==='sin_deposito'||f.estado==='aceptado'||f.estado==='tl')?gan(f.o):null; if(f.gan!=null) acum+=f.gan; f.acum=acum; f.tasa=f.o&&f.o.tipo==='SELL'?lbTasa(f.o,f.estado==='unido'&&!f.parte?f.b.abono:f.o.clp_final):null; });
-    _cc={filas,d0,d1,tasas,B:(BW||[]).filter(b=>b.fecha>=d0&&b.fecha<=d1),O:(OW||[]).filter(o=>lbDia(o.creado)>=d0&&lbDia(o.creado)<=d1),linkDe,om};
+    let acum=0, cap=usdt0; const vistos=new Set();
+    filas.forEach(f=>{ const o=f.o;
+      // un cambio pagado con varios depósitos (ej. 600.000 + 240.000): cada fila lleva su parte proporcional de USDT y ganancia
+      const deps=o?(linkDe[o.order_number]||[]).filter(b=>+b.abono>0):[]; const sumD=deps.reduce((a,b)=>a+(+b.abono),0);
+      f.prop=(f.b&&o&&f.estado==='unido'&&deps.length>1&&sumD>0)?(+f.b.abono)/sumD:1; if(f.prop!==1) f.parte=(deps.indexOf(f.b)+1)+'/'+deps.length;
+      f.usdtFila=o?(+o.usdt)*f.prop:null;
+      f.clpPag=o&&o.tipo==='SELL'?(f.estado==='unido'&&(f.prop!==1||!f.parte)?+f.b.abono:(o.clp_final!=null?(+o.clp_final):null)):null;
+      const cuenta=(f.estado==='unido'||f.estado==='sin_deposito'||f.estado==='aceptado'||f.estado==='tl')&&o&&o.tipo==='SELL'&&o.revision!=='gasto';
+      f.gan=(cuenta&&f.clpPag!=null)?(f.clpPag-f.usdtFila*o.costo_usdt):null; if(f.gan!=null) acum+=f.gan; f.acum=acum;
+      f.tasa=o&&o.tipo==='SELL'?lbTasa(o,f.clpPag):null;
+      f.clpUsdt=(f.clpPag!=null&&o&&+o.costo_usdt)?f.clpPag/o.costo_usdt:null;                 // cuántos USDT "compró" el cliente con sus pesos, al costo
+      f.ganUsdt=(f.clpUsdt!=null&&f.gan!=null)?f.clpUsdt-f.usdtFila:null;                     // ganancia expresada en USDT
+      if(o&&!vistos.has(o.order_number)){ vistos.add(o.order_number); cap+=o.tipo==='BUY'?+o.usdt:-(+o.usdt); cap-=(+o.comision||0); }
+      f.capUsdt=cap; });
+    _cc={filas,d0,d1,tasas,usdt0,usdt0ok,B:(BW||[]).filter(b=>b.fecha>=d0&&b.fecha<=d1),O:(OW||[]).filter(o=>lbDia(o.creado)>=d0&&lbDia(o.creado)<=d1),linkDe,om};
     _sd=filas.filter(f=>f.o&&!f.b&&f.o.tipo==='SELL').map(f=>f.o); _ccSel={dep:null,ords:[]};
     pintarConc(); pintarCruce();
   }catch(e){ document.getElementById('lb_resumen').innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
@@ -2289,10 +2304,10 @@ function pintarConc(){
   else if(ver==='compras') F=F.filter(f=>['compra','compra_sin','compra_sin_banco'].includes(f.estado));
   else if(ver==='tl') F=F.filter(f=>['tl','tl_in','tl_pago'].includes(f.estado));
   if(q) F=F.filter(f=>((f.b&&(f.b.descripcion+' '+(f.b.nota||'')))+' '+(f.o&&(f.o.contraparte+' '+f.o.cuenta+' '+f.o.order_number))+' '+(f.b?(f.b.abono||f.b.cargo):'')+' '+(f.o?Math.round(f.o.monto_fiat)+' '+f.o.usdt+' '+(f.o.clp_final||''):'')).toLowerCase().includes(q));
-  const T={in:0,out:0,usdt:0,clp:0,gan:0,n:0}; F.forEach(f=>{ if(f.b){T.in+=+f.b.abono||0;T.out+=+f.b.cargo||0;} if(f.o&&f.o.tipo==='SELL'&&f.gan!=null){T.usdt+=+f.o.usdt;T.clp+=f.estado==='unido'&&!f.parte?+f.b.abono:(+f.o.clp_final||0);T.gan+=f.gan;T.n++;} });
+  const T={in:0,out:0,usdt:0,clp:0,gan:0,n:0}; F.forEach(f=>{ if(f.b){T.in+=+f.b.abono||0;T.out+=+f.b.cargo||0;} if(f.o&&f.o.tipo==='SELL'&&f.gan!=null){T.usdt+=f.usdtFila||0;T.clp+=f.clpPag||0;T.gan+=f.gan;T.n++;} });
   const A=_cc.filas, nUn=A.filter(f=>f.estado==='unido').length, nSc=A.filter(f=>f.estado==='sin_cambio').length, nSd=A.filter(f=>f.estado==='sin_deposito'||f.estado==='aceptado').length;
   document.getElementById('lb_resumen').innerHTML='Del '+fechaCorta(_cc.d0)+' al '+fechaCorta(_cc.d1)+' · <b>'+nUn+'</b> cambios unidos a su depósito · <b style="color:var(--amber)">'+nSc+'</b> depósitos sin cambio · <b style="color:var(--amber)">'+nSd+'</b> cambios sin depósito'+
-    ' &nbsp;|&nbsp; mostrando '+F.length+' filas: entró <b class="m-in">+'+$clp(T.in)+'</b> · salió <b class="m-out">−'+$clp(T.out)+'</b> · '+T.n+' cambios por '+$clp(T.clp)+' ('+num(T.usdt)+' USDT) · ganancia <b style="color:var(--green)">'+$clp(T.gan)+'</b>';
+    ' &nbsp;|&nbsp; mostrando '+F.length+' filas: entró <b class="m-in">+'+$clp(T.in)+'</b> · salió <b class="m-out">−'+$clp(T.out)+'</b> · '+new Set(F.filter(f=>f.o&&f.o.tipo==='SELL'&&f.gan!=null).map(f=>f.o.order_number)).size+' cambios por '+$clp(T.clp)+' ('+num(T.usdt)+' USDT) · ganancia <b style="color:var(--green)">'+$clp(T.gan)+'</b>';
   const td=(v,st)=>'<td'+(st?' style="'+st+'"':'')+'>'+(v==null||v===''?'—':v)+'</td>';
   const acc=f=>{ if(f.b&&(f.estado==='sin_cambio'||f.estado==='compra_sin'||f.estado==='salida'||f.estado==='aporte')) return '<button type="button" class="btn b-blue" style="padding:3px 7px;font-size:10px" onclick="_bkRev=[_cc.filas['+_cc.filas.indexOf(f)+'].b];editarBk(0)">'+(f.estado==='aporte'?'✎':'🔗 unir')+'</button>';
     if(f.b&&f.o&&f.estado==='unido') return '<button type="button" class="btn b-gray" style="padding:3px 7px;font-size:10px" title="Deshacer la unión" onclick="if(confirm(\'¿Deshacer la unión de este depósito con su cambio?\')) deshacerUnion('+f.b.id+')">↺</button>';
@@ -2300,23 +2315,37 @@ function pintarConc(){
       (f.estado==='tl'?'':'<button type="button" class="btn b-gray" style="padding:3px 6px;font-size:10px" onclick="revisarOrden(\''+n+'\',\'transf_local\')">🤝</button> ')+(f.estado==='familia'?'':'<button type="button" class="btn b-red" style="padding:3px 6px;font-size:10px" onclick="revisarOrden(\''+n+'\',\'gasto\')">💸</button> ')+
       '<button type="button" class="btn b-blue" style="padding:3px 6px;font-size:10px" onclick="unirOrden('+i+')">🔗</button>'+(f.o.revision?' <button type="button" class="btn b-gray" style="padding:3px 6px;font-size:10px" onclick="revisarOrden(\''+n+'\',\'deshacer\')">↺</button>':''); }
     return ''; };
+  const TU={clpU:0,ganU:0,usdt:0,n:new Set()}; F.forEach(f=>{ if(f.o&&f.o.tipo==='SELL'&&f.gan!=null){ TU.clpU+=f.clpUsdt||0; TU.ganU+=f.ganUsdt||0; TU.usdt+=f.usdtFila||0; TU.n.add(f.o.order_number); } });
   let lastDia='';
-  document.getElementById('lb_tabla').innerHTML='<tr><th>Fecha</th><th style="text-align:left">🏦 Banco</th><th>Entró</th><th>Salió</th><th>Saldo banco</th><th style="text-align:left">🟡 Binance</th><th>Moneda</th><th>USDT</th><th>Tasa IREMI</th><th>Tasa</th><th>CLP cambio</th><th>Ganancia</th><th>Acum.</th><th style="text-align:left">Estado</th><th></th></tr>'+
+  document.getElementById('lb_tabla').innerHTML='<tr><th>Fecha · hora</th><th>N° transacción</th><th style="text-align:left">Detalle</th><th>Depósito CLP</th><th>Retiro CLP</th><th>Saldo banco</th><th>Tasa del día</th><th>Moneda destino</th><th>CLP → USDT</th><th>USDT a destino</th><th>Ganancia USDT</th><th>Ganancia CLP</th><th>Acum. CLP</th><th>Capital USDT</th><th style="text-align:left">Estado</th><th></th></tr>'+
     F.map(f=>{ const b=f.b,o=f.o,e=LB_EST[f.estado]||['',f.estado]; const sep=f.fecha!==lastDia?' style="border-top:2px solid var(--bord)"':''; lastDia=f.fecha;
-      return '<tr'+sep+'>'+td(fechaCorta(f.fecha)+(o?' <span style="color:var(--mute)">'+lbHora(o.creado)+'</span>':''),'white-space:nowrap')+td(b?esc(b.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,''))+(b.nota&&!/^Unido|^Aceptado|^Depósito desde/.test(b.nota)?' <span style="color:var(--mute)">· '+esc(b.nota.slice(0,30))+'</span>':''):'','text-align:left;max-width:190px;overflow:hidden;text-overflow:ellipsis')+
+      const nTx=(o?'<span title="'+o.order_number+'">…'+o.order_number.slice(-6)+'</span>':'')+(b&&b.n_operacion?(o?' · ':'')+'<span style="color:var(--mute)" title="N° operación banco">b'+esc(String(b.n_operacion))+'</span>':'');
+      const det=(b?'<b>'+esc(b.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,26))+'</b> <span style="color:var(--mute)">'+(+b.abono?depTipo(b):retTipo(b))+'</span>':'')+(o?(b?'<br>':'')+'<span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+esc((o.contraparte||'').slice(0,14))+(f.parte?' <span style="color:var(--mute)">('+f.parte+')</span>':''):'')+(b&&b.nota&&!/^Unido|^Aceptado|^Depósito desde/.test(b.nota)?' <span style="color:var(--mute)">· '+esc(b.nota.slice(0,28))+'</span>':'');
+      const fiat=o?o.fiat:'VES', tdia=o&&o.tipo==='BUY'?'':tasaIremiTxt(f.fecha,fiat), top=o&&o.tipo==='SELL'?lbTasaOp(o,f.clpPag):null;
+      return '<tr'+sep+'>'+td(fechaCorta(f.fecha)+(o?' <span style="color:var(--mute)">'+lbHora(o.creado)+'</span>':''),'white-space:nowrap')+td(nTx,'font-size:10px')+td(det,'text-align:left;max-width:230px;overflow:hidden;text-overflow:ellipsis;line-height:1.3')+
         td(b&&+b.abono?'<span class="m-in">+'+$clp(b.abono)+'</span>':'')+td(b&&+b.cargo?'<span class="m-out">−'+$clp(b.cargo)+'</span>':'')+td(b&&b.saldo!=null?$clp(b.saldo):'')+
-        td(o?'<span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+esc((o.contraparte||'').slice(0,14))+(f.parte?' <span style="color:var(--mute)">('+f.parte+')</span>':''):'','text-align:left')+
-        td(o?(o.tipo==='BUY'?'🛒 compra':o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')):'')+td(o?num(o.usdt):'')+td(o&&o.tipo==='SELL'?tasaIremiTxt(f.fecha,o.fiat):(b&&+b.abono&&!o?tasaIremiTxt(f.fecha,'VES'):''),'color:var(--gold)')+td(o&&o.tipo==='BUY'?'$'+num(o.precio):(f.tasa!=null?f.tasa+(o&&o.metodo_clp&&f.estado!=='unido'?' <span style="color:var(--mute)">'+o.metodo_clp+'</span>':''):''))+
-        td(o&&o.tipo==='SELL'?(f.estado==='unido'&&!f.parte?$clp(b.abono):(o.clp_final!=null?(f.estado==='unido'?'':'<span style="color:var(--mute)">≈</span>')+$clp(o.clp_final):'sin CLP')):(o&&o.tipo==='BUY'?$clp(o.monto_fiat):''))+
-        td(f.gan==null?'':'<span style="color:'+(f.gan>=0?'var(--green)':'var(--red2)')+'">'+$clp(f.gan)+'</span>')+td(f.gan==null?'':'<b>'+$clp(f.acum)+'</b>')+td('<span class="tag '+e[0]+'">'+e[1]+'</span>','text-align:left')+td(acc(f),'white-space:nowrap')+'</tr>'; }).join('')+
-    '<tr class="hs-tot"><td colspan="2">Total</td><td>+'+$clp(T.in)+'</td><td>−'+$clp(T.out)+'</td><td></td><td></td><td></td><td>'+num(T.usdt)+'</td><td></td><td></td><td>'+$clp(T.clp)+'</td><td>'+$clp(T.gan)+'</td><td></td><td></td><td></td></tr>';
+        td(tdia+(top&&top!==tasaFmt(fiat,(tasaIremi(f.fecha,fiat)||{}).base)?'<br><span style="color:var(--mute);font-size:10px">op. '+top+(o.metodo_clp&&f.estado!=='unido'?' '+o.metodo_clp:'')+'</span>':''),'color:var(--gold);line-height:1.3')+
+        td(o?(o.tipo==='BUY'?'🛒 compra a $'+num(o.precio):'<b>'+o.fiat+'</b> '+Math.round(o.monto_fiat).toLocaleString('es-CL')):'')+
+        td(o&&o.tipo==='SELL'?(f.clpPag!=null?(f.estado==='unido'?'':'≈')+$clp(f.clpPag)+(f.clpUsdt!=null?'<br><span style="color:var(--mute);font-size:10px">= '+num(f.clpUsdt)+' USDT al costo $'+num(o.costo_usdt)+'</span>':''):'sin CLP'):(o&&o.tipo==='BUY'?$clp(o.monto_fiat):''),'line-height:1.3')+
+        td(o?(o.tipo==='BUY'?'<span class="m-in">+'+num(o.usdt)+'</span>':'−'+num(f.usdtFila)+(f.prop!==1?' <span style="color:var(--mute)">de '+num(o.usdt)+'</span>':'')):'')+
+        td(f.ganUsdt==null?'':'<span style="color:'+(f.ganUsdt>=0?'var(--green)':'var(--red2)')+'">'+num(f.ganUsdt)+'</span>')+
+        td(f.gan==null?'':'<span style="color:'+(f.gan>=0?'var(--green)':'var(--red2)')+'">'+$clp(f.gan)+'</span>')+td(f.gan==null?'':'<b>'+$clp(f.acum)+'</b>')+
+        td(o?num(f.capUsdt):'','color:var(--silver)')+
+        td('<span class="tag '+e[0]+'">'+e[1]+'</span>','text-align:left')+td(acc(f),'white-space:nowrap')+'</tr>'; }).join('')+
+    '<tr class="hs-tot"><td colspan="3">Total</td><td>+'+$clp(T.in)+'</td><td>−'+$clp(T.out)+'</td><td></td><td></td><td>'+TU.n.size+' cambios</td><td>'+$clp(T.clp)+'<br><span style="font-size:10px">= '+num(TU.clpU)+' USDT</span></td><td>−'+num(TU.usdt)+'</td><td>'+num(TU.ganU)+'</td><td>'+$clp(T.gan)+'</td><td></td><td>'+(_cc.filas.length?num(_cc.filas[_cc.filas.length-1].capUsdt):'')+'</td><td></td><td></td></tr>';
+  document.getElementById('lb_resumen').innerHTML+=' · capital USDT: inicio '+(_cc.usdt0ok?num(_cc.usdt0)+' (robot, último saldo antes del '+fechaCorta(_cc.d0)+')':'<span style="color:var(--amber)">sin saldo del robot antes del mes</span>')+' → fin esperado '+(_cc.filas.length?num(_cc.filas[_cc.filas.length-1].capUsdt):'—')+' <span style="color:var(--mute)">(+compras −enviados −comisiones; no incluye Binance Pay)</span>';
 }
 let _ccSel={dep:null,ords:[]};
-function tasaIremi(dia,fiat){ const t=_cc.tasas&&_cc.tasas[dia]; if(!t) return null;
-  if(fiat==='VES') return {base:+t.ves||null,pref:+t.ves_pref||null}; if(fiat==='COP') return {base:+t.cop||null,pref:null}; if(fiat==='USD') return {base:+t.zelle||null,pref:null}; return null; }
-function tasaIremiTxt(dia,fiat){ const t=tasaIremi(dia,fiat); if(!t||!t.base) return '<span style="color:var(--mute)">sin tasa</span>';
-  if(fiat==='VES') return Math.round(t.base*1000)+(t.pref&&Math.round(t.pref*1000)!==Math.round(t.base*1000)?' <span style="color:var(--mute)">/ '+Math.round(t.pref*1000)+'</span>':'');
-  if(fiat==='USD') return '$'+Math.round(1/t.base); return String(t.base); }
+const FIAT_COL_APP={VES:'ves',COP:'cop',PEN:'pen',ARS:'ars',EUR:'eur',DOP:'dop',MXN:'mxn',BOB:'bob',USD:'zelle'};
+function tasaIremi(dia,fiat){ const t=_cc.tasas&&_cc.tasas[dia]; if(!t) return null; const col=FIAT_COL_APP[fiat]; if(!col) return null;
+  return {base:+t[col]||null,pref:fiat==='VES'?(+t.ves_pref||null):null}; }
+// Cómo se muestra la tasa: VES y COP como "moneda por peso" (Bs por $1.000 / COP por $1); el resto como "pesos por unidad" ($ por 1 USD, 1 EUR, 1 PEN, 1 MXN)
+function tasaFmt(fiat,r){ if(!r) return '—'; if(fiat==='VES') return String(Math.round(r*1000)); if(fiat==='COP') return (+r).toFixed(2); return '$'+Math.round(1/r); }
+function tasaIremiTxt(dia,fiat){ const t=tasaIremi(dia,fiat); if(!t||!t.base) return '<span style="color:var(--mute)">sin tasa '+(fiat||'')+'</span>';
+  return (fiat!=='VES'?fiat+' ':'')+tasaFmt(fiat,t.base)+(t.pref&&Math.round(t.pref*1000)!==Math.round(t.base*1000)?' <span style="color:var(--mute)">/ '+tasaFmt(fiat,t.pref)+'</span>':''); }
+const lbTasaOp=(o,clp)=>{ if(!o||!clp) return null; return tasaFmt(o.fiat,o.monto_fiat/clp); };
+const depTipo=b=>b.categoria==='belkys_ingreso'?'Transf Local':(b.categoria==='traspaso_propio'?'aporte Julio':(/FLORES/.test(b.descripcion)?'Paula':(['cambio','cambio_sin_orden','por_revisar'].includes(b.categoria)?'cliente':BK_CAT[b.categoria]||b.categoria)));
+const retTipo=b=>b.categoria==='compra_usdt'?'compra USDT':(b.categoria==='belkys_pago'?'pago Transf Local':(b.categoria==='gasto'?(b.nota||'gasto / retiro'):(b.categoria==='traspaso_propio'?'traspaso propio':'salida')));
 function vistaConc(n){ document.getElementById('cc_v1').style.display=n===1?'':'none'; document.getElementById('cc_v2').style.display=n===2?'':'none';
   document.getElementById('cc_tab1').className='btn '+(n===1?'b-gold':'b-gray'); document.getElementById('cc_tab2').className='btn '+(n===2?'b-gold':'b-gray'); if(n===2) pintarCruce(); }
 function ccMarcar(tipo,id,on){ if(tipo==='dep') _ccSel.dep=on?id:null; else { _ccSel.ords=_ccSel.ords.filter(x=>x!==id); if(on) _ccSel.ords.push(id); } pintarSelCruce(); }
@@ -2341,11 +2370,11 @@ function pintarCruce(){
       return '<div class="mv" style="cursor:default;padding:6px 8px;margin-bottom:4px'+(unido?';opacity:.6':'')+'"><div class="r1"><span>'+(unido||b.categoria==='belkys_ingreso'?'':'<input type="checkbox" style="width:auto;margin-right:6px" '+(_ccSel.dep===b.id?'checked':'')+' onchange="ccMarcar(\'dep\','+b.id+',this.checked)">')+esc(b.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,28))+' '+tag+'</span><b class="m-in">+'+$clp(b.abono)+'</b></div>'+
         '<div class="r3" style="margin-top:2px"><span>'+(+t.ves?'= Bs '+Math.round(b.abono*t.ves).toLocaleString('es-CL')+(+t.ves_pref&&t.ves_pref!==t.ves?' · pref Bs '+Math.round(b.abono*t.ves_pref).toLocaleString('es-CL'):'')+(+tm.ves?' · mañana Bs '+Math.round(b.abono*tm.ves).toLocaleString('es-CL'):''):'sin tasa del día')+(b.nota&&!/^Unido|^Aceptado|^Depósito desde/.test(b.nota)?' · '+esc(b.nota.slice(0,30)):'')+(unido?' · '+os.map(o=>lbHora(o.creado)+' '+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')).join(' + ')+' <a href="#" onclick="if(confirm(\'¿Deshacer la unión?\')) deshacerUnion('+b.id+');return false">↺</a>':'')+'</span></div></div>'; }).join('');
     const ord=D.ord.map(o=>{ const bs=_cc.linkDe[o.order_number]||[], unido=!!bs.length, est=o.revision==='gasto'?'<span class="tag w">💸 familia</span>':(o.revision==='transf_local'?'<span class="tag m">🤝 TL</span>':(unido?'<span class="tag ok">unido</span>':(o.revision==='cambio'?'<span class="tag ok">✅ aceptado</span>':'<span class="tag w">sin depósito</span>')));
-      const r=tasaIremi(lbDia(o.creado),o.fiat), eq=k=>{ const tt=k==='hoy'?(r&&r.base):(k==='pref'?(r&&r.pref):(k==='ayer'?(ty[o.fiat==='VES'?'ves':(o.fiat==='COP'?'cop':'zelle')]):null)); return tt?$clp(Math.round(o.monto_fiat/tt)):null; };
+      const r=tasaIremi(lbDia(o.creado),o.fiat), eq=k=>{ const tt=k==='hoy'?(r&&r.base):(k==='pref'?(r&&r.pref):(k==='ayer'?(+ty[FIAT_COL_APP[o.fiat]]||null):null)); return tt?$clp(Math.round(o.monto_fiat/tt)):null; };
       const eqs=[['hoy',eq('hoy')],['pref',eq('pref')],['ayer',eq('ayer')]].filter(x=>x[1]).map(x=>x[0]+' '+x[1]).join(' · ');
       return '<div class="mv" style="cursor:default;padding:6px 8px;margin-bottom:4px'+(unido?';opacity:.6':'')+'"><div class="r1"><span>'+(unido?'':'<input type="checkbox" style="width:auto;margin-right:6px" '+(_ccSel.ords.includes(o.order_number)?'checked':'')+' onchange="ccMarcar(\'ord\',\''+o.order_number+'\',this.checked)">')+lbHora(o.creado)+' <span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+esc((o.contraparte||'').slice(0,12))+' '+est+'</span><b>'+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+'</b></div>'+
         '<div class="r3" style="margin-top:2px"><span>'+num(o.usdt)+' USDT · '+(eqs?'= '+eqs:'sin tasa del día')+(unido?' · '+bs.map(b=>esc(b.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,18))+' '+$clp(b.abono)).join(' + '):(o.clp_final!=null?' · robot ≈ '+$clp(o.clp_final)+' ('+o.metodo_clp+')':''))+'</span></div></div>'; }).join('');
-    return '<div class="panel" style="padding:8px"><h3 style="margin-bottom:6px">'+new Date(d+'T12:00:00').toLocaleDateString('es-CL',{weekday:'short',day:'2-digit',month:'2-digit'})+' <small style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gold)">tasa IREMI '+fmtT(+t.ves)+(+t.ves_pref?' / pref '+fmtT(+t.ves_pref):'')+(t.hora?' ('+t.hora.slice(0,5)+')':'')+' · ayer '+fmtT(+ty.ves)+(+t.cop?' · COP '+t.cop:'')+(+t.zelle?' · USD $'+Math.round(1/t.zelle):'')+'</small></h3>'+
+    return '<div class="panel" style="padding:8px"><h3 style="margin-bottom:6px">'+new Date(d+'T12:00:00').toLocaleDateString('es-CL',{weekday:'short',day:'2-digit',month:'2-digit'})+' <small style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gold)">tasa IREMI '+fmtT(+t.ves)+(+t.ves_pref?' / pref '+fmtT(+t.ves_pref):'')+(t.hora?' ('+t.hora.slice(0,5)+')':'')+' · ayer '+fmtT(+ty.ves)+['COP','PEN','USD','EUR','MXN','ARS','DOP','BOB'].map(k=>{const v=+t[FIAT_COL_APP[k]]; return v?' · '+k+' '+tasaFmt(k,v):'';}).join('')+'</small></h3>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><div style="font-size:11px;color:var(--mute);margin-bottom:4px">🏦 Depósitos a IREMI ('+D.dep.length+')</div>'+(dep||'<div style="font-size:11px;color:var(--mute)">—</div>')+'</div>'+
       '<div><div style="font-size:11px;color:var(--mute);margin-bottom:4px">🟡 Cambios en Binance ('+D.ord.length+')</div>'+(ord||'<div style="font-size:11px;color:var(--mute)">—</div>')+'</div></div></div>'; }).join('')||'<div class="panel" style="font-size:12px;color:var(--green)">✓ Nada pendiente en este mes.</div>';
   pintarSelCruce();
@@ -2353,8 +2382,11 @@ function pintarCruce(){
 async function bajarConc(){
   if(!_cc.filas.length) return toast('No hay filas');
   try{ await cargaXLSX();
-    const H=['Fecha','Hora','Banco','Entró','Salió','Saldo banco','Cuenta Binance','Contraparte','Moneda','Monto moneda','USDT','Tasa IREMI día','Tasa IREMI pref','Tasa','CLP cambio','Costo USDT','Ganancia','Acumulado','Estado','N° orden','Cartola','Categoría banco','Nota'];
-    const R=_cc.filas.map(f=>{const b=f.b,o=f.o,e=LB_EST[f.estado]||['',f.estado]; return [new Date(f.fecha+'T12:00:00'),o?lbHora(o.creado):'',b?b.descripcion:'',b?+b.abono||'':'',b?+b.cargo||'':'',b&&b.saldo!=null?+b.saldo:'',o?o.cuenta:'',o?o.contraparte:'',o?(o.tipo==='BUY'?'COMPRA':o.fiat):'',o?+o.monto_fiat:'',o?+o.usdt:'',(_cc.tasas[f.fecha]&&+_cc.tasas[f.fecha].ves?Math.round(_cc.tasas[f.fecha].ves*1000):''),(_cc.tasas[f.fecha]&&+_cc.tasas[f.fecha].ves_pref?Math.round(_cc.tasas[f.fecha].ves_pref*1000):''),o&&o.tipo==='BUY'?+o.precio:(f.tasa==null?'':f.tasa),o&&o.tipo==='SELL'?(f.estado==='unido'&&!f.parte?+b.abono:(o.clp_final==null?'':+o.clp_final)):(o&&o.tipo==='BUY'?+o.monto_fiat:''),o?+o.costo_usdt:'',f.gan==null?'':Math.round(f.gan),f.gan==null?'':Math.round(f.acum),e[1],o?o.order_number:'',b?b.cartola:'',b?(BK_CAT[b.categoria]||b.categoria):'',b?(b.nota||''):(o?(o.nota||''):'')];});
+    const H=['Fecha','Hora','N° orden Binance','N° operación banco','Banco (quién)','Tipo depósito/retiro','Depósito CLP','Retiro CLP','Saldo banco','Cuenta Binance','Contraparte','Moneda destino','Monto destino','Tasa del día','Tasa del día pref','Tasa de la operación','CLP pagados','Costo USDT','CLP → USDT','USDT a destino','Ganancia USDT','Ganancia CLP','Acumulado CLP','Capital USDT','Estado','Cartola','Categoría banco','Nota'];
+    const R=_cc.filas.map(f=>{const b=f.b,o=f.o,e=LB_EST[f.estado]||['',f.estado], fiat=o?o.fiat:'VES', r=tasaIremi(f.fecha,fiat)||{};
+      return [new Date(f.fecha+'T12:00:00'),o?lbHora(o.creado):'',o?o.order_number:'',b?(b.n_operacion||''):'',b?b.descripcion:'',b?(+b.abono?depTipo(b):retTipo(b)):'',b?+b.abono||'':'',b?+b.cargo||'':'',b&&b.saldo!=null?+b.saldo:'',o?o.cuenta:'',o?o.contraparte:'',o?(o.tipo==='BUY'?'COMPRA':o.fiat):'',o?+o.monto_fiat:'',
+        r.base?(fiat==='VES'?Math.round(r.base*1000):(fiat==='COP'?+r.base:Math.round(1/r.base))):'',r.pref?Math.round(r.pref*1000):'',o&&o.tipo==='BUY'?+o.precio:(f.clpPag&&o?(fiat==='VES'?Math.round(o.monto_fiat/f.clpPag*1000):(fiat==='COP'?+(o.monto_fiat/f.clpPag).toFixed(3):Math.round(f.clpPag/o.monto_fiat))):''),
+        f.clpPag!=null?Math.round(f.clpPag):(o&&o.tipo==='BUY'?+o.monto_fiat:''),o?+o.costo_usdt:'',f.clpUsdt!=null?+f.clpUsdt.toFixed(2):'',o?(o.tipo==='BUY'?+o.usdt:-o.usdt):'',f.ganUsdt!=null?+f.ganUsdt.toFixed(2):'',f.gan==null?'':Math.round(f.gan),f.gan==null?'':Math.round(f.acum),o?+f.capUsdt.toFixed(2):'',e[1],b?b.cartola:'',b?(BK_CAT[b.categoria]||b.categoria):'',b?(b.nota||''):(o?(o.nota||''):'')];});
     const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([H].concat(R),{cellDates:true}),'Libro '+_cc.d0.slice(0,7));
     XLSX.writeFile(wb,'IREMI_libro_'+_cc.d0.slice(0,7)+'.xlsx'); toast('📥 Excel descargado');
   }catch(e){ toast('✗ '+e.message); }
