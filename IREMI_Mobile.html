@@ -2225,7 +2225,7 @@ async function cargarInicioDia(){
          else { const c=ultimo(r=>r.banco_real!=null&&r.usdt_real!=null); set('k_capt',c?$clp(+c.banco_real+c.usdt_real*c.costo_usdt):'—'); set('k_capt_s',c?'banco '+$clp(c.banco_real)+' ('+fechaCorta(c.dia)+') + USDT':'sube la cartola'); }
          if(gp==null){ kf.textContent='—'; set('k_falta_s',E&&E.sin_banco?'sube la cartola de este mes':(E&&E.parcial?'sube la cartola para calcular':'faltan saldos del robot')); }
          else { kf.textContent=conSigno(+gp); kf.style.color=colorFalta(+gp); set('k_falta_s',(Math.abs(gp)<50000?'✓ cuadra':(gp<0?'falta':'sobra'))+' · hasta '+fechaCorta(E.banco_hasta<hoy?E.banco_hasta:hoy)); }
-    }catch(e){ set('k_falta','—'); set('k_falta_s',/estado_caja/.test(e.message)?'falta IREMI_etapa8.sql':'✗ error'); }
+    }catch(e){ set('k_falta','—'); set('k_falta_s',/estado_caja/.test(e.message)?'falta IREMI_etapa8.sql':'✗ error'); set('k_capt','—'); set('k_capt_s','✗ '+(e.message||'error').slice(0,80)); }
   }catch(e){ set('k_util','—'); set('k_util_s',/v_diario/.test(e.message)?'falta IREMI_etapa7.sql':'✗ error'); }
   activarAccesos();
 }

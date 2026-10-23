@@ -61,8 +61,8 @@ begin
    and (o.creado at time zone 'America/Santiago')::date between p_desde and p_hasta;
   v_sindep_n := v_n - v_condep_n; v_sindep_clp := v_clp - v_condep_clp;
   -- ventas del período cuyo depósito quedó fuera del período (lo pagaron antes o después)
-  select count(*), coalesce(sum(clp_final), 0) into v_otro_n, v_otro_clp
-  from v_ordenes o where o.tipo = 'SELL' and o.estado = 'COMPLETED' and coalesce(o.revision, '') not in ('gasto', 'transf_local')
+  select count(*), coalesce(sum(coalesce(o.clp_manual, o.clp)), 0) into v_otro_n, v_otro_clp
+  from robot_ordenes o where o.tipo = 'SELL' and o.estado = 'COMPLETED' and coalesce(o.revision, '') not in ('gasto', 'transf_local')
    and (o.creado at time zone 'America/Santiago')::date between p_desde and p_hasta
    and exists (select 1 from banco_movimientos b where b.orden_binance is not null and position(o.order_number in b.orden_binance) > 0)
    and not exists (select 1 from banco_movimientos b where b.orden_binance is not null and position(o.order_number in b.orden_binance) > 0 and b.fecha between p_desde and p_hasta);
@@ -93,14 +93,16 @@ begin
   cb_in := dep_con + dep_sin; cb_in_n := dep_sin_n;
   select count(*), coalesce(sum(b.abono), 0) into dep_otro_n, dep_otro
   from banco_movimientos b where b.fecha between p_desde and p_hasta and b.abono > 0 and b.categoria = 'cambio' and b.orden_binance is not null
-   and not exists (select 1 from robot_ordenes o where position(o.order_number in b.orden_binance) > 0
+   and not exists (select 1 from robot_ordenes o where o.order_number = any(regexp_split_to_array(b.orden_binance, '\s*[,;]\s*'))
                    and (o.creado at time zone 'America/Santiago')::date between p_desde and p_hasta);
   select count(*), coalesce(sum(monto_clp), 0) into ajustes_n, ajustes from caja_ajustes where fecha between p_desde and p_hasta;
   -- depósitos unidos del período que valen más (+) o menos (−) que los cambios a los que están unidos (ej.: $360.000 que pagan $310.000 de cambios)
-  select count(*), coalesce(sum(b.abono - coalesce((select sum(o.clp_final) from v_ordenes o where position(o.order_number in b.orden_binance) > 0), 0)), 0)
-    into uni_n, uni_dif
-  from banco_movimientos b where b.fecha between p_desde and p_hasta and b.abono > 0 and b.categoria = 'cambio' and b.orden_binance is not null
-   and abs(b.abono - coalesce((select sum(o.clp_final) from v_ordenes o where position(o.order_number in b.orden_binance) > 0), 0)) >= 1;
+  select count(*), coalesce(sum(b.abono - s.clp), 0) into uni_n, uni_dif
+  from banco_movimientos b
+  join lateral (select coalesce(sum(coalesce(o.clp_manual, o.clp)), 0) as clp
+                from robot_ordenes o where o.order_number = any(regexp_split_to_array(b.orden_binance, '\s*[,;]\s*'))) s on true
+  where b.fecha between p_desde and p_hasta and b.abono > 0 and b.categoria = 'cambio' and b.orden_binance is not null
+    and abs(b.abono - s.clp) >= 1;
   -- clientes: solo cuenta lo que NO está unido (un cambio unido a su depósito cuadra solo, sea cual sea la fecha del depósito) + las diferencias de monto en uniones
   dif_cli := dep_sin - v_sindep_clp + uni_dif;
   tl_pend := tl_in - tl_pag / 0.96 - tl_env;                      -- plata de Transf Local que aún no se envía (no es tuya)
