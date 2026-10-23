@@ -846,7 +846,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
 <div class="pg" id="pg_conc" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
   <div class="filtros" style="flex-wrap:wrap;gap:6px">
     <select id="lb_mes" onchange="cargarConc()"></select>
-    <select id="lb_ver" onchange="pintarConc()"><option value="todo">Ver todo</option><option value="sinunir">Solo lo que no está unido</option><option value="cambios">Solo cambios (ventas)</option><option value="banco">Solo movimientos del banco</option><option value="compras">Solo compras de USDT</option><option value="tl">Solo Transf Local</option></select>
+    <select id="lb_ver" onchange="pintarConc()"><option value="todo">Ver todo</option><option value="sinunir">Solo lo que no está unido</option><option value="cambios">Solo cambios (ventas)</option><option value="banco">Solo movimientos del banco</option><option value="entradas">Solo entradas (lo que entró)</option><option value="salidas">Solo salidas (lo que salió)</option><option value="compras">Solo compras de USDT</option><option value="tl">Solo Transf Local</option></select>
     <input id="lb_q" type="search" placeholder="Buscar nombre, contraparte, monto…" oninput="pintarConc()" style="flex:1;min-width:140px">
     <button type="button" class="btn b-gold" style="padding:8px 12px;font-size:12px" onclick="bajarConc()">📥 .xlsx</button>
   </div>
@@ -2301,19 +2301,22 @@ async function cargarConc(){
         filas.push({t:o?o.creado:b.fecha+'T00:00:00-03:00',fecha:o?lbDia(o.creado):b.fecha,b,o,estado:b.categoria==='compra_usdt'?(o?'compra':'compra_sin'):(b.categoria==='belkys_pago'?'tl_pago':(b.categoria==='gasto'?'gasto':(b.categoria==='traspaso_propio'?'traspaso':'salida'))),clp:null});
       }
     });
-    // b) órdenes del período sin ningún movimiento del banco unido
-    (OW||[]).filter(o=>lbDia(o.creado)>=d0&&lbDia(o.creado)<=d1&&!(linkDe[o.order_number]||[]).length).forEach(o=>{
-      filas.push({t:o.creado,fecha:lbDia(o.creado),b:null,o,estado:o.tipo==='BUY'?'compra_sin_banco':(o.revision==='gasto'?'familia':(o.revision==='transf_local'?'tl':(o.revision==='cambio'?'aceptado':'sin_deposito'))),clp:o.clp_final});
+    // b) órdenes del período que no quedaron en ninguna fila (sin depósito, o con su depósito fuera de este mes)
+    const conFila=new Set(filas.filter(f=>f.o).map(f=>f.o.order_number));
+    (OW||[]).filter(o=>lbDia(o.creado)>=d0&&lbDia(o.creado)<=d1&&!conFila.has(o.order_number)).forEach(o=>{
+      const fuera=(linkDe[o.order_number]||[]);
+      filas.push({t:o.creado,fecha:lbDia(o.creado),b:null,o,bFuera:fuera[0]||null,
+        estado:fuera.length?'unido_fuera':(o.tipo==='BUY'?'compra_sin_banco':(o.revision==='gasto'?'familia':(o.revision==='transf_local'?'tl':(o.revision==='cambio'?'aceptado':'sin_deposito')))),clp:o.clp_final});
     });
     filas.sort((a,b)=>a.t<b.t?-1:(a.t>b.t?1:0));
     let acum=0, cap=usdt0; const vistos=new Set();
     filas.forEach(f=>{ const o=f.o;
       // un cambio pagado con varios depósitos (ej. 600.000 + 240.000): cada fila lleva su parte proporcional de USDT y ganancia
       const deps=o?(linkDe[o.order_number]||[]).filter(b=>+b.abono>0):[]; const sumD=deps.reduce((a,b)=>a+(+b.abono),0);
-      const unido=f.estado==='unido'||f.estado==='tl_unido'; f.prop=(f.b&&o&&unido&&deps.length>1&&sumD>0)?(+f.b.abono)/sumD:1; if(f.prop!==1) f.parte=(deps.indexOf(f.b)+1)+'/'+deps.length;
+      const unido=f.estado==='unido'||f.estado==='tl_unido'||f.estado==='unido_fuera'; f.prop=(f.b&&o&&unido&&deps.length>1&&sumD>0)?(+f.b.abono)/sumD:1; if(f.prop!==1) f.parte=(deps.indexOf(f.b)+1)+'/'+deps.length;
       f.usdtFila=o?(+o.usdt)*f.prop:null;
-      f.clpPag=o&&o.tipo==='SELL'?(unido&&(f.prop!==1||!f.parte)?+f.b.abono:(o.clp_final!=null?(+o.clp_final):null)):null;
-      const cuenta=(unido||f.estado==='sin_deposito'||f.estado==='aceptado'||f.estado==='tl')&&o&&o.tipo==='SELL'&&o.revision!=='gasto';
+      f.clpPag=o&&o.tipo==='SELL'?((unido&&f.b&&(f.prop!==1||!f.parte))?+f.b.abono:(o.clp_final!=null?(+o.clp_final):null)):null;
+      const cuenta=o&&o.tipo==='SELL'&&o.revision!=='gasto';   // toda venta del período aporta su ganancia, esté unida o no
       f.gan=(cuenta&&f.clpPag!=null)?(f.clpPag-f.usdtFila*o.costo_usdt):null; if(f.gan!=null) acum+=f.gan; f.acum=acum;
       f.tasa=o&&o.tipo==='SELL'?lbTasa(o,f.clpPag):null;
       f.clpUsdt=(f.clpPag!=null&&o&&+o.costo_usdt)?f.clpPag/o.costo_usdt:null;                 // cuántos USDT "compró" el cliente con sus pesos, al costo
@@ -2321,27 +2324,33 @@ async function cargarConc(){
       if(o&&!vistos.has(o.order_number)){ vistos.add(o.order_number); cap+=o.tipo==='BUY'?+o.usdt:-(+o.usdt); cap-=(+o.comision||0); }
       f.capUsdt=cap; });
     const pagoDe={}; (BW||[]).forEach(b=>{ if(b.tl_ref) (pagoDe[b.tl_ref]=pagoDe[b.tl_ref]||[]).push(b); });
-    _cc={filas,d0,d1,tasas,usdt0,usdt0ok,pagoDe,bw:BW||[],B:(BW||[]).filter(b=>b.fecha>=d0&&b.fecha<=d1),O:(OW||[]).filter(o=>lbDia(o.creado)>=d0&&lbDia(o.creado)<=d1),linkDe,om};
+    const EB=(BW||[]).filter(b=>b.fecha>=d0&&b.fecha<=d1).reduce((a,b)=>a+(+b.abono||0),0), SB=(BW||[]).filter(b=>b.fecha>=d0&&b.fecha<=d1).reduce((a,b)=>a+(+b.cargo||0),0);
+    const ganBinance=(OW||[]).filter(o=>o.tipo==='SELL'&&lbDia(o.creado)>=d0&&lbDia(o.creado)<=d1&&o.revision!=='gasto'&&o.clp_final!=null).reduce((a,o)=>a+(+o.clp_final-(+o.usdt)*(+o.costo_usdt)),0);
+    _cc={filas,d0,d1,tasas,usdt0,usdt0ok,pagoDe,entradas:EB,salidas:SB,ganBinance,bw:BW||[],B:(BW||[]).filter(b=>b.fecha>=d0&&b.fecha<=d1),O:(OW||[]).filter(o=>lbDia(o.creado)>=d0&&lbDia(o.creado)<=d1),linkDe,om};
     _sd=filas.filter(f=>f.o&&!f.b&&f.o.tipo==='SELL').map(f=>f.o); _ccSel={dep:null,ords:[],pago:null,ents:[]};
     pintarConc(); pintarCruce();
   }catch(e){ document.getElementById('lb_resumen').innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
-const LB_EST={unido:['ok','unido'],tl_unido:['m','🤝 TL unida a su cambio'],tl_pagada:['m','🤝 TL pagada a Florelvi'],sin_cambio:['w','depósito sin cambio'],sin_deposito:['w','cambio sin depósito'],aceptado:['ok','✅ aceptado sin depósito'],tl:['m','🤝 TL enviado'],tl_in:['m','🤝 TL entrada'],tl_pago:['m','🤝 TL pago'],familia:['w','💸 familia'],aporte:['j','aporte propio'],compra:['i','🛒 compra'],compra_sin:['w','🛒 pago sin orden'],compra_sin_banco:['w','🛒 compra sin pago del banco'],gasto:['w','gasto / retiro'],traspaso:['j','traspaso propio'],salida:['w','salida sin clasificar']};
+const LB_EST={unido:['ok','unido'],unido_fuera:['ok','unido (depósito de otro mes)'],tl_unido:['m','🤝 TL unida a su cambio'],tl_pagada:['m','🤝 TL pagada a Florelvi'],sin_cambio:['w','depósito sin cambio'],sin_deposito:['w','cambio sin depósito'],aceptado:['ok','✅ aceptado sin depósito'],tl:['m','🤝 TL enviado'],tl_in:['m','🤝 TL entrada'],tl_pago:['m','🤝 TL pago'],familia:['w','💸 familia'],aporte:['j','aporte propio'],compra:['i','🛒 compra'],compra_sin:['w','🛒 pago sin orden'],compra_sin_banco:['w','🛒 compra sin pago del banco'],gasto:['w','gasto / retiro'],traspaso:['j','traspaso propio'],salida:['w','salida sin clasificar']};
 function pintarConc(){
   const ver=document.getElementById('lb_ver').value, q=(document.getElementById('lb_q').value||'').toLowerCase().trim();
   let F=_cc.filas;
   if(ver==='sinunir') F=F.filter(f=>['sin_cambio','sin_deposito','aceptado','compra_sin','compra_sin_banco','salida','tl_in'].includes(f.estado));
   else if(ver==='cambios') F=F.filter(f=>f.o&&f.o.tipo==='SELL');
   else if(ver==='banco') F=F.filter(f=>f.b);
+  else if(ver==='entradas') F=F.filter(f=>f.b&&+f.b.abono>0);
+  else if(ver==='salidas') F=F.filter(f=>f.b&&+f.b.cargo>0);
   else if(ver==='compras') F=F.filter(f=>['compra','compra_sin','compra_sin_banco'].includes(f.estado));
   else if(ver==='tl') F=F.filter(f=>['tl','tl_in','tl_pago','tl_unido','tl_pagada'].includes(f.estado));
   if(q) F=F.filter(f=>((f.b&&(f.b.descripcion+' '+(f.b.nota||'')))+' '+(f.o&&(f.o.contraparte+' '+f.o.cuenta+' '+f.o.order_number))+' '+(f.b?(f.b.abono||f.b.cargo):'')+' '+(f.o?Math.round(f.o.monto_fiat)+' '+f.o.usdt+' '+(f.o.clp_final||''):'')).toLowerCase().includes(q));
   const T={in:0,out:0,usdt:0,clp:0,gan:0,n:0}; F.forEach(f=>{ if(f.b){T.in+=+f.b.abono||0;T.out+=+f.b.cargo||0;} if(f.o&&f.o.tipo==='SELL'&&f.gan!=null){T.usdt+=f.usdtFila||0;T.clp+=f.clpPag||0;T.gan+=f.gan;T.n++;} });
-  const A=_cc.filas, nUn=A.filter(f=>f.estado==='unido'||f.estado==='tl_unido').length, nSc=A.filter(f=>f.estado==='sin_cambio').length, nSd=A.filter(f=>f.estado==='sin_deposito'||f.estado==='aceptado').length;
-  document.getElementById('lb_resumen').innerHTML='Del '+fechaCorta(_cc.d0)+' al '+fechaCorta(_cc.d1)+' · <b>'+nUn+'</b> cambios unidos a su depósito · <b style="color:var(--amber)">'+nSc+'</b> depósitos sin cambio · <b style="color:var(--amber)">'+nSd+'</b> cambios sin depósito'+
+  const A=_cc.filas, nUn=A.filter(f=>f.estado==='unido'||f.estado==='tl_unido'||f.estado==='unido_fuera').length, nSc=A.filter(f=>f.estado==='sin_cambio').length, nSd=A.filter(f=>f.estado==='sin_deposito'||f.estado==='aceptado').length;
+  const GB=_cc.ganBinance||0, EB=_cc.entradas||0, SB=_cc.salidas||0, GL=_cc.filas.reduce((a,f)=>a+(f.gan||0),0);
+  document.getElementById('lb_resumen').innerHTML='<div style="margin-bottom:4px">🏦 <b>Banco del mes completo</b>: entró <b class="m-in">+'+$clp(EB)+'</b> · salió <b class="m-out">−'+$clp(SB)+'</b> · neto <b>'+conSigno(EB-SB)+'</b> &nbsp;|&nbsp; 🟡 <b>Ganancia del mes</b>: según Binance <b style="color:var(--green)">'+$clp(GB)+'</b>'+(Math.abs(GL-GB)>=1000?' · según los depósitos reales <b style="color:var(--green)">'+$clp(GL)+'</b> <span onclick="verUnionesDif(_cc.d0,_cc.d1)" style="color:var(--gold);cursor:pointer;text-decoration:underline">(diferencia '+conSigno(GL-GB)+': depósitos unidos que no calzan con el cambio ›)</span>':'')+'</div>'+'Del '+fechaCorta(_cc.d0)+' al '+fechaCorta(_cc.d1)+' · <b>'+nUn+'</b> cambios unidos a su depósito · <b style="color:var(--amber)">'+nSc+'</b> depósitos sin cambio · <b style="color:var(--amber)">'+nSd+'</b> cambios sin depósito'+
     ' &nbsp;|&nbsp; mostrando '+F.length+' filas: entró <b class="m-in">+'+$clp(T.in)+'</b> · salió <b class="m-out">−'+$clp(T.out)+'</b> · '+new Set(F.filter(f=>f.o&&f.o.tipo==='SELL'&&f.gan!=null).map(f=>f.o.order_number)).size+' cambios por '+$clp(T.clp)+' ('+num(T.usdt)+' USDT) · ganancia <b style="color:var(--green)">'+$clp(T.gan)+'</b>';
   const td=(v,st)=>'<td'+(st?' style="'+st+'"':'')+'>'+(v==null||v===''?'—':v)+'</td>';
   const acc=f=>{ if(f.b&&(f.estado==='sin_cambio'||f.estado==='compra_sin'||f.estado==='salida'||f.estado==='aporte')) return '<button type="button" class="btn b-blue" style="padding:3px 7px;font-size:10px" onclick="_bkRev=[_cc.filas['+_cc.filas.indexOf(f)+'].b];editarBk(0)">'+(f.estado==='aporte'?'✎':'🔗 unir')+'</button>';
+    if(f.bFuera&&f.o) return '<button type="button" class="btn b-gray" style="padding:3px 7px;font-size:10px" title="Deshacer la unión" onclick="if(confirm(\'¿Deshacer la unión con el depósito del otro mes?\')) deshacerUnion('+f.bFuera.id+')">↺</button>';
     if(f.b&&f.o&&(f.estado==='unido'||f.estado==='tl_unido')) return '<button type="button" class="btn b-gray" style="padding:3px 7px;font-size:10px" title="Deshacer la unión" onclick="if(confirm(\'¿Deshacer la unión de este depósito con su cambio?\')) deshacerUnion('+f.b.id+')">↺</button>';
     if(f.b&&f.estado==='tl_in') return '<button type="button" class="btn b-blue" style="padding:3px 7px;font-size:10px" onclick="_bkRev=[_cc.filas['+_cc.filas.indexOf(f)+'].b];editarBk(0)">🔗 unir</button>';
     if(f.b&&f.estado==='tl_pagada') return '<button type="button" class="btn b-gray" style="padding:3px 7px;font-size:10px" title="Deshacer" onclick="if(confirm(\'¿Deshacer la unión con el pago a Florelvi?\')) desvincularTL('+f.b.id+')">↺</button>';
@@ -2354,8 +2363,8 @@ function pintarConc(){
   document.getElementById('lb_tabla').innerHTML='<tr><th>Fecha · hora</th><th>N° transacción</th><th style="text-align:left">Detalle</th><th>Depósito CLP</th><th>Retiro CLP</th><th>Saldo banco</th><th>Tasa del día</th><th>Moneda destino</th><th>CLP → USDT</th><th>USDT a destino</th><th>Ganancia USDT</th><th>Ganancia CLP</th><th>Acum. CLP</th><th>Capital USDT</th><th style="text-align:left">Estado</th><th></th></tr>'+
     F.map(f=>{ const b=f.b,o=f.o,e=LB_EST[f.estado]||['',f.estado]; const sep=f.fecha!==lastDia?' style="border-top:2px solid var(--bord)"':''; lastDia=f.fecha;
       const nTx=(o?'<span title="'+o.order_number+'">…'+o.order_number.slice(-6)+'</span>':'')+(b&&b.n_operacion?(o?' · ':'')+'<span style="color:var(--mute)" title="N° operación banco">b'+esc(String(b.n_operacion))+'</span>':'');
-      const pg_=b&&b.categoria==='belkys_pago'?(_cc.pagoDe[b.id]||[]):[], ref=b&&b.tl_ref?_cc.bw.find(x=>x.id===b.tl_ref):null;
-      const det=(b?'<b>'+esc(b.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,26))+'</b> <span style="color:var(--mute)">'+(+b.abono?depTipo(b):retTipo(b))+'</span>'+(pg_.length?'<br><span style="color:var(--mute);font-size:10px">paga '+pg_.length+' entrada'+(pg_.length>1?'s':'')+': '+$clp(pg_.reduce((a,x)=>a+(+x.abono),0))+' × 0,96 = '+$clp(Math.round(pg_.reduce((a,x)=>a+(+x.abono),0)*0.96))+'</span>':'')+(ref?'<br><span style="color:var(--mute);font-size:10px">→ pago Florelvi '+fechaCorta(ref.fecha)+' '+$clp(ref.cargo)+'</span>':''):'')+(o?(b?'<br>':'')+'<span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+esc((o.contraparte||'').slice(0,14))+(f.parte?' <span style="color:var(--mute)">('+f.parte+')</span>':''):'')+(b&&b.nota&&!/^Unido|^Aceptado|^Depósito desde/.test(b.nota)?' <span style="color:var(--mute)">· '+esc(b.nota.slice(0,28))+'</span>':'');
+      const pg_=b&&b.categoria==='belkys_pago'?(_cc.pagoDe[b.id]||[]):[], ref=b&&b.tl_ref?_cc.bw.find(x=>x.id===b.tl_ref):null, bf=f.bFuera;
+      const det=(b?'<b>'+esc(b.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,26))+'</b> <span style="color:var(--mute)">'+(+b.abono?depTipo(b):retTipo(b))+'</span>'+(pg_.length?'<br><span style="color:var(--mute);font-size:10px">paga '+pg_.length+' entrada'+(pg_.length>1?'s':'')+': '+$clp(pg_.reduce((a,x)=>a+(+x.abono),0))+' × 0,96 = '+$clp(Math.round(pg_.reduce((a,x)=>a+(+x.abono),0)*0.96))+'</span>':'')+(ref?'<br><span style="color:var(--mute);font-size:10px">→ pago Florelvi '+fechaCorta(ref.fecha)+' '+$clp(ref.cargo)+'</span>':''):'')+(bf?'<br><span style="color:var(--mute);font-size:10px">💵 pagado el '+fechaCorta(bf.fecha)+' · '+esc(bf.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,22))+' '+$clp(bf.abono)+'</span>':'')+(o?(b?'<br>':'')+'<span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+esc((o.contraparte||'').slice(0,14))+(f.parte?' <span style="color:var(--mute)">('+f.parte+')</span>':''):'')+(b&&b.nota&&!/^Unido|^Aceptado|^Depósito desde/.test(b.nota)?' <span style="color:var(--mute)">· '+esc(b.nota.slice(0,28))+'</span>':'');
       const fiat=o?o.fiat:'VES', tdia=o&&o.tipo==='BUY'?'':tasaIremiTxt(f.fecha,fiat), top=o&&o.tipo==='SELL'?lbTasaOp(o,f.clpPag):null, esClp=o&&o.fiat==='CLP';
       return '<tr'+sep+'>'+td(fechaCorta(f.fecha)+(o?' <span style="color:var(--mute)">'+lbHora(o.creado)+'</span>':''),'white-space:nowrap')+td(nTx,'font-size:10px')+td(det,'text-align:left;max-width:230px;overflow:hidden;text-overflow:ellipsis;line-height:1.3')+
         td(b&&+b.abono?'<span class="m-in">+'+$clp(b.abono)+'</span>':'')+td(b&&+b.cargo?'<span class="m-out">−'+$clp(b.cargo)+'</span>':'')+td(b&&b.saldo!=null?$clp(b.saldo):'')+
@@ -2409,8 +2418,9 @@ function pintarSelCruce(){
 function pintarCruce(){
   const el=document.getElementById('cc_cruce'); if(!el||!_cc.B) return;
   const solo=document.getElementById('cc_solop').checked, T=_cc.tasas||{};
-  const dias={}; const add=(d,k,x)=>{ (dias[d]=dias[d]||{dep:[],ord:[],pago:[]})[k].push(x); };
-  _cc.B.forEach(b=>{ if(+b.cargo>0&&b.categoria==='belkys_pago'){ const ents=_cc.pagoDe[b.id]||[], cubierto=Math.round(ents.reduce((a,x)=>a+(+x.abono),0)*0.96); if(solo&&ents.length&&Math.abs(cubierto-b.cargo)<1000) return; add(b.fecha,'pago',b); return; }
+  const dias={}; const add=(d,k,x)=>{ (dias[d]=dias[d]||{dep:[],ord:[],pago:[],sal:[]})[k].push(x); };
+  _cc.B.forEach(b=>{ if(+b.cargo>0){ if(b.categoria==='belkys_pago'){ const ents=_cc.pagoDe[b.id]||[], cubierto=Math.round(ents.reduce((a,x)=>a+(+x.abono),0)*0.96); if(solo&&ents.length&&Math.abs(cubierto-b.cargo)<1000) return; add(b.fecha,'pago',b); }
+      else if(!solo) add(b.fecha,'sal',b); return; }
     if(!(+b.abono>0)) return; const unido=!!b.orden_binance||!!b.tl_ref; if(solo&&(unido||b.categoria==='traspaso_propio')) return; add(b.fecha,'dep',b); });
   _cc.O.forEach(o=>{ if(o.tipo!=='SELL') return; const unido=!!(_cc.linkDe[o.order_number]||[]).length; if(solo&&(unido||o.revision==='gasto'||o.revision==='transf_local')) return; add(lbDia(o.creado),'ord',o); });
   const fmtT=t=>t?Math.round(t*1000):'—';
@@ -2426,9 +2436,10 @@ function pintarCruce(){
       const eqs=o.fiat==='CLP'?('venta en pesos a $'+num(o.precio)+' por USDT'):[['hoy',eq('hoy')],['pref',eq('pref')],['ayer',eq('ayer')]].filter(x=>x[1]).map(x=>x[0]+' '+x[1]).join(' · ');
       return '<div class="mv" style="cursor:default;padding:6px 8px;margin-bottom:4px'+(unido?';opacity:.6':'')+'"><div class="r1"><span>'+(unido?'':'<input type="checkbox" style="width:auto;margin-right:6px" '+(_ccSel.ords.includes(o.order_number)?'checked':'')+' onchange="ccMarcar(\'ord\',\''+o.order_number+'\',this.checked)">')+lbHora(o.creado)+' <span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+esc((o.contraparte||'').slice(0,12))+' '+est+'</span><b>'+(o.fiat==='CLP'?'USDT '+num(o.usdt)+' por $'+Math.round(o.monto_fiat).toLocaleString('es-CL'):o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL'))+'</b></div>'+
         '<div class="r3" style="margin-top:2px"><span>'+num(o.usdt)+' USDT · '+(eqs?'= '+eqs:'sin tasa del día')+(unido?' · '+bs.map(b=>esc(b.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,18))+' '+$clp(b.abono)).join(' + '):(o.clp_final!=null?' · robot ≈ '+$clp(o.clp_final)+' ('+o.metodo_clp+')':''))+'</span></div></div>'; }).join('');
+    const sal=D.sal.map(b=>'<div class="mv" style="cursor:default;padding:6px 8px;margin-bottom:4px;border-left:3px solid var(--red2)"><div class="r1"><span>📤 '+esc(b.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,26))+' <span class="tag w">'+(BK_CAT[b.categoria]||b.categoria)+'</span></span><b class="m-out">−'+$clp(b.cargo)+'</b></div>'+(b.nota?'<div class="r3" style="margin-top:2px"><span>'+esc(b.nota.slice(0,50))+'</span></div>':'')+'</div>').join('');
     return '<div class="panel" style="padding:8px"><h3 style="margin-bottom:6px">'+new Date(d+'T12:00:00').toLocaleDateString('es-CL',{weekday:'short',day:'2-digit',month:'2-digit'})+' <small style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gold)">tasa IREMI '+fmtT(+t.ves)+(+t.ves_pref?' / pref '+fmtT(+t.ves_pref):'')+(t.hora?' ('+t.hora.slice(0,5)+')':'')+' · ayer '+fmtT(+ty.ves)+['COP','PEN','USD','EUR','MXN','ARS','DOP','BOB'].map(k=>{const v=+t[FIAT_COL_APP[k]]; return v?' · '+k+' '+tasaFmt(k,v):'';}).join('')+'</small></h3>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><div style="font-size:11px;color:var(--mute);margin-bottom:4px">🏦 Depósitos a IREMI ('+D.dep.length+')</div>'+(dep||'<div style="font-size:11px;color:var(--mute)">—</div>')+'</div>'+
-      '<div><div style="font-size:11px;color:var(--mute);margin-bottom:4px">🟡 Cambios en Binance ('+D.ord.length+')'+(D.pago.length?' · 📤 pagos Transf Local ('+D.pago.length+')':'')+'</div>'+(pagos||'')+(ord||(D.pago.length?'':'<div style="font-size:11px;color:var(--mute)">—</div>'))+'</div></div></div>'; }).join('')||'<div class="panel" style="font-size:12px;color:var(--green)">✓ Nada pendiente en este mes.</div>';
+      '<div><div style="font-size:11px;color:var(--mute);margin-bottom:4px">🟡 Cambios en Binance ('+D.ord.length+')'+(D.pago.length?' · 📤 pagos TL ('+D.pago.length+')':'')+(D.sal.length?' · 📤 otras salidas ('+D.sal.length+')':'')+'</div>'+(pagos||'')+(sal||'')+(ord||((D.pago.length||D.sal.length)?'':'<div style="font-size:11px;color:var(--mute)">—</div>'))+'</div></div></div>'; }).join('')||'<div class="panel" style="font-size:12px;color:var(--green)">✓ Nada pendiente en este mes.</div>';
   pintarSelCruce();
 }
 async function bajarConc(){
