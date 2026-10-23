@@ -819,11 +819,23 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
     <input id="lb_q" type="search" placeholder="Buscar nombre, contraparte, monto…" oninput="pintarConc()" style="flex:1;min-width:140px">
     <button type="button" class="btn b-gold" style="padding:8px 12px;font-size:12px" onclick="bajarConc()">📥 .xlsx</button>
   </div>
+  <div class="brow" style="gap:6px;margin-bottom:8px">
+    <button type="button" class="btn b-gold" id="cc_tab1" style="flex:1;padding:8px" onclick="vistaConc(1)">📒 Libro (filas unidas)</button>
+    <button type="button" class="btn b-gray" id="cc_tab2" style="flex:1;padding:8px" onclick="vistaConc(2)">🧩 Cruce día a día (tú unes)</button>
+  </div>
+  <div id="cc_v2" style="display:none">
+    <div class="filtros" style="gap:10px"><label><input type="checkbox" id="cc_solop" checked onchange="pintarCruce()"> Solo pendientes (sin unir)</label>
+      <span style="font-size:12px;color:var(--silver)">Marca <b>un depósito</b> y <b>uno o más cambios</b> (del mismo día o del siguiente) y toca "Unir".</span></div>
+    <div id="cc_sel" class="panel" style="position:sticky;top:0;z-index:5;display:none"></div>
+    <div id="cc_cruce"></div>
+  </div>
+  <div id="cc_v1">
   <div class="panel"><div id="lb_resumen" style="font-size:12px;color:var(--silver)">Cargando...</div></div>
   <div class="panel" style="overflow-x:auto;padding:6px"><table class="tabla" id="lb_tabla" style="font-size:11px;white-space:nowrap"></table></div>
+  </div>
   <div style="font-size:11px;color:var(--mute);line-height:1.6">
     Cada fila es un <b>depósito del banco unido a su cambio en Binance</b> (o un movimiento que todavía no tiene pareja). <b>Tasa</b> = Bs por cada $1.000 (o COP/USD por peso). <b>CLP cambio</b> = lo que pagó el cliente (el depósito real si está unido; si no, el estimado por la tasa). <b>Ganancia</b> = CLP − USDT × costo. <b>Acum.</b> = ganancia acumulada del período, como el "Acumulado" del Excel.<br>
-    Estados: <span class="tag ok">unido</span> depósito y cambio pegados · <span class="tag w">sin unir</span> falta su pareja · <span class="tag m">TL</span> Transf Local · <span class="tag j">aporte</span> plata tuya · 💸 familia · 🛒 compra de USDT.
+    <b>Tasa IREMI</b> = la tasa real que publicaste ese día (base / preferencial), del histórico de tasas; <b>Tasa</b> = la que resultó en la operación. Estados: <span class="tag ok">unido</span> depósito y cambio pegados · <span class="tag w">sin unir</span> falta su pareja · <span class="tag m">TL</span> Transf Local · <span class="tag j">aporte</span> plata tuya · 💸 familia · 🛒 compra de USDT.
   </div>
 </div>
 <div class="pg" id="pg_dia" style="padding:12px 12px 90px"><button type="button" class="volver" onclick="showPg('pg_mas','nb_mas')">‹ Volver a Más</button>
@@ -2227,16 +2239,18 @@ function irConc(){
     for(let i=0;i<14;i++){ const m=mesDe(hoy.slice(0,8)+'01',-i); h+='<option value="'+m.slice(0,7)+'">'+new Date(m+'T12:00:00').toLocaleDateString('es-CL',{month:'long',year:'numeric'})+'</option>'; } sel.innerHTML=h; }
   showPg('pg_conc','nb_mas'); cargarConc();
 }
-function refrescarConc(){ if(document.getElementById('pg_conc').classList.contains('on')) cargarConc(); }
+function refrescarConc(){ if(document.getElementById('pg_conc').classList.contains('on')){ _ccSel={dep:null,ords:[]}; cargarConc(); } }
 async function cargarConc(){
   const mes=document.getElementById('lb_mes').value, d0=mes+'-01', d1=sumarDias(mesDe(d0,1),-1);
   document.getElementById('lb_resumen').textContent='Cargando...';
   try{
     const w0=sumarDias(d0,-10), w1=sumarDias(d1,10);
-    const [BW,OW]=await Promise.all([
+    const [BW,TW,OW]=await Promise.all([
       sbPost('banco_movimientos?select=id,fecha,cartola,descripcion,abono,cargo,saldo,categoria,nota,orden_binance&fecha=gte.'+w0+'&fecha=lte.'+w1+'&order=fecha.asc,id.asc&limit=5000'),
+      sbPost('tasas_diarias?select=fecha,ves,ves_pref,cop,zelle,hora,fuente&fecha=gte.'+sumarDias(w0,-3)+'&fecha=lte.'+w1+'&order=fecha.asc'),
       sbPost('v_ordenes?select=order_number,cuenta,tipo,fiat,monto_fiat,precio,usdt,comision,creado,clp,clp_manual,clp_final,tasa_usada,metodo_clp,revision,contraparte,costo_usdt,nota&estado=eq.COMPLETED&creado=gte.'+tz(w0)+'&creado=lt.'+tz(sumarDias(w1,1))+'&order=creado.asc&limit=5000')]);
     const om={}; (OW||[]).forEach(o=>om[o.order_number]=o);
+    const tasas={}; (TW||[]).forEach(t=>{ const p=tasas[t.fecha]; if(!p||(t.fuente!=='libro'&&p.fuente==='libro')||(+t.ves&&!+p.ves)) tasas[t.fecha]=t; });
     // órdenes referenciadas por el banco que quedaron fuera de la ventana
     const faltan=[...new Set((BW||[]).flatMap(b=>lbNums(b.orden_binance)).filter(n=>!om[n]))];
     if(faltan.length){ const X=(await sbPost('v_ordenes?select=order_number,cuenta,tipo,fiat,monto_fiat,precio,usdt,comision,creado,clp,clp_manual,clp_final,tasa_usada,metodo_clp,revision,contraparte,costo_usdt,nota&order_number=in.('+faltan.join(',')+')'))||[]; X.forEach(o=>om[o.order_number]=o); }
@@ -2260,8 +2274,9 @@ async function cargarConc(){
     });
     filas.sort((a,b)=>a.t<b.t?-1:(a.t>b.t?1:0));
     let acum=0; filas.forEach(f=>{ f.gan=(f.estado==='unido'||f.estado==='sin_deposito'||f.estado==='aceptado'||f.estado==='tl')?gan(f.o):null; if(f.gan!=null) acum+=f.gan; f.acum=acum; f.tasa=f.o&&f.o.tipo==='SELL'?lbTasa(f.o,f.estado==='unido'&&!f.parte?f.b.abono:f.o.clp_final):null; });
-    _cc={filas,d0,d1}; _sd=filas.filter(f=>f.o&&!f.b&&f.o.tipo==='SELL').map(f=>f.o);
-    pintarConc();
+    _cc={filas,d0,d1,tasas,B:(BW||[]).filter(b=>b.fecha>=d0&&b.fecha<=d1),O:(OW||[]).filter(o=>lbDia(o.creado)>=d0&&lbDia(o.creado)<=d1),linkDe,om};
+    _sd=filas.filter(f=>f.o&&!f.b&&f.o.tipo==='SELL').map(f=>f.o); _ccSel={dep:null,ords:[]};
+    pintarConc(); pintarCruce();
   }catch(e){ document.getElementById('lb_resumen').innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
 const LB_EST={unido:['ok','unido'],sin_cambio:['w','depósito sin cambio'],sin_deposito:['w','cambio sin depósito'],aceptado:['ok','✅ aceptado sin depósito'],tl:['m','🤝 TL enviado'],tl_in:['m','🤝 TL entrada'],tl_pago:['m','🤝 TL pago'],familia:['w','💸 familia'],aporte:['j','aporte propio'],compra:['i','🛒 compra'],compra_sin:['w','🛒 pago sin orden'],compra_sin_banco:['w','🛒 compra sin pago del banco'],gasto:['w','gasto / retiro'],traspaso:['j','traspaso propio'],salida:['w','salida sin clasificar']};
@@ -2286,21 +2301,60 @@ function pintarConc(){
       '<button type="button" class="btn b-blue" style="padding:3px 6px;font-size:10px" onclick="unirOrden('+i+')">🔗</button>'+(f.o.revision?' <button type="button" class="btn b-gray" style="padding:3px 6px;font-size:10px" onclick="revisarOrden(\''+n+'\',\'deshacer\')">↺</button>':''); }
     return ''; };
   let lastDia='';
-  document.getElementById('lb_tabla').innerHTML='<tr><th>Fecha</th><th style="text-align:left">🏦 Banco</th><th>Entró</th><th>Salió</th><th>Saldo banco</th><th style="text-align:left">🟡 Binance</th><th>Moneda</th><th>USDT</th><th>Tasa</th><th>CLP cambio</th><th>Ganancia</th><th>Acum.</th><th style="text-align:left">Estado</th><th></th></tr>'+
+  document.getElementById('lb_tabla').innerHTML='<tr><th>Fecha</th><th style="text-align:left">🏦 Banco</th><th>Entró</th><th>Salió</th><th>Saldo banco</th><th style="text-align:left">🟡 Binance</th><th>Moneda</th><th>USDT</th><th>Tasa IREMI</th><th>Tasa</th><th>CLP cambio</th><th>Ganancia</th><th>Acum.</th><th style="text-align:left">Estado</th><th></th></tr>'+
     F.map(f=>{ const b=f.b,o=f.o,e=LB_EST[f.estado]||['',f.estado]; const sep=f.fecha!==lastDia?' style="border-top:2px solid var(--bord)"':''; lastDia=f.fecha;
       return '<tr'+sep+'>'+td(fechaCorta(f.fecha)+(o?' <span style="color:var(--mute)">'+lbHora(o.creado)+'</span>':''),'white-space:nowrap')+td(b?esc(b.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,''))+(b.nota&&!/^Unido|^Aceptado|^Depósito desde/.test(b.nota)?' <span style="color:var(--mute)">· '+esc(b.nota.slice(0,30))+'</span>':''):'','text-align:left;max-width:190px;overflow:hidden;text-overflow:ellipsis')+
         td(b&&+b.abono?'<span class="m-in">+'+$clp(b.abono)+'</span>':'')+td(b&&+b.cargo?'<span class="m-out">−'+$clp(b.cargo)+'</span>':'')+td(b&&b.saldo!=null?$clp(b.saldo):'')+
         td(o?'<span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+esc((o.contraparte||'').slice(0,14))+(f.parte?' <span style="color:var(--mute)">('+f.parte+')</span>':''):'','text-align:left')+
-        td(o?(o.tipo==='BUY'?'🛒 compra':o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')):'')+td(o?num(o.usdt):'')+td(o&&o.tipo==='BUY'?'$'+num(o.precio):(f.tasa!=null?f.tasa+(o&&o.metodo_clp&&f.estado!=='unido'?' <span style="color:var(--mute)">'+o.metodo_clp+'</span>':''):''))+
+        td(o?(o.tipo==='BUY'?'🛒 compra':o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')):'')+td(o?num(o.usdt):'')+td(o&&o.tipo==='SELL'?tasaIremiTxt(f.fecha,o.fiat):(b&&+b.abono&&!o?tasaIremiTxt(f.fecha,'VES'):''),'color:var(--gold)')+td(o&&o.tipo==='BUY'?'$'+num(o.precio):(f.tasa!=null?f.tasa+(o&&o.metodo_clp&&f.estado!=='unido'?' <span style="color:var(--mute)">'+o.metodo_clp+'</span>':''):''))+
         td(o&&o.tipo==='SELL'?(f.estado==='unido'&&!f.parte?$clp(b.abono):(o.clp_final!=null?(f.estado==='unido'?'':'<span style="color:var(--mute)">≈</span>')+$clp(o.clp_final):'sin CLP')):(o&&o.tipo==='BUY'?$clp(o.monto_fiat):''))+
         td(f.gan==null?'':'<span style="color:'+(f.gan>=0?'var(--green)':'var(--red2)')+'">'+$clp(f.gan)+'</span>')+td(f.gan==null?'':'<b>'+$clp(f.acum)+'</b>')+td('<span class="tag '+e[0]+'">'+e[1]+'</span>','text-align:left')+td(acc(f),'white-space:nowrap')+'</tr>'; }).join('')+
-    '<tr class="hs-tot"><td colspan="2">Total</td><td>+'+$clp(T.in)+'</td><td>−'+$clp(T.out)+'</td><td></td><td></td><td></td><td>'+num(T.usdt)+'</td><td></td><td>'+$clp(T.clp)+'</td><td>'+$clp(T.gan)+'</td><td></td><td></td><td></td></tr>';
+    '<tr class="hs-tot"><td colspan="2">Total</td><td>+'+$clp(T.in)+'</td><td>−'+$clp(T.out)+'</td><td></td><td></td><td></td><td>'+num(T.usdt)+'</td><td></td><td></td><td>'+$clp(T.clp)+'</td><td>'+$clp(T.gan)+'</td><td></td><td></td><td></td></tr>';
+}
+let _ccSel={dep:null,ords:[]};
+function tasaIremi(dia,fiat){ const t=_cc.tasas&&_cc.tasas[dia]; if(!t) return null;
+  if(fiat==='VES') return {base:+t.ves||null,pref:+t.ves_pref||null}; if(fiat==='COP') return {base:+t.cop||null,pref:null}; if(fiat==='USD') return {base:+t.zelle||null,pref:null}; return null; }
+function tasaIremiTxt(dia,fiat){ const t=tasaIremi(dia,fiat); if(!t||!t.base) return '<span style="color:var(--mute)">sin tasa</span>';
+  if(fiat==='VES') return Math.round(t.base*1000)+(t.pref&&Math.round(t.pref*1000)!==Math.round(t.base*1000)?' <span style="color:var(--mute)">/ '+Math.round(t.pref*1000)+'</span>':'');
+  if(fiat==='USD') return '$'+Math.round(1/t.base); return String(t.base); }
+function vistaConc(n){ document.getElementById('cc_v1').style.display=n===1?'':'none'; document.getElementById('cc_v2').style.display=n===2?'':'none';
+  document.getElementById('cc_tab1').className='btn '+(n===1?'b-gold':'b-gray'); document.getElementById('cc_tab2').className='btn '+(n===2?'b-gold':'b-gray'); if(n===2) pintarCruce(); }
+function ccMarcar(tipo,id,on){ if(tipo==='dep') _ccSel.dep=on?id:null; else { _ccSel.ords=_ccSel.ords.filter(x=>x!==id); if(on) _ccSel.ords.push(id); } pintarSelCruce(); }
+function pintarSelCruce(){
+  const box=document.getElementById('cc_sel'); const dep=_ccSel.dep?_cc.B.find(b=>b.id===_ccSel.dep):null, ords=_ccSel.ords.map(n=>_cc.om[n]).filter(Boolean);
+  if(!dep&&!ords.length){ box.style.display='none'; return; }
+  const sumO=ords.reduce((a,o)=>a+(+o.clp_final||0),0);
+  box.style.display=''; box.innerHTML='<div style="font-size:12px"><b>Seleccionado:</b> '+(dep?'depósito '+esc(dep.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,26))+' <b class="m-in">+'+$clp(dep.abono)+'</b>':'<span style="color:var(--amber)">falta elegir el depósito</span>')+
+    ' &nbsp;⇄&nbsp; '+(ords.length?ords.length+' cambio'+(ords.length>1?'s':'')+' ('+ords.map(o=>o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')).join(' + ')+' ≈ '+$clp(sumO)+')':'<span style="color:var(--amber)">falta elegir el cambio</span>')+
+    (dep&&ords.length?' · diferencia <b style="color:'+colorFalta(dep.abono-sumO)+'">'+conSigno(dep.abono-sumO)+'</b>'+(ords.length===1&&ords[0].fiat==='VES'?' · tasa resultante <b>'+Math.round(ords[0].monto_fiat/dep.abono*1000)+'</b>':''):'')+'</div>'+
+    '<div class="brow" style="gap:6px;margin-top:6px"><button type="button" class="btn b-green" style="flex:1;padding:8px" '+(dep&&ords.length?'':'disabled')+' onclick="confirmarUnion('+(dep?dep.id:0)+',_ccSel.ords.slice())">🔗 Unir</button><button type="button" class="btn b-gray" style="flex:0 0 auto;padding:8px 12px" onclick="_ccSel={dep:null,ords:[]};pintarCruce()">Limpiar</button></div>';
+}
+function pintarCruce(){
+  const el=document.getElementById('cc_cruce'); if(!el||!_cc.B) return;
+  const solo=document.getElementById('cc_solop').checked, T=_cc.tasas||{};
+  const dias={}; const add=(d,k,x)=>{ (dias[d]=dias[d]||{dep:[],ord:[]})[k].push(x); };
+  _cc.B.forEach(b=>{ if(!(+b.abono>0)) return; const unido=!!b.orden_binance; if(solo&&(unido||['belkys_ingreso','traspaso_propio'].includes(b.categoria))) return; add(b.fecha,'dep',b); });
+  _cc.O.forEach(o=>{ if(o.tipo!=='SELL') return; const unido=!!(_cc.linkDe[o.order_number]||[]).length; if(solo&&(unido||o.revision==='gasto'||o.revision==='transf_local')) return; add(lbDia(o.creado),'ord',o); });
+  const fmtT=t=>t?Math.round(t*1000):'—';
+  el.innerHTML=Object.keys(dias).sort().map(d=>{ const D=dias[d], t=T[d]||{}, ty=T[sumarDias(d,-1)]||{}, tm=T[sumarDias(d,1)]||{};
+    const dep=D.dep.map(b=>{ const unido=!!b.orden_binance, os=lbNums(b.orden_binance).map(n=>_cc.om[n]).filter(Boolean), tag=b.categoria==='belkys_ingreso'?'<span class="tag m">TL</span>':(b.categoria==='traspaso_propio'?'<span class="tag j">aporte</span>':(unido?'<span class="tag ok">unido</span>':'<span class="tag w">sin cambio</span>'));
+      return '<div class="mv" style="cursor:default;padding:6px 8px;margin-bottom:4px'+(unido?';opacity:.6':'')+'"><div class="r1"><span>'+(unido||b.categoria==='belkys_ingreso'?'':'<input type="checkbox" style="width:auto;margin-right:6px" '+(_ccSel.dep===b.id?'checked':'')+' onchange="ccMarcar(\'dep\','+b.id+',this.checked)">')+esc(b.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,28))+' '+tag+'</span><b class="m-in">+'+$clp(b.abono)+'</b></div>'+
+        '<div class="r3" style="margin-top:2px"><span>'+(+t.ves?'= Bs '+Math.round(b.abono*t.ves).toLocaleString('es-CL')+(+t.ves_pref&&t.ves_pref!==t.ves?' · pref Bs '+Math.round(b.abono*t.ves_pref).toLocaleString('es-CL'):'')+(+tm.ves?' · mañana Bs '+Math.round(b.abono*tm.ves).toLocaleString('es-CL'):''):'sin tasa del día')+(b.nota&&!/^Unido|^Aceptado|^Depósito desde/.test(b.nota)?' · '+esc(b.nota.slice(0,30)):'')+(unido?' · '+os.map(o=>lbHora(o.creado)+' '+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')).join(' + ')+' <a href="#" onclick="if(confirm(\'¿Deshacer la unión?\')) deshacerUnion('+b.id+');return false">↺</a>':'')+'</span></div></div>'; }).join('');
+    const ord=D.ord.map(o=>{ const bs=_cc.linkDe[o.order_number]||[], unido=!!bs.length, est=o.revision==='gasto'?'<span class="tag w">💸 familia</span>':(o.revision==='transf_local'?'<span class="tag m">🤝 TL</span>':(unido?'<span class="tag ok">unido</span>':(o.revision==='cambio'?'<span class="tag ok">✅ aceptado</span>':'<span class="tag w">sin depósito</span>')));
+      const r=tasaIremi(lbDia(o.creado),o.fiat), eq=k=>{ const tt=k==='hoy'?(r&&r.base):(k==='pref'?(r&&r.pref):(k==='ayer'?(ty[o.fiat==='VES'?'ves':(o.fiat==='COP'?'cop':'zelle')]):null)); return tt?$clp(Math.round(o.monto_fiat/tt)):null; };
+      const eqs=[['hoy',eq('hoy')],['pref',eq('pref')],['ayer',eq('ayer')]].filter(x=>x[1]).map(x=>x[0]+' '+x[1]).join(' · ');
+      return '<div class="mv" style="cursor:default;padding:6px 8px;margin-bottom:4px'+(unido?';opacity:.6':'')+'"><div class="r1"><span>'+(unido?'':'<input type="checkbox" style="width:auto;margin-right:6px" '+(_ccSel.ords.includes(o.order_number)?'checked':'')+' onchange="ccMarcar(\'ord\',\''+o.order_number+'\',this.checked)">')+lbHora(o.creado)+' <span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+esc((o.contraparte||'').slice(0,12))+' '+est+'</span><b>'+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+'</b></div>'+
+        '<div class="r3" style="margin-top:2px"><span>'+num(o.usdt)+' USDT · '+(eqs?'= '+eqs:'sin tasa del día')+(unido?' · '+bs.map(b=>esc(b.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,18))+' '+$clp(b.abono)).join(' + '):(o.clp_final!=null?' · robot ≈ '+$clp(o.clp_final)+' ('+o.metodo_clp+')':''))+'</span></div></div>'; }).join('');
+    return '<div class="panel" style="padding:8px"><h3 style="margin-bottom:6px">'+new Date(d+'T12:00:00').toLocaleDateString('es-CL',{weekday:'short',day:'2-digit',month:'2-digit'})+' <small style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gold)">tasa IREMI '+fmtT(+t.ves)+(+t.ves_pref?' / pref '+fmtT(+t.ves_pref):'')+(t.hora?' ('+t.hora.slice(0,5)+')':'')+' · ayer '+fmtT(+ty.ves)+(+t.cop?' · COP '+t.cop:'')+(+t.zelle?' · USD $'+Math.round(1/t.zelle):'')+'</small></h3>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><div style="font-size:11px;color:var(--mute);margin-bottom:4px">🏦 Depósitos a IREMI ('+D.dep.length+')</div>'+(dep||'<div style="font-size:11px;color:var(--mute)">—</div>')+'</div>'+
+      '<div><div style="font-size:11px;color:var(--mute);margin-bottom:4px">🟡 Cambios en Binance ('+D.ord.length+')</div>'+(ord||'<div style="font-size:11px;color:var(--mute)">—</div>')+'</div></div></div>'; }).join('')||'<div class="panel" style="font-size:12px;color:var(--green)">✓ Nada pendiente en este mes.</div>';
+  pintarSelCruce();
 }
 async function bajarConc(){
   if(!_cc.filas.length) return toast('No hay filas');
   try{ await cargaXLSX();
-    const H=['Fecha','Hora','Banco','Entró','Salió','Saldo banco','Cuenta Binance','Contraparte','Moneda','Monto moneda','USDT','Tasa','CLP cambio','Costo USDT','Ganancia','Acumulado','Estado','N° orden','Cartola','Categoría banco','Nota'];
-    const R=_cc.filas.map(f=>{const b=f.b,o=f.o,e=LB_EST[f.estado]||['',f.estado]; return [new Date(f.fecha+'T12:00:00'),o?lbHora(o.creado):'',b?b.descripcion:'',b?+b.abono||'':'',b?+b.cargo||'':'',b&&b.saldo!=null?+b.saldo:'',o?o.cuenta:'',o?o.contraparte:'',o?(o.tipo==='BUY'?'COMPRA':o.fiat):'',o?+o.monto_fiat:'',o?+o.usdt:'',o&&o.tipo==='BUY'?+o.precio:(f.tasa==null?'':f.tasa),o&&o.tipo==='SELL'?(f.estado==='unido'&&!f.parte?+b.abono:(o.clp_final==null?'':+o.clp_final)):(o&&o.tipo==='BUY'?+o.monto_fiat:''),o?+o.costo_usdt:'',f.gan==null?'':Math.round(f.gan),f.gan==null?'':Math.round(f.acum),e[1],o?o.order_number:'',b?b.cartola:'',b?(BK_CAT[b.categoria]||b.categoria):'',b?(b.nota||''):(o?(o.nota||''):'')];});
+    const H=['Fecha','Hora','Banco','Entró','Salió','Saldo banco','Cuenta Binance','Contraparte','Moneda','Monto moneda','USDT','Tasa IREMI día','Tasa IREMI pref','Tasa','CLP cambio','Costo USDT','Ganancia','Acumulado','Estado','N° orden','Cartola','Categoría banco','Nota'];
+    const R=_cc.filas.map(f=>{const b=f.b,o=f.o,e=LB_EST[f.estado]||['',f.estado]; return [new Date(f.fecha+'T12:00:00'),o?lbHora(o.creado):'',b?b.descripcion:'',b?+b.abono||'':'',b?+b.cargo||'':'',b&&b.saldo!=null?+b.saldo:'',o?o.cuenta:'',o?o.contraparte:'',o?(o.tipo==='BUY'?'COMPRA':o.fiat):'',o?+o.monto_fiat:'',o?+o.usdt:'',(_cc.tasas[f.fecha]&&+_cc.tasas[f.fecha].ves?Math.round(_cc.tasas[f.fecha].ves*1000):''),(_cc.tasas[f.fecha]&&+_cc.tasas[f.fecha].ves_pref?Math.round(_cc.tasas[f.fecha].ves_pref*1000):''),o&&o.tipo==='BUY'?+o.precio:(f.tasa==null?'':f.tasa),o&&o.tipo==='SELL'?(f.estado==='unido'&&!f.parte?+b.abono:(o.clp_final==null?'':+o.clp_final)):(o&&o.tipo==='BUY'?+o.monto_fiat:''),o?+o.costo_usdt:'',f.gan==null?'':Math.round(f.gan),f.gan==null?'':Math.round(f.acum),e[1],o?o.order_number:'',b?b.cartola:'',b?(BK_CAT[b.categoria]||b.categoria):'',b?(b.nota||''):(o?(o.nota||''):'')];});
     const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([H].concat(R),{cellDates:true}),'Libro '+_cc.d0.slice(0,7));
     XLSX.writeFile(wb,'IREMI_libro_'+_cc.d0.slice(0,7)+'.xlsx'); toast('📥 Excel descargado');
   }catch(e){ toast('✗ '+e.message); }
