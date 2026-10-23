@@ -551,6 +551,37 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
 
 <!-- ══ NAV ═════════════════════════════════════════════════ -->
 
+<!-- ── FIXED ACTION BAR (tasas only) ─────────────────── -->
+<div id="action_bar" style="
+  position:fixed;bottom:64px;left:0;right:0;
+  display:flex;gap:8px;padding:8px 12px;
+  background:linear-gradient(0deg,var(--dark) 60%,transparent);
+  z-index:90;
+  padding-bottom:max(8px,env(safe-area-inset-bottom,8px))
+">
+  <button type="button" id="btn_upd" onclick="fetchAllRates()"
+    style="flex:1;padding:13px 8px;border-radius:10px;border:none;
+           background:#0039A6;color:#fff;font-family:'Barlow Condensed',sans-serif;
+           font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+           cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+    🔄 Actualizar
+  </button>
+  <button type="button" onclick="doChangeBg()"
+    style="flex:1;padding:13px 8px;border-radius:10px;border:none;
+           background:#b45309;color:#fff;font-family:'Barlow Condensed',sans-serif;
+           font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+           cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+    🌄 Fondo
+  </button>
+  <button type="button" onclick="doShare()"
+    style="flex:1;padding:13px 8px;border-radius:10px;border:none;
+           background:#166534;color:#fff;font-family:'Barlow Condensed',sans-serif;
+           font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+           cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+    📤 Compartir
+  </button>
+</div>
+
 <nav class="nav">
   <button type="button" class="nb active" id="nb_i" onclick="showPg('pg_inicio','nb_i');cargarInicio()"><span class="ni">📊</span><span>Inicio</span></button>
   <button type="button" class="nb" id="nb_t" onclick="showPg('pg_tasas','nb_t')"><span class="ni">💱</span><span>Tasas</span></button>
