@@ -856,7 +856,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
   </div>
   <div id="cc_v2" style="display:none">
     <div class="filtros" style="gap:10px"><label><input type="checkbox" id="cc_solop" checked onchange="pintarCruce()"> Solo pendientes (sin unir)</label>
-      <span style="font-size:12px;color:var(--silver)">Marca <b>un depósito</b> y <b>uno o más cambios</b> (del mismo día o del siguiente) y toca "Unir". Para Transf Local: marca el <b>📤 pago a Florelvi</b> y las <b>entradas</b> que van en él.</span></div>
+      <span style="font-size:12px;color:var(--silver)">Marca <b>un depósito</b> y <b>uno o más cambios</b> (del mismo día o del siguiente) y toca "Unir". Para <b>Transf Local</b>: marca las <b>entradas</b> del día, el <b>📤 pago a Florelvi</b> y el <b>cambio</b> con que enviaste el resto → "Cerrar Transf Local".</span></div>
     <div id="cc_sel" class="panel" style="position:sticky;top:0;z-index:5;display:none"></div>
     <div id="cc_cruce"></div>
   </div>
@@ -2270,19 +2270,20 @@ function irConc(){
     for(let i=0;i<14;i++){ const m=mesDe(hoy.slice(0,8)+'01',-i); h+='<option value="'+m.slice(0,7)+'">'+new Date(m+'T12:00:00').toLocaleDateString('es-CL',{month:'long',year:'numeric'})+'</option>'; } sel.innerHTML=h; }
   showPg('pg_conc','nb_mas'); cargarConc();
 }
-function refrescarConc(){ if(document.getElementById('pg_conc').classList.contains('on')){ _ccSel={dep:null,ords:[],pago:null,ents:[]}; cargarConc(); } }
+function refrescarConc(){ if(document.getElementById('pg_conc').classList.contains('on')){ _ccSel={dep:null,ords:[],pagos:[],ents:[]}; cargarConc(); } }
 async function cargarConc(){
   const mes=document.getElementById('lb_mes').value, d0=mes+'-01', d1=sumarDias(mesDe(d0,1),-1);
   document.getElementById('lb_resumen').textContent='Cargando...';
   try{
     const w0=sumarDias(d0,-10), w1=sumarDias(d1,10);
-    const [BW,TW,OW,SW]=await Promise.all([
-      sbPost('banco_movimientos?select=id,fecha,cartola,n_operacion,descripcion,abono,cargo,saldo,categoria,nota,orden_binance,tl_ref&fecha=gte.'+w0+'&fecha=lte.'+w1+'&order=fecha.asc,id.asc&limit=5000'),
+    const [BW,TW,OW,SW,TC]=await Promise.all([
+      sbPost('banco_movimientos?select=id,fecha,cartola,n_operacion,descripcion,abono,cargo,saldo,categoria,nota,orden_binance,tl_ref,tl_grupo&fecha=gte.'+w0+'&fecha=lte.'+w1+'&order=fecha.asc,id.asc&limit=5000'),
       sbPost('tasas_diarias?select=fecha,ves,ves_pref,cop,pen,ars,eur,dop,mxn,bob,zelle,usdt,hora,fuente&fecha=gte.'+sumarDias(w0,-3)+'&fecha=lte.'+w1+'&order=fecha.asc'),
       sbPost('v_ordenes?select=order_number,cuenta,tipo,fiat,monto_fiat,precio,usdt,comision,creado,clp,clp_manual,clp_final,tasa_usada,metodo_clp,revision,contraparte,costo_usdt,nota&estado=eq.COMPLETED&creado=gte.'+tz(w0)+'&creado=lt.'+tz(sumarDias(w1,1))+'&order=creado.asc&limit=5000'),
-      sbPost('robot_saldos?select=cuenta,total,fecha&fecha=lt.'+tz(d0)+'&order=fecha.desc&limit=12')]);
+      sbPost('robot_saldos?select=cuenta,total,fecha&fecha=lt.'+tz(d0)+'&order=fecha.desc&limit=12'),
+      sbPost('tl_cierre_ordenes?select=order_number,tl_grupo').catch(()=>[])]);
     const u0={}; (SW||[]).forEach(x=>{ if(u0[x.cuenta]==null) u0[x.cuenta]=+x.total; }); const usdt0=Object.values(u0).reduce((a,v)=>a+v,0), usdt0ok=Object.keys(u0).length>0;
-    const om={}; (OW||[]).forEach(o=>om[o.order_number]=o);
+    const om={}; (OW||[]).forEach(o=>om[o.order_number]=o); (TC||[]).forEach(t=>{ if(om[t.order_number]) om[t.order_number].tl_grupo=t.tl_grupo; });
     const tasas={}; (TW||[]).forEach(t=>{ const p=tasas[t.fecha]; if(!p||(t.fuente!=='libro'&&p.fuente==='libro')||(+t.ves&&!+p.ves)) tasas[t.fecha]=t; });
     // órdenes referenciadas por el banco que quedaron fuera de la ventana
     const faltan=[...new Set((BW||[]).flatMap(b=>lbNums(b.orden_binance)).filter(n=>!om[n]))];
@@ -2327,7 +2328,7 @@ async function cargarConc(){
     const EB=(BW||[]).filter(b=>b.fecha>=d0&&b.fecha<=d1).reduce((a,b)=>a+(+b.abono||0),0), SB=(BW||[]).filter(b=>b.fecha>=d0&&b.fecha<=d1).reduce((a,b)=>a+(+b.cargo||0),0);
     const ganBinance=(OW||[]).filter(o=>o.tipo==='SELL'&&lbDia(o.creado)>=d0&&lbDia(o.creado)<=d1&&o.revision!=='gasto'&&o.clp_final!=null).reduce((a,o)=>a+(+o.clp_final-(+o.usdt)*(+o.costo_usdt)),0);
     _cc={filas,d0,d1,tasas,usdt0,usdt0ok,pagoDe,entradas:EB,salidas:SB,ganBinance,bw:BW||[],B:(BW||[]).filter(b=>b.fecha>=d0&&b.fecha<=d1),O:(OW||[]).filter(o=>lbDia(o.creado)>=d0&&lbDia(o.creado)<=d1),linkDe,om};
-    _sd=filas.filter(f=>f.o&&!f.b&&f.o.tipo==='SELL').map(f=>f.o); _ccSel={dep:null,ords:[],pago:null,ents:[]};
+    _sd=filas.filter(f=>f.o&&!f.b&&f.o.tipo==='SELL').map(f=>f.o); _ccSel={dep:null,ords:[],pagos:[],ents:[]};
     pintarConc(); pintarCruce();
   }catch(e){ document.getElementById('lb_resumen').innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
@@ -2379,7 +2380,7 @@ function pintarConc(){
     '<tr class="hs-tot"><td colspan="3">Total</td><td>+'+$clp(T.in)+'</td><td>−'+$clp(T.out)+'</td><td></td><td></td><td>'+TU.n.size+' cambios</td><td>'+$clp(T.clp)+'<br><span style="font-size:10px">= '+num(TU.clpU)+' USDT</span></td><td>−'+num(TU.usdt)+'</td><td>'+num(TU.ganU)+'</td><td>'+$clp(T.gan)+'</td><td></td><td>'+(_cc.filas.length?num(_cc.filas[_cc.filas.length-1].capUsdt):'')+'</td><td></td><td></td></tr>';
   document.getElementById('lb_resumen').innerHTML+=' · capital USDT: inicio '+(_cc.usdt0ok?num(_cc.usdt0)+' (robot, último saldo antes del '+fechaCorta(_cc.d0)+')':'<span style="color:var(--amber)">sin saldo del robot antes del mes</span>')+' → fin esperado '+(_cc.filas.length?num(_cc.filas[_cc.filas.length-1].capUsdt):'—')+' <span style="color:var(--mute)">(+compras −enviados −comisiones; no incluye Binance Pay)</span>';
 }
-let _ccSel={dep:null,ords:[],pago:null,ents:[]};
+let _ccSel={dep:null,ords:[],pagos:[],ents:[]};
 const FIAT_COL_APP={VES:'ves',COP:'cop',PEN:'pen',ARS:'ars',EUR:'eur',DOP:'dop',MXN:'mxn',BOB:'bob',USD:'zelle'};
 function tasaIremi(dia,fiat){ const t=_cc.tasas&&_cc.tasas[dia]; if(!t) return null; const col=FIAT_COL_APP[fiat]; if(!col) return null;
   return {base:+t[col]||null,pref:fiat==='VES'?(+t.ves_pref||null):null}; }
@@ -2394,44 +2395,59 @@ const retTipo=b=>b.categoria==='compra_usdt'?'compra USDT':(b.categoria==='belky
 function vistaConc(n){ document.getElementById('cc_v1').style.display=n===1?'':'none'; document.getElementById('cc_v2').style.display=n===2?'':'none';
   document.getElementById('cc_tab1').className='btn '+(n===1?'b-gold':'b-gray'); document.getElementById('cc_tab2').className='btn '+(n===2?'b-gold':'b-gray'); if(n===2) pintarCruce(); }
 function ccMarcar(tipo,id,on){
-  if(tipo==='pago'){ _ccSel.pago=on?id:null; if(on&&_ccSel.dep){ const d=_cc.B.find(b=>b.id===_ccSel.dep); if(d&&d.categoria==='belkys_ingreso'&&!_ccSel.ents.includes(d.id)) _ccSel.ents.push(d.id); _ccSel.dep=null; } }
+  if(tipo==='pago'){ _ccSel.pagos=_ccSel.pagos.filter(x=>x!==id); if(on) _ccSel.pagos.push(id); }
   else if(tipo==='dep'){ const d=_cc.B.find(b=>b.id===id);
-    if(_ccSel.pago&&d&&d.categoria==='belkys_ingreso'){ _ccSel.ents=_ccSel.ents.filter(x=>x!==id); if(on) _ccSel.ents.push(id); }   // con un pago elegido, las entradas TL se suman al pago
-    else { _ccSel.dep=on?id:null; if(on&&d&&d.categoria==='belkys_ingreso'&&_ccSel.ents.length){ _ccSel.ents=[]; } } }
+    if(d&&d.categoria==='belkys_ingreso'){ _ccSel.ents=_ccSel.ents.filter(x=>x!==id); if(on) _ccSel.ents.push(id); }
+    else { _ccSel.dep=on?id:null; } }
   else { _ccSel.ords=_ccSel.ords.filter(x=>x!==id); if(on) _ccSel.ords.push(id); }
   pintarSelCruce(); }
+async function cerrarTL(){
+  const ents=_ccSel.ents.slice(), pagos=_ccSel.pagos.slice(), ords=_ccSel.ords.slice();
+  if(!ents.length) return toast('Marca al menos una entrada de Fidel/Angélica');
+  try{ await sbPost('rpc/cerrar_tl','POST',{p_entradas:ents,p_pagos:pagos,p_ordenes:ords},'return=minimal');
+       toast('🤝 Transf Local cerrada'); refrescarConc();
+  }catch(e){ toast('✗ '+e.message+(/cerrar_tl/.test(e.message)?' · Falta correr IREMI_etapa14.sql':'')); } }
+async function abrirTL(g){ if(!confirm('¿Deshacer este cierre de Transf Local?')) return;
+  try{ await sbPost('rpc/abrir_tl','POST',{p_grupo:g},'return=minimal'); toast('↺ Cierre deshecho'); refrescarConc(); }catch(e){ toast('✗ '+e.message); } }
 async function unirTL(pago,ents){ try{ await sbPost('rpc/vincular_tl','POST',{p_pago:pago,p_entradas:ents},'return=minimal'); toast('🤝 Entradas unidas al pago'); refrescarConc(); }catch(e){ toast('✗ '+e.message+(/vincular_tl/.test(e.message)?' · Falta correr IREMI_etapa13.sql':'')); } }
 async function desvincularTL(id){ try{ await sbPost('rpc/desvincular_tl','POST',{p_entrada:id},'return=minimal'); toast('↺ Deshecho'); refrescarConc(); }catch(e){ toast('✗ '+e.message); } }
 function pintarSelCruce(){
   const box=document.getElementById('cc_sel'); const dep=_ccSel.dep?_cc.B.find(b=>b.id===_ccSel.dep):null, ords=_ccSel.ords.map(n=>_cc.om[n]).filter(Boolean);
-  if(_ccSel.pago){ const p=_cc.B.find(b=>b.id===_ccSel.pago), ents=_ccSel.ents.map(i=>_cc.B.find(b=>b.id===i)).filter(Boolean), sumE=ents.reduce((a,b)=>a+(+b.abono),0);
-    box.style.display=''; box.innerHTML='<div style="font-size:12px"><b>Pago a Florelvi/Belkys</b> '+fechaCorta(p.fecha)+' <b class="m-out">−'+$clp(p.cargo)+'</b> (= '+$clp(Math.round(p.cargo/0.96))+' de entradas al 96%) &nbsp;⇄&nbsp; '+(ents.length?ents.length+' entrada'+(ents.length>1?'s':'')+' '+$clp(sumE)+' × 0,96 = '+$clp(Math.round(sumE*0.96))+' · diferencia <b style="color:'+colorFalta(Math.round(sumE*0.96)-p.cargo)+'">'+conSigno(Math.round(sumE*0.96)-p.cargo)+'</b>':'<span style="color:var(--amber)">marca las entradas de Fidel/Angélica que van en este pago</span>')+'</div>'+
-      '<div class="brow" style="gap:6px;margin-top:6px"><button type="button" class="btn b-green" style="flex:1;padding:8px" '+(ents.length?'':'disabled')+' onclick="unirTL('+p.id+',_ccSel.ents.slice())">🤝 Unir entradas a este pago</button><button type="button" class="btn b-gray" style="flex:0 0 auto;padding:8px 12px" onclick="_ccSel={dep:null,ords:[],pago:null,ents:[]};pintarCruce()">Limpiar</button></div>';
+  if(_ccSel.ents.length||_ccSel.pagos.length){
+    const ents=_ccSel.ents.map(i=>_cc.B.find(b=>b.id===i)).filter(Boolean), pagos=_ccSel.pagos.map(i=>_cc.B.find(b=>b.id===i)).filter(Boolean), ordsTL=_ccSel.ords.map(n=>_cc.om[n]).filter(Boolean);
+    const sumE=ents.reduce((a,b)=>a+(+b.abono),0), sumP=pagos.reduce((a,b)=>a+(+b.cargo),0), enEnt=Math.round(sumP/0.96), com=Math.round(sumP/0.96*0.04), sumO=ordsTL.reduce((a,o)=>a+(+o.clp_final||0),0), resto=Math.round(sumE-enEnt-sumO);
+    box.style.display=''; box.innerHTML='<div style="font-size:12px"><b>🤝 Cierre de Transf Local</b><br>'+
+      ents.length+' entrada'+(ents.length>1?'s':'')+' de Fidel/Angélica/Lilibeth: <b class="m-in">'+$clp(sumE)+'</b>'+
+      '<br>− pagado a Florelvi/Belkys: <b class="m-out">'+$clp(sumP)+'</b> (= '+$clp(enEnt)+' de entradas al 96% · <b style="color:var(--green)">tu 4%: '+$clp(com)+'</b>)'+
+      '<br>− enviado a Venezuela con '+(ordsTL.length?ordsTL.length+' cambio'+(ordsTL.length>1?'s':''):'cambios')+': <b>'+$clp(sumO)+'</b>'+
+      '<br>= resto sin enviar: <b style="color:'+colorFalta(-Math.abs(resto))+'">'+$clp(resto)+'</b>'+(Math.abs(resto)<2000?' ✅ cuadra':'')+'</div>'+
+      '<div class="brow" style="gap:6px;margin-top:6px"><button type="button" class="btn b-green" style="flex:1;padding:8px" '+(ents.length?'':'disabled')+' onclick="cerrarTL()">🤝 Cerrar Transf Local</button><button type="button" class="btn b-gray" style="flex:0 0 auto;padding:8px 12px" onclick="_ccSel={dep:null,ords:[],pagos:[],ents:[]};pintarCruce()">Limpiar</button></div>'+
+      '<div style="font-size:10.5px;color:var(--mute);margin-top:3px">Marca las entradas del día, el pago a Florelvi y el cambio con que enviaste el resto. Si solo pagaste a Florelvi, deja el cambio sin marcar.</div>';
     return; }
   if(!dep&&!ords.length){ box.style.display='none'; return; }
   const sumO=ords.reduce((a,o)=>a+(+o.clp_final||0),0);
   box.style.display=''; box.innerHTML='<div style="font-size:12px"><b>Seleccionado:</b> '+(dep?(dep.categoria==='belkys_ingreso'?'🤝 entrada TL ':'depósito ')+esc(dep.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,26))+' <b class="m-in">+'+$clp(dep.abono)+'</b>':'<span style="color:var(--amber)">falta elegir el depósito</span>')+
     ' &nbsp;⇄&nbsp; '+(ords.length?ords.length+' cambio'+(ords.length>1?'s':'')+' ('+ords.map(o=>o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')).join(' + ')+' ≈ '+$clp(sumO)+')':'<span style="color:var(--amber)">falta elegir el cambio</span>')+
     (dep&&ords.length?' · diferencia <b style="color:'+colorFalta(dep.abono-sumO)+'">'+conSigno(dep.abono-sumO)+'</b>'+(ords.length===1&&ords[0].fiat==='VES'?' · tasa resultante <b>'+Math.round(ords[0].monto_fiat/dep.abono*1000)+'</b>':''):'')+'</div>'+
-    '<div class="brow" style="gap:6px;margin-top:6px"><button type="button" class="btn b-green" style="flex:1;padding:8px" '+(dep&&ords.length?'':'disabled')+' onclick="confirmarUnion('+(dep?dep.id:0)+',_ccSel.ords.slice())">🔗 Unir'+(dep&&dep.categoria==='belkys_ingreso'?' (el cambio queda 🤝 TL)':'')+'</button><button type="button" class="btn b-gray" style="flex:0 0 auto;padding:8px 12px" onclick="_ccSel={dep:null,ords:[],pago:null,ents:[]};pintarCruce()">Limpiar</button></div>';
+    '<div class="brow" style="gap:6px;margin-top:6px"><button type="button" class="btn b-green" style="flex:1;padding:8px" '+(dep&&ords.length?'':'disabled')+' onclick="confirmarUnion('+(dep?dep.id:0)+',_ccSel.ords.slice())">🔗 Unir'+(dep&&dep.categoria==='belkys_ingreso'?' (el cambio queda 🤝 TL)':'')+'</button><button type="button" class="btn b-gray" style="flex:0 0 auto;padding:8px 12px" onclick="_ccSel={dep:null,ords:[],pagos:[],ents:[]};pintarCruce()">Limpiar</button></div>';
 }
 function pintarCruce(){
   const el=document.getElementById('cc_cruce'); if(!el||!_cc.B) return;
   const solo=document.getElementById('cc_solop').checked, T=_cc.tasas||{};
   const dias={}; const add=(d,k,x)=>{ (dias[d]=dias[d]||{dep:[],ord:[],pago:[],sal:[]})[k].push(x); };
-  _cc.B.forEach(b=>{ if(+b.cargo>0){ if(b.categoria==='belkys_pago'){ const ents=_cc.pagoDe[b.id]||[], cubierto=Math.round(ents.reduce((a,x)=>a+(+x.abono),0)*0.96); if(solo&&ents.length&&Math.abs(cubierto-b.cargo)<1000) return; add(b.fecha,'pago',b); }
+  _cc.B.forEach(b=>{ if(+b.cargo>0){ if(b.categoria==='belkys_pago'){ const ents=_cc.pagoDe[b.id]||[], cubierto=Math.round(ents.reduce((a,x)=>a+(+x.abono),0)*0.96); if(solo&&(b.tl_grupo||(ents.length&&Math.abs(cubierto-b.cargo)<1000))) return; add(b.fecha,'pago',b); }
       else if(!solo) add(b.fecha,'sal',b); return; }
-    if(!(+b.abono>0)) return; const unido=!!b.orden_binance||!!b.tl_ref; if(solo&&(unido||b.categoria==='traspaso_propio')) return; add(b.fecha,'dep',b); });
-  _cc.O.forEach(o=>{ if(o.tipo!=='SELL') return; const unido=!!(_cc.linkDe[o.order_number]||[]).length; if(solo&&(unido||o.revision==='gasto'||o.revision==='transf_local')) return; add(lbDia(o.creado),'ord',o); });
+    if(!(+b.abono>0)) return; const unido=!!b.orden_binance||!!b.tl_ref||!!b.tl_grupo; if(solo&&(unido||b.categoria==='traspaso_propio')) return; add(b.fecha,'dep',b); });
+  _cc.O.forEach(o=>{ if(o.tipo!=='SELL') return; const unido=!!(_cc.linkDe[o.order_number]||[]).length; if(solo&&(unido||o.revision==='gasto'||o.revision==='transf_local'||o.tl_grupo)) return; add(lbDia(o.creado),'ord',o); });
   const fmtT=t=>t?Math.round(t*1000):'—';
   el.innerHTML=Object.keys(dias).sort().map(d=>{ const D=dias[d], t=T[d]||{}, ty=T[sumarDias(d,-1)]||{}, tm=T[sumarDias(d,1)]||{};
-    const dep=D.dep.map(b=>{ const unido=!!b.orden_binance||!!b.tl_ref, os=lbNums(b.orden_binance).map(n=>_cc.om[n]).filter(Boolean), ref=b.tl_ref?_cc.bw.find(x=>x.id===b.tl_ref):null, tag=b.categoria==='belkys_ingreso'?'<span class="tag m">TL'+(ref?' → Florelvi '+fechaCorta(ref.fecha):'')+'</span>':(b.categoria==='traspaso_propio'?'<span class="tag j">aporte</span>':(unido?'<span class="tag ok">unido</span>':'<span class="tag w">sin cambio</span>'));
+    const dep=D.dep.map(b=>{ const unido=!!b.orden_binance||!!b.tl_ref||!!b.tl_grupo, os=lbNums(b.orden_binance).map(n=>_cc.om[n]).filter(Boolean), ref=b.tl_ref?_cc.bw.find(x=>x.id===b.tl_ref):null, tag=b.categoria==='belkys_ingreso'?'<span class="tag m">TL'+(b.tl_grupo?' · cierre #'+b.tl_grupo:(ref?' → Florelvi '+fechaCorta(ref.fecha):''))+'</span>':(b.categoria==='traspaso_propio'?'<span class="tag j">aporte</span>':(unido?'<span class="tag ok">unido</span>':'<span class="tag w">sin cambio</span>'));
       return '<div class="mv" style="cursor:default;padding:6px 8px;margin-bottom:4px'+(unido?';opacity:.6':'')+'"><div class="r1"><span>'+(unido?'':'<input type="checkbox" style="width:auto;margin-right:6px" '+(_ccSel.dep===b.id||_ccSel.ents.includes(b.id)?'checked':'')+' onchange="ccMarcar(\'dep\','+b.id+',this.checked)">')+esc(b.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,28))+' '+tag+'</span><b class="m-in">+'+$clp(b.abono)+'</b></div>'+
-        '<div class="r3" style="margin-top:2px"><span>'+(+t.ves?'= Bs '+Math.round(b.abono*t.ves).toLocaleString('es-CL')+(+t.ves_pref&&t.ves_pref!==t.ves?' · pref Bs '+Math.round(b.abono*t.ves_pref).toLocaleString('es-CL'):'')+(+tm.ves?' · mañana Bs '+Math.round(b.abono*tm.ves).toLocaleString('es-CL'):''):'sin tasa del día')+(b.nota&&!/^Unido|^Aceptado|^Depósito desde/.test(b.nota)?' · '+esc(b.nota.slice(0,30)):'')+(os.length?' · '+os.map(o=>lbHora(o.creado)+' '+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')).join(' + ')+' <a href="#" onclick="if(confirm(\'¿Deshacer la unión?\')) deshacerUnion('+b.id+');return false">↺</a>':'')+(ref?' · pagada a Florelvi '+fechaCorta(ref.fecha)+' ('+$clp(ref.cargo)+') <a href="#" onclick="if(confirm(\'¿Deshacer la unión con el pago?\')) desvincularTL('+b.id+');return false">↺</a>':'')+'</span></div></div>'; }).join('');
+        '<div class="r3" style="margin-top:2px"><span>'+(+t.ves?'= Bs '+Math.round(b.abono*t.ves).toLocaleString('es-CL')+(+t.ves_pref&&t.ves_pref!==t.ves?' · pref Bs '+Math.round(b.abono*t.ves_pref).toLocaleString('es-CL'):'')+(+tm.ves?' · mañana Bs '+Math.round(b.abono*tm.ves).toLocaleString('es-CL'):''):'sin tasa del día')+(b.nota&&!/^Unido|^Aceptado|^Depósito desde/.test(b.nota)?' · '+esc(b.nota.slice(0,30)):'')+(os.length?' · '+os.map(o=>lbHora(o.creado)+' '+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')).join(' + ')+' <a href="#" onclick="if(confirm(\'¿Deshacer la unión?\')) deshacerUnion('+b.id+');return false">↺</a>':'')+(b.tl_grupo?' · cierre #'+b.tl_grupo+' <a href="#" onclick="abrirTL('+b.tl_grupo+');return false">↺</a>':(ref?' · pagada a Florelvi '+fechaCorta(ref.fecha)+' ('+$clp(ref.cargo)+') <a href="#" onclick="if(confirm(\'¿Deshacer la unión con el pago?\')) desvincularTL('+b.id+');return false">↺</a>':''))+'</span></div></div>'; }).join('');
     const pagos=D.pago.map(p=>{ const ents=_cc.pagoDe[p.id]||[], sumE=ents.reduce((a,x)=>a+(+x.abono),0), cub=Math.round(sumE*0.96), ok=ents.length&&Math.abs(cub-p.cargo)<1000;
-      return '<div class="mv" style="cursor:default;padding:6px 8px;margin-bottom:4px;border-left:3px solid var(--gold)'+(ok?';opacity:.6':'')+'"><div class="r1"><span><input type="checkbox" style="width:auto;margin-right:6px" '+(_ccSel.pago===p.id?'checked':'')+' onchange="ccMarcar(\'pago\','+p.id+',this.checked)">📤 '+esc(p.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,22))+' <span class="tag m">pago TL</span></span><b class="m-out">−'+$clp(p.cargo)+'</b></div>'+
-        '<div class="r3" style="margin-top:2px"><span>= '+$clp(Math.round(p.cargo/0.96))+' de entradas al 96% · tu 4%: '+$clp(Math.round(p.cargo/0.96*0.04))+(ents.length?' · unidas: '+ents.length+' ('+$clp(sumE)+' × 0,96 = '+$clp(cub)+', dif '+conSigno(cub-p.cargo)+')':' · <span style="color:var(--amber)">sin entradas unidas</span>')+'</span></div></div>'; }).join('');
-    const ord=D.ord.map(o=>{ const bs=_cc.linkDe[o.order_number]||[], unido=!!bs.length, est=o.revision==='gasto'?'<span class="tag w">💸 familia</span>':(o.revision==='transf_local'?'<span class="tag m">🤝 TL</span>':(unido?'<span class="tag ok">unido</span>':(o.revision==='cambio'?'<span class="tag ok">✅ aceptado</span>':'<span class="tag w">sin depósito</span>')));
+      const gp=p.tl_grupo; return '<div class="mv" style="cursor:default;padding:6px 8px;margin-bottom:4px;border-left:3px solid var(--gold)'+(ok||gp?';opacity:.6':'')+'"><div class="r1"><span><input type="checkbox" style="width:auto;margin-right:6px" '+(_ccSel.pagos.includes(p.id)?'checked':'')+' onchange="ccMarcar(\'pago\','+p.id+',this.checked)">📤 '+esc(p.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,22))+' <span class="tag m">pago TL</span></span><b class="m-out">−'+$clp(p.cargo)+'</b></div>'+
+        '<div class="r3" style="margin-top:2px"><span>= '+$clp(Math.round(p.cargo/0.96))+' de entradas al 96% · tu 4%: '+$clp(Math.round(p.cargo/0.96*0.04))+(ents.length?' · unidas: '+ents.length+' ('+$clp(sumE)+' × 0,96 = '+$clp(cub)+', dif '+conSigno(cub-p.cargo)+')':' · <span style="color:var(--amber)">sin entradas unidas</span>')+(gp?' · <b>cierre #'+gp+'</b> <a href="#" onclick="abrirTL('+gp+');return false">↺</a>':'')+'</span></div></div>'; }).join('');
+    const ord=D.ord.map(o=>{ const bs=_cc.linkDe[o.order_number]||[], unido=!!bs.length, est=o.revision==='gasto'?'<span class="tag w">💸 familia</span>':(o.revision==='transf_local'?'<span class="tag m">🤝 TL'+(o.tl_grupo?' #'+o.tl_grupo:'')+'</span>':(unido?'<span class="tag ok">unido</span>':(o.revision==='cambio'?'<span class="tag ok">✅ aceptado</span>':'<span class="tag w">sin depósito</span>')));
       const r=tasaIremi(lbDia(o.creado),o.fiat), eq=k=>{ const tt=k==='hoy'?(r&&r.base):(k==='pref'?(r&&r.pref):(k==='ayer'?(+ty[FIAT_COL_APP[o.fiat]]||null):null)); return tt?$clp(Math.round(o.monto_fiat/tt)):null; };
       const eqs=o.fiat==='CLP'?('venta en pesos a $'+num(o.precio)+' por USDT'):[['hoy',eq('hoy')],['pref',eq('pref')],['ayer',eq('ayer')]].filter(x=>x[1]).map(x=>x[0]+' '+x[1]).join(' · ');
       return '<div class="mv" style="cursor:default;padding:6px 8px;margin-bottom:4px'+(unido?';opacity:.6':'')+'"><div class="r1"><span>'+(unido?'':'<input type="checkbox" style="width:auto;margin-right:6px" '+(_ccSel.ords.includes(o.order_number)?'checked':'')+' onchange="ccMarcar(\'ord\',\''+o.order_number+'\',this.checked)">')+lbHora(o.creado)+' <span class="tag '+(o.cuenta==='JULIO'?'j':'i')+'">'+o.cuenta+'</span> '+esc((o.contraparte||'').slice(0,12))+' '+est+'</span><b>'+(o.fiat==='CLP'?'USDT '+num(o.usdt)+' por $'+Math.round(o.monto_fiat).toLocaleString('es-CL'):o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL'))+'</b></div>'+
