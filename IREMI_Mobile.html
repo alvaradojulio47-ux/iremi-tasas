@@ -2263,7 +2263,7 @@ async function cargarConc(){
     (BW||[]).filter(b=>b.fecha>=d0&&b.fecha<=d1).forEach(b=>{
       const os=lbNums(b.orden_binance).map(n=>om[n]).filter(Boolean);
       if(+b.abono>0){
-        if(os.length){ os.forEach((o,k)=>filas.push({t:o.creado,fecha:lbDia(o.creado),b,o,parte:os.length>1?(k+1)+'/'+os.length:'',estado:'unido',clp:os.length>1?o.clp_final:b.abono})); }
+        if(os.length){ os.forEach((o,k)=>filas.push({t:o.creado,fecha:lbDia(o.creado),b,o,parte:os.length>1?(k+1)+'/'+os.length:'',estado:b.categoria==='belkys_ingreso'?'tl_unido':'unido',clp:os.length>1?o.clp_final:b.abono})); }
         else filas.push({t:b.fecha+'T00:00:00-03:00',fecha:b.fecha,b,o:null,estado:b.categoria==='belkys_ingreso'?'tl_in':(b.categoria==='traspaso_propio'?'aporte':'sin_cambio'),clp:null});
       } else {
         const o=os[0]||null;
@@ -2279,10 +2279,10 @@ async function cargarConc(){
     filas.forEach(f=>{ const o=f.o;
       // un cambio pagado con varios depósitos (ej. 600.000 + 240.000): cada fila lleva su parte proporcional de USDT y ganancia
       const deps=o?(linkDe[o.order_number]||[]).filter(b=>+b.abono>0):[]; const sumD=deps.reduce((a,b)=>a+(+b.abono),0);
-      f.prop=(f.b&&o&&f.estado==='unido'&&deps.length>1&&sumD>0)?(+f.b.abono)/sumD:1; if(f.prop!==1) f.parte=(deps.indexOf(f.b)+1)+'/'+deps.length;
+      const unido=f.estado==='unido'||f.estado==='tl_unido'; f.prop=(f.b&&o&&unido&&deps.length>1&&sumD>0)?(+f.b.abono)/sumD:1; if(f.prop!==1) f.parte=(deps.indexOf(f.b)+1)+'/'+deps.length;
       f.usdtFila=o?(+o.usdt)*f.prop:null;
-      f.clpPag=o&&o.tipo==='SELL'?(f.estado==='unido'&&(f.prop!==1||!f.parte)?+f.b.abono:(o.clp_final!=null?(+o.clp_final):null)):null;
-      const cuenta=(f.estado==='unido'||f.estado==='sin_deposito'||f.estado==='aceptado'||f.estado==='tl')&&o&&o.tipo==='SELL'&&o.revision!=='gasto';
+      f.clpPag=o&&o.tipo==='SELL'?(unido&&(f.prop!==1||!f.parte)?+f.b.abono:(o.clp_final!=null?(+o.clp_final):null)):null;
+      const cuenta=(unido||f.estado==='sin_deposito'||f.estado==='aceptado'||f.estado==='tl')&&o&&o.tipo==='SELL'&&o.revision!=='gasto';
       f.gan=(cuenta&&f.clpPag!=null)?(f.clpPag-f.usdtFila*o.costo_usdt):null; if(f.gan!=null) acum+=f.gan; f.acum=acum;
       f.tasa=o&&o.tipo==='SELL'?lbTasa(o,f.clpPag):null;
       f.clpUsdt=(f.clpPag!=null&&o&&+o.costo_usdt)?f.clpPag/o.costo_usdt:null;                 // cuántos USDT "compró" el cliente con sus pesos, al costo
@@ -2294,23 +2294,24 @@ async function cargarConc(){
     pintarConc(); pintarCruce();
   }catch(e){ document.getElementById('lb_resumen').innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
-const LB_EST={unido:['ok','unido'],sin_cambio:['w','depósito sin cambio'],sin_deposito:['w','cambio sin depósito'],aceptado:['ok','✅ aceptado sin depósito'],tl:['m','🤝 TL enviado'],tl_in:['m','🤝 TL entrada'],tl_pago:['m','🤝 TL pago'],familia:['w','💸 familia'],aporte:['j','aporte propio'],compra:['i','🛒 compra'],compra_sin:['w','🛒 pago sin orden'],compra_sin_banco:['w','🛒 compra sin pago del banco'],gasto:['w','gasto / retiro'],traspaso:['j','traspaso propio'],salida:['w','salida sin clasificar']};
+const LB_EST={unido:['ok','unido'],tl_unido:['m','🤝 TL unida a su cambio'],sin_cambio:['w','depósito sin cambio'],sin_deposito:['w','cambio sin depósito'],aceptado:['ok','✅ aceptado sin depósito'],tl:['m','🤝 TL enviado'],tl_in:['m','🤝 TL entrada'],tl_pago:['m','🤝 TL pago'],familia:['w','💸 familia'],aporte:['j','aporte propio'],compra:['i','🛒 compra'],compra_sin:['w','🛒 pago sin orden'],compra_sin_banco:['w','🛒 compra sin pago del banco'],gasto:['w','gasto / retiro'],traspaso:['j','traspaso propio'],salida:['w','salida sin clasificar']};
 function pintarConc(){
   const ver=document.getElementById('lb_ver').value, q=(document.getElementById('lb_q').value||'').toLowerCase().trim();
   let F=_cc.filas;
-  if(ver==='sinunir') F=F.filter(f=>['sin_cambio','sin_deposito','aceptado','compra_sin','compra_sin_banco','salida'].includes(f.estado));
+  if(ver==='sinunir') F=F.filter(f=>['sin_cambio','sin_deposito','aceptado','compra_sin','compra_sin_banco','salida','tl_in'].includes(f.estado));
   else if(ver==='cambios') F=F.filter(f=>f.o&&f.o.tipo==='SELL');
   else if(ver==='banco') F=F.filter(f=>f.b);
   else if(ver==='compras') F=F.filter(f=>['compra','compra_sin','compra_sin_banco'].includes(f.estado));
-  else if(ver==='tl') F=F.filter(f=>['tl','tl_in','tl_pago'].includes(f.estado));
+  else if(ver==='tl') F=F.filter(f=>['tl','tl_in','tl_pago','tl_unido'].includes(f.estado));
   if(q) F=F.filter(f=>((f.b&&(f.b.descripcion+' '+(f.b.nota||'')))+' '+(f.o&&(f.o.contraparte+' '+f.o.cuenta+' '+f.o.order_number))+' '+(f.b?(f.b.abono||f.b.cargo):'')+' '+(f.o?Math.round(f.o.monto_fiat)+' '+f.o.usdt+' '+(f.o.clp_final||''):'')).toLowerCase().includes(q));
   const T={in:0,out:0,usdt:0,clp:0,gan:0,n:0}; F.forEach(f=>{ if(f.b){T.in+=+f.b.abono||0;T.out+=+f.b.cargo||0;} if(f.o&&f.o.tipo==='SELL'&&f.gan!=null){T.usdt+=f.usdtFila||0;T.clp+=f.clpPag||0;T.gan+=f.gan;T.n++;} });
-  const A=_cc.filas, nUn=A.filter(f=>f.estado==='unido').length, nSc=A.filter(f=>f.estado==='sin_cambio').length, nSd=A.filter(f=>f.estado==='sin_deposito'||f.estado==='aceptado').length;
+  const A=_cc.filas, nUn=A.filter(f=>f.estado==='unido'||f.estado==='tl_unido').length, nSc=A.filter(f=>f.estado==='sin_cambio').length, nSd=A.filter(f=>f.estado==='sin_deposito'||f.estado==='aceptado').length;
   document.getElementById('lb_resumen').innerHTML='Del '+fechaCorta(_cc.d0)+' al '+fechaCorta(_cc.d1)+' · <b>'+nUn+'</b> cambios unidos a su depósito · <b style="color:var(--amber)">'+nSc+'</b> depósitos sin cambio · <b style="color:var(--amber)">'+nSd+'</b> cambios sin depósito'+
     ' &nbsp;|&nbsp; mostrando '+F.length+' filas: entró <b class="m-in">+'+$clp(T.in)+'</b> · salió <b class="m-out">−'+$clp(T.out)+'</b> · '+new Set(F.filter(f=>f.o&&f.o.tipo==='SELL'&&f.gan!=null).map(f=>f.o.order_number)).size+' cambios por '+$clp(T.clp)+' ('+num(T.usdt)+' USDT) · ganancia <b style="color:var(--green)">'+$clp(T.gan)+'</b>';
   const td=(v,st)=>'<td'+(st?' style="'+st+'"':'')+'>'+(v==null||v===''?'—':v)+'</td>';
   const acc=f=>{ if(f.b&&(f.estado==='sin_cambio'||f.estado==='compra_sin'||f.estado==='salida'||f.estado==='aporte')) return '<button type="button" class="btn b-blue" style="padding:3px 7px;font-size:10px" onclick="_bkRev=[_cc.filas['+_cc.filas.indexOf(f)+'].b];editarBk(0)">'+(f.estado==='aporte'?'✎':'🔗 unir')+'</button>';
-    if(f.b&&f.o&&f.estado==='unido') return '<button type="button" class="btn b-gray" style="padding:3px 7px;font-size:10px" title="Deshacer la unión" onclick="if(confirm(\'¿Deshacer la unión de este depósito con su cambio?\')) deshacerUnion('+f.b.id+')">↺</button>';
+    if(f.b&&f.o&&(f.estado==='unido'||f.estado==='tl_unido')) return '<button type="button" class="btn b-gray" style="padding:3px 7px;font-size:10px" title="Deshacer la unión" onclick="if(confirm(\'¿Deshacer la unión de este depósito con su cambio?\')) deshacerUnion('+f.b.id+')">↺</button>';
+    if(f.b&&f.estado==='tl_in') return '<button type="button" class="btn b-blue" style="padding:3px 7px;font-size:10px" onclick="_bkRev=[_cc.filas['+_cc.filas.indexOf(f)+'].b];editarBk(0)">🔗 unir</button>';
     if(f.o&&!f.b&&f.o.tipo==='SELL'){ const i=_sd.indexOf(f.o), n=f.o.order_number; return (f.estado==='aceptado'?'':'<button type="button" class="btn b-green" style="padding:3px 6px;font-size:10px" onclick="revisarOrden(\''+n+'\',\'cambio\')">✅</button> ')+
       (f.estado==='tl'?'':'<button type="button" class="btn b-gray" style="padding:3px 6px;font-size:10px" onclick="revisarOrden(\''+n+'\',\'transf_local\')">🤝</button> ')+(f.estado==='familia'?'':'<button type="button" class="btn b-red" style="padding:3px 6px;font-size:10px" onclick="revisarOrden(\''+n+'\',\'gasto\')">💸</button> ')+
       '<button type="button" class="btn b-blue" style="padding:3px 6px;font-size:10px" onclick="unirOrden('+i+')">🔗</button>'+(f.o.revision?' <button type="button" class="btn b-gray" style="padding:3px 6px;font-size:10px" onclick="revisarOrden(\''+n+'\',\'deshacer\')">↺</button>':''); }
@@ -2353,21 +2354,21 @@ function pintarSelCruce(){
   const box=document.getElementById('cc_sel'); const dep=_ccSel.dep?_cc.B.find(b=>b.id===_ccSel.dep):null, ords=_ccSel.ords.map(n=>_cc.om[n]).filter(Boolean);
   if(!dep&&!ords.length){ box.style.display='none'; return; }
   const sumO=ords.reduce((a,o)=>a+(+o.clp_final||0),0);
-  box.style.display=''; box.innerHTML='<div style="font-size:12px"><b>Seleccionado:</b> '+(dep?'depósito '+esc(dep.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,26))+' <b class="m-in">+'+$clp(dep.abono)+'</b>':'<span style="color:var(--amber)">falta elegir el depósito</span>')+
+  box.style.display=''; box.innerHTML='<div style="font-size:12px"><b>Seleccionado:</b> '+(dep?(dep.categoria==='belkys_ingreso'?'🤝 entrada TL ':'depósito ')+esc(dep.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,26))+' <b class="m-in">+'+$clp(dep.abono)+'</b>':'<span style="color:var(--amber)">falta elegir el depósito</span>')+
     ' &nbsp;⇄&nbsp; '+(ords.length?ords.length+' cambio'+(ords.length>1?'s':'')+' ('+ords.map(o=>o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')).join(' + ')+' ≈ '+$clp(sumO)+')':'<span style="color:var(--amber)">falta elegir el cambio</span>')+
     (dep&&ords.length?' · diferencia <b style="color:'+colorFalta(dep.abono-sumO)+'">'+conSigno(dep.abono-sumO)+'</b>'+(ords.length===1&&ords[0].fiat==='VES'?' · tasa resultante <b>'+Math.round(ords[0].monto_fiat/dep.abono*1000)+'</b>':''):'')+'</div>'+
-    '<div class="brow" style="gap:6px;margin-top:6px"><button type="button" class="btn b-green" style="flex:1;padding:8px" '+(dep&&ords.length?'':'disabled')+' onclick="confirmarUnion('+(dep?dep.id:0)+',_ccSel.ords.slice())">🔗 Unir</button><button type="button" class="btn b-gray" style="flex:0 0 auto;padding:8px 12px" onclick="_ccSel={dep:null,ords:[]};pintarCruce()">Limpiar</button></div>';
+    '<div class="brow" style="gap:6px;margin-top:6px"><button type="button" class="btn b-green" style="flex:1;padding:8px" '+(dep&&ords.length?'':'disabled')+' onclick="confirmarUnion('+(dep?dep.id:0)+',_ccSel.ords.slice())">🔗 Unir'+(dep&&dep.categoria==='belkys_ingreso'?' (el cambio queda 🤝 TL)':'')+'</button><button type="button" class="btn b-gray" style="flex:0 0 auto;padding:8px 12px" onclick="_ccSel={dep:null,ords:[]};pintarCruce()">Limpiar</button></div>';
 }
 function pintarCruce(){
   const el=document.getElementById('cc_cruce'); if(!el||!_cc.B) return;
   const solo=document.getElementById('cc_solop').checked, T=_cc.tasas||{};
   const dias={}; const add=(d,k,x)=>{ (dias[d]=dias[d]||{dep:[],ord:[]})[k].push(x); };
-  _cc.B.forEach(b=>{ if(!(+b.abono>0)) return; const unido=!!b.orden_binance; if(solo&&(unido||['belkys_ingreso','traspaso_propio'].includes(b.categoria))) return; add(b.fecha,'dep',b); });
+  _cc.B.forEach(b=>{ if(!(+b.abono>0)) return; const unido=!!b.orden_binance; if(solo&&(unido||b.categoria==='traspaso_propio')) return; add(b.fecha,'dep',b); });
   _cc.O.forEach(o=>{ if(o.tipo!=='SELL') return; const unido=!!(_cc.linkDe[o.order_number]||[]).length; if(solo&&(unido||o.revision==='gasto'||o.revision==='transf_local')) return; add(lbDia(o.creado),'ord',o); });
   const fmtT=t=>t?Math.round(t*1000):'—';
   el.innerHTML=Object.keys(dias).sort().map(d=>{ const D=dias[d], t=T[d]||{}, ty=T[sumarDias(d,-1)]||{}, tm=T[sumarDias(d,1)]||{};
     const dep=D.dep.map(b=>{ const unido=!!b.orden_binance, os=lbNums(b.orden_binance).map(n=>_cc.om[n]).filter(Boolean), tag=b.categoria==='belkys_ingreso'?'<span class="tag m">TL</span>':(b.categoria==='traspaso_propio'?'<span class="tag j">aporte</span>':(unido?'<span class="tag ok">unido</span>':'<span class="tag w">sin cambio</span>'));
-      return '<div class="mv" style="cursor:default;padding:6px 8px;margin-bottom:4px'+(unido?';opacity:.6':'')+'"><div class="r1"><span>'+(unido||b.categoria==='belkys_ingreso'?'':'<input type="checkbox" style="width:auto;margin-right:6px" '+(_ccSel.dep===b.id?'checked':'')+' onchange="ccMarcar(\'dep\','+b.id+',this.checked)">')+esc(b.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,28))+' '+tag+'</span><b class="m-in">+'+$clp(b.abono)+'</b></div>'+
+      return '<div class="mv" style="cursor:default;padding:6px 8px;margin-bottom:4px'+(unido?';opacity:.6':'')+'"><div class="r1"><span>'+(unido?'':'<input type="checkbox" style="width:auto;margin-right:6px" '+(_ccSel.dep===b.id?'checked':'')+' onchange="ccMarcar(\'dep\','+b.id+',this.checked)">')+esc(b.descripcion.replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,28))+' '+tag+'</span><b class="m-in">+'+$clp(b.abono)+'</b></div>'+
         '<div class="r3" style="margin-top:2px"><span>'+(+t.ves?'= Bs '+Math.round(b.abono*t.ves).toLocaleString('es-CL')+(+t.ves_pref&&t.ves_pref!==t.ves?' · pref Bs '+Math.round(b.abono*t.ves_pref).toLocaleString('es-CL'):'')+(+tm.ves?' · mañana Bs '+Math.round(b.abono*tm.ves).toLocaleString('es-CL'):''):'sin tasa del día')+(b.nota&&!/^Unido|^Aceptado|^Depósito desde/.test(b.nota)?' · '+esc(b.nota.slice(0,30)):'')+(unido?' · '+os.map(o=>lbHora(o.creado)+' '+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')).join(' + ')+' <a href="#" onclick="if(confirm(\'¿Deshacer la unión?\')) deshacerUnion('+b.id+');return false">↺</a>':'')+'</span></div></div>'; }).join('');
     const ord=D.ord.map(o=>{ const bs=_cc.linkDe[o.order_number]||[], unido=!!bs.length, est=o.revision==='gasto'?'<span class="tag w">💸 familia</span>':(o.revision==='transf_local'?'<span class="tag m">🤝 TL</span>':(unido?'<span class="tag ok">unido</span>':(o.revision==='cambio'?'<span class="tag ok">✅ aceptado</span>':'<span class="tag w">sin depósito</span>')));
       const r=tasaIremi(lbDia(o.creado),o.fiat), eq=k=>{ const tt=k==='hoy'?(r&&r.base):(k==='pref'?(r&&r.pref):(k==='ayer'?(+ty[FIAT_COL_APP[o.fiat]]||null):null)); return tt?$clp(Math.round(o.monto_fiat/tt)):null; };
@@ -2713,11 +2714,12 @@ async function unirOrden(i){
   const o=_sd[i]; _unirOrden=o; const box=document.getElementById('mu2_lista');
   document.getElementById('mu2_info').innerHTML=fh(o.creado)+' · '+o.cuenta+' · '+esc(o.contraparte||'')+'<br><b>'+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+'</b> · '+num(o.usdt)+' USDT<br>Elige el depósito (3 días antes a 8 después; incluye depósitos desde tu cuenta personal si pagaste tú el efectivo). La tasa sale de dividir los '+o.fiat+' por el depósito:';
   box.innerHTML='Buscando...'; openModal('modal_unir');
-  try{ const d=(await sbPost('banco_movimientos?select=id,fecha,descripcion,abono,categoria&categoria=in.(por_revisar,cambio_sin_orden,traspaso_propio)&abono=gt.0&fecha=gte.'+sumarDias(o.dia,-3)+'&fecha=lte.'+sumarDias(o.dia,8)+'&order=fecha.asc'))||[];
+  try{ const d=(await sbPost('banco_movimientos?select=id,fecha,descripcion,abono,categoria&categoria=in.(por_revisar,cambio_sin_orden,traspaso_propio,belkys_ingreso)&orden_binance=is.null&abono=gt.0&fecha=gte.'+sumarDias(o.dia,-3)+'&fecha=lte.'+sumarDias(o.dia,8)+'&order=fecha.asc'))||[];
     d.sort((a,b)=>Math.abs(a.abono-o.clp_final)-Math.abs(b.abono-o.clp_final));
     box.innerHTML=d.length?d.map(b=>'<div class="mv" onclick="confirmarUnion('+b.id+',[\''+o.order_number+'\'])"><div class="bk-d">'+esc(b.descripcion)+'</div><div class="bk-s">'+b.fecha.slice(8)+'/'+b.fecha.slice(5,7)+
-      ' · <span class="m-in">+'+$clp(b.abono)+'</span>'+(b.categoria==='traspaso_propio'?' · <span class="tag j">tu cuenta</span>':'')+' · tasa '+tasaTxt(o.fiat,o.monto_fiat,b.abono)+difTasa(o.fiat,o.monto_fiat,b.abono,o.dia)+'</div></div>').join('')
+      ' · <span class="m-in">+'+$clp(b.abono)+'</span>'+(b.categoria==='traspaso_propio'?' · <span class="tag j">tu cuenta</span>':(b.categoria==='belkys_ingreso'?' · <span class="tag m">🤝 TL</span>':''))+' · tasa '+tasaTxt(o.fiat,o.monto_fiat,b.abono)+difTasa(o.fiat,o.monto_fiat,b.abono,o.dia)+'</div></div>').join('')
       :'<div style="font-size:12px;color:var(--mute)">No hay depósitos pendientes cerca de esa fecha.</div>';
+    document.getElementById('mu2_info').innerHTML+='<br><span style="color:var(--mute)">Si eliges una entrada 🤝 TL, el cambio queda marcado como Transf Local.</span>';
   }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
 async function confirmarUnion(bancoId,ordenes){
@@ -2725,20 +2727,26 @@ async function confirmarUnion(bancoId,ordenes){
        toast(ordenes.length?'🔗 Unido: el cambio toma el monto real del banco':'✅ Aceptado como cambio');
        closeModal('modal_unir'); closeModal('modal_bk'); cargarSinDeposito(); cargarRevisar(); refrescarConc();
   }catch(e){ toast('✗ '+e.message); } }
-async function accionesBk(b){
-  const box=document.getElementById('mb_acc');
-  if(+b.abono>0){
-    if(b.orden_binance){ box.innerHTML='<div style="font-size:12px">🔗 Unido a la orden '+esc(b.orden_binance)+'</div><button type="button" class="btn b-gray" style="width:100%;margin-top:6px" onclick="deshacerUnion('+b.id+')">↺ Deshacer la unión</button>'; return; }
-    box.innerHTML='<div style="font-size:12px;font-weight:700;margin-bottom:4px">✅ ¿Es un cambio? Elige su orden (tasa propuesta):</div><div id="mb_cands">Buscando órdenes...</div>'+
-      '<button type="button" class="btn b-green" style="width:100%;margin-top:6px" onclick="confirmarUnion('+b.id+',[...document.querySelectorAll(\'#mb_cands input:checked\')].map(x=>x.value))">✅ Confirmar cambio</button>'+
-      '<div style="font-size:10.5px;color:var(--mute);margin-top:3px">Puedes marcar <b>varias órdenes</b> si un solo depósito pagó más de un cambio. Sin marcar ninguna = aceptado sin orden (no se une a ningún cambio; el cuadre no cambia).</div>';
-    try{ const c=(await sbPost('v_ordenes_sin_deposito?select=*&or=(revision.is.null,revision.eq.cambio)&dia=gte.'+sumarDias(b.fecha,-8)+'&dia=lte.'+sumarDias(b.fecha,3)))||[];
+async function cargarCandidatos(b){
+    try{ const c=(await sbPost('v_ordenes_sin_deposito?select=*&or=(revision.is.null,revision.eq.cambio,revision.eq.transf_local)&dia=gte.'+sumarDias(b.fecha,-8)+'&dia=lte.'+sumarDias(b.fecha,3)))||[];
       await tasasDelRango(sumarDias(b.fecha,-8),sumarDias(b.fecha,3));
       c.sort((x,y)=>Math.abs((x.clp_final||0)-b.abono)-Math.abs((y.clp_final||0)-b.abono));
       document.getElementById('mb_cands').innerHTML=c.length?c.slice(0,20).map(o=>'<label class="mv" style="display:flex;gap:8px;align-items:center;cursor:pointer;margin-bottom:5px"><input type="checkbox" value="'+o.order_number+'" style="width:auto">'+
         '<span style="font-size:11.5px">'+fh(o.creado)+' · '+o.cuenta+' · '+esc((o.contraparte||'').slice(0,14))+(o.revision==='cambio'?' · <span class="tag ok">✅</span>':'')+'<br><b>'+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+'</b> ≈ '+(o.clp_final!=null?$clp(o.clp_final):'?')+' → tasa <b>'+tasaTxt(o.fiat,o.monto_fiat,b.abono)+'</b>'+difTasa(o.fiat,o.monto_fiat,b.abono,o.dia)+'</span></label>').join('')
         :'<div style="font-size:12px;color:var(--mute)">No hay órdenes pendientes cerca de esa fecha.</div>';
     }catch(e){ document.getElementById('mb_cands').innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
+}
+async function accionesBk(b){
+  const box=document.getElementById('mb_acc');
+  if(+b.abono>0){
+    if(b.categoria==='belkys_ingreso'&&!b.orden_binance){ box.innerHTML='<div style="font-size:12px;font-weight:700;margin-bottom:4px">🤝 Entrada de Transf Local. ¿Con qué cambio se envió? (si la pagaste a Florelvi, déjala sin unir)</div><div id="mb_cands">Buscando órdenes...</div>'+
+        '<button type="button" class="btn b-green" style="width:100%;margin-top:6px" onclick="confirmarUnion('+b.id+',[...document.querySelectorAll(\'#mb_cands input:checked\')].map(x=>x.value))">🤝 Unir con el cambio</button>';
+      cargarCandidatos(b); return; }
+    if(b.orden_binance){ box.innerHTML='<div style="font-size:12px">🔗 Unido a la orden '+esc(b.orden_binance)+'</div><button type="button" class="btn b-gray" style="width:100%;margin-top:6px" onclick="deshacerUnion('+b.id+')">↺ Deshacer la unión</button>'; return; }
+    box.innerHTML='<div style="font-size:12px;font-weight:700;margin-bottom:4px">✅ ¿Es un cambio? Elige su orden (tasa propuesta):</div><div id="mb_cands">Buscando órdenes...</div>'+
+      '<button type="button" class="btn b-green" style="width:100%;margin-top:6px" onclick="confirmarUnion('+b.id+',[...document.querySelectorAll(\'#mb_cands input:checked\')].map(x=>x.value))">✅ Confirmar cambio</button>'+
+      '<div style="font-size:10.5px;color:var(--mute);margin-top:3px">Puedes marcar <b>varias órdenes</b> si un solo depósito pagó más de un cambio. Sin marcar ninguna = aceptado sin orden (no se une a ningún cambio; el cuadre no cambia).</div>';
+    cargarCandidatos(b);
   } else {
     box.innerHTML='<div style="font-size:12px;font-weight:700;margin-bottom:4px">💸 ¿Es un gasto?</div><div class="brow" style="gap:6px"><select id="mb_gcat" style="flex:1;background:var(--dark);border:1px solid var(--bord);border-radius:8px;color:var(--tx);padding:8px">'+
       ['Otros','Contador','IVA / SII','Sueldos','Retiro socio','Envío familia','Comisiones Binance','Combustible','Publicidad','Teléfono / Internet'].map(x=>'<option>'+x+'</option>').join('')+'</select>'+
