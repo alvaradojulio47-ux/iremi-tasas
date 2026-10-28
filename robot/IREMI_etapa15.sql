@@ -19,7 +19,7 @@ analyze robot_ordenes; analyze banco_movimientos;
 -- 2) Estado de caja con el resumen "debería / hay" separado para banco, USDT y total
 -- Estado de caja de un período: todo lo que entró y salió, según el banco y según Binance, y la diferencia explicada
 create or replace function estado_caja(p_desde date, p_hasta date) returns jsonb
-language plpgsql volatile security invoker set search_path = public as $$
+language plpgsql stable security invoker set search_path = public as $$
 declare
   r jsonb; ini_b numeric; fin_b numeric; ini_u numeric; fin_u numeric; costo numeric; tl_in numeric; tl_pag numeric;
   v_clp numeric; v_usdt numeric; v_n int; v_fam_usdt numeric; v_gan numeric; v_condep_n int; v_condep_clp numeric; v_sindep_n int; v_sindep_clp numeric;
@@ -41,35 +41,34 @@ begin
                     (select case when p_desde <= coalesce(max(valor) filter (where clave = 'apertura_fecha'), '2026-09-01')::date
                                  then max(valor) filter (where clave = 'apertura_usdt') end::numeric from robot_config));
   fin_u := usdt_real_al(p_hasta);
-  -- Lista de órdenes que tienen un depósito unido (se arma una sola vez: antes se buscaba una por una)
-  create temp table if not exists _enl (ord text primary key, en_per boolean) on commit drop;
-  delete from _enl;
-  insert into _enl (ord, en_per)
-  select x.ord, bool_or(x.fecha between p_desde and p_hasta)
-  from (select unnest(regexp_split_to_array(b.orden_binance, '\s*[,;]\s*')) as ord, b.fecha
-          from banco_movimientos b where b.orden_binance is not null) x
-  where x.ord <> '' group by x.ord;
-  analyze _enl;
-  -- Binance: ventas (sin los envíos a familia) y compras
-  select count(*), coalesce(sum(o.clp_final), 0), coalesce(sum(o.usdt), 0),
-         coalesce(sum(o.clp_final - o.usdt * o.costo_usdt), 0),
-         count(*) filter (where e.ord is not null),
-         coalesce(sum(o.clp_final) filter (where e.ord is not null), 0)
-    into v_n, v_clp, v_usdt, v_gan, v_condep_n, v_condep_clp
-  from v_ordenes o left join _enl e on e.ord = o.order_number
-  where o.tipo = 'SELL' and o.estado = 'COMPLETED' and coalesce(o.revision, '') not in ('gasto', 'transf_local')
-   and (o.creado at time zone 'America/Santiago')::date between p_desde and p_hasta;
-  select count(*), coalesce(sum(clp_final), 0), coalesce(sum(usdt), 0), coalesce(sum(clp_final - usdt * costo_usdt), 0) into tl_n, tl_env, tl_usdt, tl_gan
-  from v_ordenes o where o.tipo = 'SELL' and o.estado = 'COMPLETED' and o.revision = 'transf_local'
-   and (o.creado at time zone 'America/Santiago')::date between p_desde and p_hasta;
+  -- Ventas del período en una sola pasada (antes se buscaba orden por orden dentro del campo del banco)
+  with enl as (
+    select x.ord, bool_or(x.fecha between p_desde and p_hasta) as en_per
+    from (select unnest(regexp_split_to_array(b.orden_binance, '\s*[,;]\s*')) as ord, b.fecha
+            from banco_movimientos b where b.orden_binance is not null) x
+    where x.ord <> '' group by x.ord),
+  vt as (
+    select coalesce(o.revision, '') as rev, o.clp_final, o.usdt, o.costo_usdt,
+           (e.ord is not null) as unido, coalesce(e.en_per, false) as en_per
+    from v_ordenes o left join enl e on e.ord = o.order_number
+    where o.tipo = 'SELL' and o.estado = 'COMPLETED'
+      and (o.creado at time zone 'America/Santiago')::date between p_desde and p_hasta)
+  select count(*) filter (where rev not in ('gasto', 'transf_local')),
+         coalesce(sum(clp_final) filter (where rev not in ('gasto', 'transf_local')), 0),
+         coalesce(sum(usdt) filter (where rev not in ('gasto', 'transf_local')), 0),
+         coalesce(sum(clp_final - usdt * costo_usdt) filter (where rev not in ('gasto', 'transf_local')), 0),
+         count(*) filter (where rev not in ('gasto', 'transf_local') and unido),
+         coalesce(sum(clp_final) filter (where rev not in ('gasto', 'transf_local') and unido), 0),
+         count(*) filter (where rev not in ('gasto', 'transf_local') and unido and not en_per),
+         coalesce(sum(clp_final) filter (where rev not in ('gasto', 'transf_local') and unido and not en_per), 0),
+         count(*) filter (where rev = 'transf_local'),
+         coalesce(sum(clp_final) filter (where rev = 'transf_local'), 0),
+         coalesce(sum(usdt) filter (where rev = 'transf_local'), 0),
+         coalesce(sum(clp_final - usdt * costo_usdt) filter (where rev = 'transf_local'), 0),
+         coalesce(sum(usdt) filter (where rev = 'gasto'), 0)
+    into v_n, v_clp, v_usdt, v_gan, v_condep_n, v_condep_clp, v_otro_n, v_otro_clp, tl_n, tl_env, tl_usdt, tl_gan, v_fam_usdt
+  from vt;
   v_sindep_n := v_n - v_condep_n; v_sindep_clp := v_clp - v_condep_clp;
-  -- ventas del período cuyo depósito quedó fuera del período (lo pagaron antes o después)
-  select count(*), coalesce(sum(coalesce(o.clp_manual, o.clp)), 0) into v_otro_n, v_otro_clp
-  from robot_ordenes o join _enl e on e.ord = o.order_number
-  where o.tipo = 'SELL' and o.estado = 'COMPLETED' and coalesce(o.revision, '') not in ('gasto', 'transf_local')
-   and (o.creado at time zone 'America/Santiago')::date between p_desde and p_hasta and not e.en_per;
-  select coalesce(sum(usdt), 0) into v_fam_usdt from v_ordenes o where o.tipo = 'SELL' and o.estado = 'COMPLETED' and o.revision = 'gasto'
-   and (o.creado at time zone 'America/Santiago')::date between p_desde and p_hasta;
   select count(*), coalesce(sum(usdt), 0) into c_n, c_usdt
   from v_ordenes o where o.tipo = 'BUY' and o.estado = 'COMPLETED' and (o.creado at time zone 'America/Santiago')::date between p_desde and p_hasta;
   -- pesos de las compras: por la fecha en que el banco pagó (si la orden está unida a su pago), si no por la fecha de Binance
