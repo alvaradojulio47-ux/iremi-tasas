@@ -620,6 +620,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
     <div class="kc"><div class="kl">¿Falta plata?</div><div class="kv" id="k_falta">—</div><div class="ks" id="k_falta_s">Binance vs banco</div></div>
     <div class="kc y"><div class="kl">Capital USDT (JULIO + IREMI)</div><div class="kv" id="k_cap">—</div><div class="ks" id="k_cap_s">—</div></div>
     <div class="kc"><div class="kl">USDT/CLP ahora</div><div class="kv" id="k_px">—</div><div class="ks" id="k_px_s">—</div></div>
+    <div class="kc y"><div class="kl">Última compra de USDT</div><div class="kv" id="k_ucp">—</div><div class="ks" id="k_ucp_s">—</div></div>
   </div>
   <div class="panel"><h3>🤖 Robot</h3><div id="ini_robot" style="font-size:12px;color:var(--silver)">—</div></div>
   <div class="panel"><h3>📲 Última alerta</h3><div id="ini_alerta" style="font-size:12px;color:var(--silver);white-space:pre-line">—</div></div>
@@ -1810,14 +1811,15 @@ async function cargarInicio(){
   set('ini_mes', meses[parseInt(hoy.slice(5,7))-1]+' '+hoy.slice(0,4));
   const aviso=document.getElementById('ini_aviso'); if(aviso) aviso.innerHTML='';
   try{
-    const [ords,sal,px,res,est,al,tas]=await Promise.all([
+    const [ords,sal,px,res,est,al,tas,uc]=await Promise.all([
       sbPost('v_ordenes?select=cuenta,tipo,usdt,creado,clp_final,costo_usdt,metodo_clp,revision,clp_manual&estado=eq.COMPLETED&creado=gte.'+encodeURIComponent(mesIni+'T00:00:00-03:00')+'&order=creado.desc&limit=5000'),
       sbPost('robot_saldos?select=cuenta,total,fecha&order=fecha.desc&limit=6'),
       sbPost('precios_p2p?select=clp_min,fecha&order=fecha.desc&limit=1'),
       sbPost('precios_resumen?select=*'),
       sbPost('robot_estado?select=clave,valor,actualizado'),
       sbPost('robot_alertas?select=fecha,mensaje&order=fecha.desc&limit=1'),
-      sbPost('tasas_diarias?select=fecha,ves,hora,fuente&fecha=eq.'+hoy)]);
+      sbPost('tasas_diarias?select=fecha,ves,hora,fuente&fecha=eq.'+hoy),
+      sbPost('v_ordenes?select=creado,cuenta,precio,usdt,monto_fiat,contraparte&tipo=eq.BUY&estado=eq.COMPLETED&order=creado.desc&limit=1')]);
     // usuario con sesión pero fuera de la lista app_usuarios: la base de datos no le muestra nada
     const yo=await sbPost('app_usuarios?select=email&limit=1');
     if(!(yo&&yo.length)){
@@ -1848,6 +1850,13 @@ async function cargarInicio(){
     const p=(px||[])[0], r0=(res||[])[0]||{};
     set('k_px',p?parseFloat(p.clp_min).toFixed(2):'—');
     set('k_px_s',r0.prom7?('prom. 7 días '+parseFloat(r0.prom7).toFixed(2)):'—');
+    const u0=(uc||[])[0];
+    if(u0){ const d=new Date(u0.creado), dCL=diaCL(u0.creado), hace=Math.round((new Date(hoy+'T12:00:00Z')-new Date(dCL+'T12:00:00Z'))/86400000);
+      set('k_ucp','$'+parseFloat(u0.precio).toLocaleString('es-CL',{maximumFractionDigits:2}));
+      set('k_ucp_s',Math.round(u0.usdt).toLocaleString('es-CL')+' USDT por '+$(u0.monto_fiat)+' · '+u0.cuenta+' · '+d.toLocaleDateString('es-CL',{timeZone:'America/Santiago',day:'2-digit',month:'2-digit'})+(hace<=0?' (hoy)':(hace===1?' (ayer)':' (hace '+hace+' días)')));
+      const kp=document.getElementById('k_ucp'); const act=p?parseFloat(p.clp_min):null;
+      if(kp&&act){ const dif=act-parseFloat(u0.precio); kp.style.color=dif>=0?'var(--green)':'var(--red2)'; }
+    } else { set('k_ucp','—'); set('k_ucp_s','sin compras registradas'); }
     // robot
     const E={}; (est||[]).forEach(r=>E[r.clave]=r);
     const ok=E.ultima_sync_ok;
@@ -2738,6 +2747,7 @@ function activarAccesos(){
     k_hoy_tasa:['tasas',()=>showPg('pg_tasas','nb_t')],k_mes_n:['historial',()=>irHist(null)],k_mes_clp:['historial',()=>irHist(null)],
     k_mes_gan:['cuadre',irDia],k_mes_rev:['movimientos',irPorRevisar],k_gas:['gastos',()=>{showPg('pg_gastos','nb_g');cargarGastos();}],
     k_util:['cuadre',irDia],k_capt:['cuadre',irDia],k_falta:['cuadre',irDia],k_cap:['cuadre',()=>{showPg('pg_cuadre','nb_mas');cargarCuadre();}],
+    k_ucp:['movimientos',()=>{const t=document.getElementById('mv_tipo'); if(t) t.value='BUY'; const pr=document.getElementById('mv_per'); if(pr) pr.value='mes'; showPg('pg_mov','nb_m'); cargarMov();}],
     k_px:['alertas',()=>{showPg('pg_alertas','nb_mas');cargarAlertas();}],ini_robot:['alertas',()=>{showPg('pg_alertas','nb_mas');cargarAlertas();}],
     ini_alerta:['alertas',()=>{showPg('pg_alertas','nb_mas');cargarAlertas();}]};
   Object.entries(A).forEach(([id,[perm,fn]])=>{ const e=document.getElementById(id); if(!e) return; const box=e.closest('.kc,.panel'); if(!box) return;
