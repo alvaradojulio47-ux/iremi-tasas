@@ -851,6 +851,15 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
     <input id="lb_q" type="search" placeholder="Buscar nombre, contraparte, monto…" oninput="pintarConc()" style="flex:1;min-width:140px">
     <button type="button" class="btn b-gold" style="padding:8px 12px;font-size:12px" onclick="bajarConc()">📥 .xlsx</button>
   </div>
+  <div class="panel" style="padding:10px">
+    <div style="font-size:12px;font-weight:700;margin-bottom:4px">📝 Corregir en Excel</div>
+    <div style="font-size:11px;color:var(--silver);margin-bottom:8px">Baja el mes completo registro a registro, corrige en Excel las columnas marcadas <b>(editable)</b> y súbelo. Antes de guardar nada te muestro la lista de cambios para que la revises.</div>
+    <div class="brow" style="gap:6px;flex-wrap:wrap">
+      <button type="button" class="btn b-gold" style="flex:1;padding:8px;min-width:150px" onclick="bajarPlantillaConc()">📝 Bajar Excel editable</button>
+      <label class="btn b-blue" style="flex:1;padding:8px;min-width:150px;text-align:center;cursor:pointer">📤 Subir Excel corregido<input type="file" id="pl_file" accept=".xlsx,.xls" style="display:none" onchange="leerPlantillaConc(this.files)"></label>
+    </div>
+    <div id="pl_prev" style="margin-top:8px"></div>
+  </div>
   <div class="brow" style="gap:6px;margin-bottom:8px">
     <button type="button" class="btn b-gold" id="cc_tab1" style="flex:1;padding:8px" onclick="vistaConc(1)">📒 Libro (filas unidas)</button>
     <button type="button" class="btn b-gray" id="cc_tab2" style="flex:1;padding:8px" onclick="vistaConc(2)">🧩 Cruce día a día (tú unes)</button>
@@ -2467,6 +2476,125 @@ function pintarCruce(){
       '<div><div style="font-size:11px;color:var(--mute);margin-bottom:4px">🟡 Cambios en Binance ('+D.ord.length+')'+(D.pago.length?' · 📤 pagos TL ('+D.pago.length+')':'')+(D.sal.length?' · 📤 otras salidas ('+D.sal.length+')':'')+'</div>'+(pagos||'')+(sal||'')+(ord||((D.pago.length||D.sal.length)?'':'<div style="font-size:11px;color:var(--mute)">—</div>'))+'</div></div></div>'; }).join('')||'<div class="panel" style="font-size:12px;color:var(--green)">✓ Nada pendiente en este mes.</div>';
   pintarSelCruce();
 }
+const PL_CAT={'Cambio (cliente)':'cambio','Cambio sin orden':'cambio_sin_orden','Compra USDT':'compra_usdt',
+  'Transf Local · entrada':'belkys_ingreso','Transf Local · pago':'belkys_pago','Gasto':'gasto','Traspaso propio':'traspaso_propio','Por revisar':'por_revisar'};
+const PL_MARCA={'':null,'cambio':'cambio','aceptado':'cambio','familia':'gasto','gasto':'gasto','tl':'transf_local','transf local':'transf_local','transf_local':'transf_local'};
+const plTxt=v=>v==null?'':String(v).trim();
+const plNum=v=>{ if(v==null||v==='') return null; const n=+String(v).replace(/[^0-9,.-]/g,'').replace(/\.(?=\d{3}\b)/g,'').replace(',','.'); return isNaN(n)?null:n; };
+let _pl=null;
+
+async function bajarPlantillaConc(){
+  if(!_cc.filas||!_cc.filas.length) return toast('Primero carga el mes');
+  try{ await cargaXLSX();
+    const d0=_cc.d0, d1=_cc.d1;
+    // Hoja 1 · BANCO: un registro por movimiento del mes
+    const HB=['ID (no tocar)','Fecha','Cartola','Descripción','Entró','Salió','Saldo','Categoría (editable)','Órdenes unidas (editable)','Nota (editable)'];
+    const RB=_cc.B.slice().sort((a,b)=>a.fecha<b.fecha?-1:(a.fecha>b.fecha?1:a.id-b.id)).map(b=>[
+      b.id, new Date(b.fecha+'T12:00:00'), b.cartola||'', b.descripcion||'', +b.abono||'', +b.cargo||'', b.saldo!=null?+b.saldo:'',
+      BK_CAT[b.categoria]||b.categoria||'', b.orden_binance||'', b.nota||'']);
+    // Hoja 2 · BINANCE: un registro por orden del mes
+    const HO=['N° orden (no tocar)','Fecha','Hora','Cuenta','Tipo','Moneda destino','Monto destino','USDT','Costo USDT','CLP del robot','CLP real (editable)','Marca (editable)','Depósito unido (informativo)'];
+    const RO=_cc.O.slice().sort((a,b)=>a.creado<b.creado?-1:1).map(o=>{
+      const bs=(_cc.linkDe[o.order_number]||[]);
+      return [o.order_number, new Date(lbDia(o.creado)+'T12:00:00'), lbHora(o.creado), o.cuenta, o.tipo==='BUY'?'COMPRA':'VENTA',
+        o.tipo==='BUY'?'COMPRA':o.fiat, o.tipo==='BUY'?'':+o.monto_fiat, +o.usdt, +o.costo_usdt,
+        o.clp!=null?+o.clp:'', o.clp_manual!=null?+o.clp_manual:'',
+        o.revision==='gasto'?'familia':(o.revision==='transf_local'?'TL':(o.revision==='cambio'?'cambio':'')),
+        bs.map(b=>fechaCorta(b.fecha)+' '+(b.descripcion||'').replace(/^TEF (BANCOESTADO )?(DE|A) /,'').slice(0,20)+' '+$clp(b.abono)).join(' + ')];});
+    const HI=[['CÓMO USAR ESTA PLANILLA'],[''],
+      ['1. Corrige SOLO las columnas que dicen (editable). No cambies el ID ni el N° de orden: con eso se reconoce cada registro.'],
+      ['2. Hoja BANCO · Categoría: escribe una de estas: '+Object.keys(PL_CAT).join(' / ')],
+      ['3. Hoja BANCO · Órdenes unidas: el N° de orden de Binance que pagó ese depósito. Si fueron varias, sepáralas con coma. Vacío = sin unir.'],
+      ['4. Hoja BINANCE · Marca: déjala vacía (sin revisar), o escribe: cambio (aceptado sin depósito) / familia (envío tuyo, pasa a gastos) / TL (Transf Local).'],
+      ['5. Hoja BINANCE · CLP real: solo si el robot estimó mal y sabes el monto exacto en pesos que pagó el cliente. Vacío = se usa el estimado.'],
+      ['6. Guarda el archivo y súbelo con "📤 Subir Excel corregido". Antes de guardar nada verás la lista de cambios.'],[''],
+      ['Mes de esta planilla', d0+' a '+d1],['Generada', new Date().toLocaleString('es-CL')]];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(HI), 'Instrucciones');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([HB].concat(RB),{cellDates:true}), 'Banco');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([HO].concat(RO),{cellDates:true}), 'Binance');
+    XLSX.writeFile(wb,'IREMI_corregir_'+d0.slice(0,7)+'.xlsx');
+    toast('📝 Excel descargado: corrígelo y súbelo');
+  }catch(e){ toast('✗ '+e.message); }
+}
+
+async function leerPlantillaConc(files){
+  const box=document.getElementById('pl_prev'); const f=files&&files[0]; if(!f) return;
+  box.innerHTML='Leyendo...'; _pl=null;
+  try{ await cargaXLSX();
+    const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
+    const hb=wb.Sheets['Banco'], ho=wb.Sheets['Binance'];
+    if(!hb&&!ho) throw new Error('El archivo no tiene las hojas "Banco" ni "Binance". ¿Bajaste la plantilla con el botón de al lado?');
+    const fb=hb?XLSX.utils.sheet_to_json(hb,{defval:''}):[], fo=ho?XLSX.utils.sheet_to_json(ho,{defval:''}):[];
+    const bId={}; _cc.B.forEach(b=>bId[b.id]=b); const oId=_cc.om||{};
+    const cambios=[], errores=[];
+    const col=(r,...nn)=>{ for(const n of nn){ const k=Object.keys(r).find(k=>k.toLowerCase().startsWith(n)); if(k!=null) return r[k]; } return ''; };
+    fb.forEach(r=>{
+      const id=+plNum(col(r,'id ')); const b=bId[id]; if(!id||!b) return;
+      const catTxt=plTxt(col(r,'categor')), cat=catTxt===''?b.categoria:PL_CAT[catTxt]||PL_CAT[Object.keys(PL_CAT).find(k=>k.toLowerCase()===catTxt.toLowerCase())||''];
+      if(catTxt!=='' && !cat){ errores.push('Banco ID '+id+': categoría "'+esc(catTxt)+'" no existe'); return; }
+      const ordTxt=plTxt(col(r,'órdenes','ordenes')).replace(/\s/g,''), ordAct=plTxt(b.orden_binance).replace(/\s/g,'');
+      const nota=plTxt(col(r,'nota'));
+      if(ordTxt!==ordAct){
+        const nums=ordTxt?ordTxt.split(/[,;]+/).filter(Boolean):[];
+        const malos=nums.filter(n=>!/^\d{6,}$/.test(n));
+        if(malos.length){ errores.push('Banco ID '+id+': N° de orden no válido ('+esc(malos.join(', '))+')'); return; }
+        cambios.push({tipo:'union',id,nums,nota:(nota!==plTxt(b.nota)?nota:''),txt:fechaCorta(b.fecha)+' · '+(b.descripcion||'').slice(0,26)+' · '+(nums.length?'unir a '+nums.length+' orden'+(nums.length>1?'es':''):'quitar la unión')});
+      } else if(cat!==b.categoria){
+        cambios.push({tipo:'cat',id,cat,nota,txt:fechaCorta(b.fecha)+' · '+(b.descripcion||'').slice(0,26)+' · '+(BK_CAT[b.categoria]||b.categoria)+' → '+(BK_CAT[cat]||cat)});
+      } else if(nota!==plTxt(b.nota)){
+        cambios.push({tipo:'nota',id,nota,txt:fechaCorta(b.fecha)+' · '+(b.descripcion||'').slice(0,26)+' · nota'});
+      }
+    });
+    fo.forEach(r=>{
+      const num=plTxt(col(r,'n° orden','no orden','n orden','orden')); const o=oId[num]; if(!num||!o) return;
+      const mTxt=plTxt(col(r,'marca')).toLowerCase(); 
+      if(!(mTxt in PL_MARCA)){ errores.push('Binance '+num.slice(-6)+': marca "'+esc(mTxt)+'" no válida'); }
+      else { const nueva=PL_MARCA[mTxt], act=o.revision||null;
+        if(nueva!==act) cambios.push({tipo:'marca',num,accion:nueva||'deshacer',txt:fechaCorta(lbDia(o.creado))+' '+lbHora(o.creado)+' · '+o.cuenta+' '+o.fiat+' '+Math.round(o.monto_fiat).toLocaleString('es-CL')+' · '+(act||'sin marca')+' → '+(nueva||'sin marca')}); }
+      const clpTxt=col(r,'clp real'), clp=plNum(clpTxt), act2=o.clp_manual!=null?+o.clp_manual:null;
+      if((clp==null?null:Math.round(clp))!==(act2==null?null:Math.round(act2)))
+        cambios.push({tipo:'clp',num,clp,txt:fechaCorta(lbDia(o.creado))+' · '+o.cuenta+' '+o.fiat+' · CLP '+(act2!=null?$clp(act2):'estimado')+' → '+(clp!=null?$clp(clp):'estimado')});
+    });
+    _pl=cambios;
+    box.innerHTML=(errores.length?'<div class="salv" style="color:var(--red2);font-size:12px;margin-bottom:6px">⚠ '+errores.length+' problema(s):<br>'+errores.slice(0,10).join('<br>')+'</div>':'')+
+      (cambios.length?'<div style="font-size:12px;font-weight:700;margin-bottom:4px">'+cambios.length+' cambio(s) por aplicar:</div>'+
+        '<div style="max-height:230px;overflow-y:auto;font-size:11.5px;line-height:1.7">'+cambios.map(c=>'• '+esc(c.txt)).join('<br>')+'</div>'+
+        '<button type="button" class="btn b-green" style="width:100%;margin-top:8px;padding:9px" onclick="aplicarPlantillaConc()">✅ Aplicar estos '+cambios.length+' cambios</button>'
+        :'<div style="font-size:12px;color:var(--green)">✓ El archivo no trae cambios respecto a lo que ya está guardado.</div>');
+  }catch(e){ box.innerHTML='<span style="color:var(--red2);font-size:12px">✗ '+esc(e.message)+'</span>'; }
+  finally{ const i=document.getElementById('pl_file'); if(i) i.value=''; }
+}
+
+async function aplicarPlantillaConc(){
+  if(!_pl||!_pl.length) return;
+  const box=document.getElementById('pl_prev'); let ok=0; const fallas=[];
+  box.innerHTML='Aplicando 0 de '+_pl.length+'...';
+  // primero el banco (uniones y categorías), después las marcas de Binance
+  const orden={union:1,cat:1,nota:1,marca:2,clp:3};
+  for(const c of _pl.slice().sort((a,b)=>orden[a.tipo]-orden[b.tipo])){
+    try{
+      if(c.tipo==='union'){
+        if(!c.nums.length) await sbPost('rpc/desvincular_deposito','POST',{p_banco_id:c.id},'return=minimal');
+        else await sbPost('rpc/vincular_deposito','POST',{p_banco_id:c.id,p_ordenes:c.nums,p_nota:c.nota||null},'return=minimal');
+      } else if(c.tipo==='cat'){
+        await sbPost('banco_movimientos?id=eq.'+c.id,'PATCH',{categoria:c.cat,nota:c.nota||null},'return=minimal');
+      } else if(c.tipo==='nota'){
+        await sbPost('banco_movimientos?id=eq.'+c.id,'PATCH',{nota:c.nota||null},'return=minimal');
+      } else if(c.tipo==='marca'){
+        await sbPost('rpc/revisar_orden','POST',{p_orden:c.num,p_accion:c.accion},'return=minimal');
+      } else if(c.tipo==='clp'){
+        await sbPost('robot_ordenes?order_number=eq.'+c.num,'PATCH',{clp_manual:c.clp},'return=minimal');
+      }
+      ok++; box.innerHTML='Aplicando '+ok+' de '+_pl.length+'...';
+    }catch(e){ fallas.push(esc(c.txt)+' → '+esc(e.message)); }
+  }
+  _pl=null;
+  box.innerHTML='<div style="font-size:12px"><b>'+ok+'</b> cambio(s) aplicados'+(fallas.length?' · <span style="color:var(--red2)">'+fallas.length+' con error</span>':'')+'</div>'+
+    (fallas.length?'<div style="font-size:11px;color:var(--red2);margin-top:4px;max-height:160px;overflow-y:auto">'+fallas.join('<br>')+'</div>':'');
+  toast(ok+' cambios aplicados'); cargarConc(); cargarInicioDia();
+}
+
 async function bajarConc(){
   if(!_cc.filas.length) return toast('No hay filas');
   try{ await cargaXLSX();
