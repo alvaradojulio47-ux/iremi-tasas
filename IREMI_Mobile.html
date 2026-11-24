@@ -597,7 +597,7 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
 <div class="pg on" id="pg_inicio" style="padding:12px 12px 90px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
     <div class="section" style="margin:0">📊 Resumen <span id="ini_mes" class="badge"></span></div>
-    <button type="button" class="tbtn" onclick="cargarInicio()">↻ Actualizar</button>
+    <button type="button" class="tbtn" onclick="limpiarCache();cargarInicio()">↻ Actualizar</button>
   </div>
   <div id="ini_aviso"></div>
   <div class="section">Hoy</div>
@@ -2460,16 +2460,16 @@ function ccMarcar(tipo,id,on){
     else { _ccSel.dep=on?id:null; } }
   else { _ccSel.ords=_ccSel.ords.filter(x=>x!==id); if(on) _ccSel.ords.push(id); }
   pintarSelCruce(); }
-async function cerrarTL(){
+async function cerrarTL(){ limpiarCache();
   const ents=_ccSel.ents.slice(), pagos=_ccSel.pagos.slice(), ords=_ccSel.ords.slice();
   if(!ents.length) return toast('Marca al menos una entrada de Fidel/Angélica');
   try{ await sbPost('rpc/cerrar_tl','POST',{p_entradas:ents,p_pagos:pagos,p_ordenes:ords},'return=minimal');
        toast('🤝 Transf Local cerrada'); refrescarConc();
   }catch(e){ toast('✗ '+e.message+(/cerrar_tl/.test(e.message)?' · Falta correr IREMI_etapa14.sql':'')); } }
-async function abrirTL(g){ if(!confirm('¿Deshacer este cierre de Transf Local?')) return;
+async function abrirTL(g){ limpiarCache(); if(!confirm('¿Deshacer este cierre de Transf Local?')) return;
   try{ await sbPost('rpc/abrir_tl','POST',{p_grupo:g},'return=minimal'); toast('↺ Cierre deshecho'); refrescarConc(); }catch(e){ toast('✗ '+e.message); } }
-async function unirTL(pago,ents){ try{ await sbPost('rpc/vincular_tl','POST',{p_pago:pago,p_entradas:ents},'return=minimal'); toast('🤝 Entradas unidas al pago'); refrescarConc(); }catch(e){ toast('✗ '+e.message+(/vincular_tl/.test(e.message)?' · Falta correr IREMI_etapa13.sql':'')); } }
-async function desvincularTL(id){ try{ await sbPost('rpc/desvincular_tl','POST',{p_entrada:id},'return=minimal'); toast('↺ Deshecho'); refrescarConc(); }catch(e){ toast('✗ '+e.message); } }
+async function unirTL(pago,ents){ limpiarCache(); try{ await sbPost('rpc/vincular_tl','POST',{p_pago:pago,p_entradas:ents},'return=minimal'); toast('🤝 Entradas unidas al pago'); refrescarConc(); }catch(e){ toast('✗ '+e.message+(/vincular_tl/.test(e.message)?' · Falta correr IREMI_etapa13.sql':'')); } }
+async function desvincularTL(id){ limpiarCache(); try{ await sbPost('rpc/desvincular_tl','POST',{p_entrada:id},'return=minimal'); toast('↺ Deshecho'); refrescarConc(); }catch(e){ toast('✗ '+e.message); } }
 function pintarSelCruce(){
   const box=document.getElementById('cc_sel'); const dep=_ccSel.dep?_cc.B.find(b=>b.id===_ccSel.dep):null, ords=_ccSel.ords.map(n=>_cc.om[n]).filter(Boolean);
   if(_ccSel.ents.length||_ccSel.pagos.length){
@@ -2607,7 +2607,7 @@ async function leerPlantillaConc(files){
   finally{ const i=document.getElementById('pl_file'); if(i) i.value=''; }
 }
 
-async function aplicarPlantillaConc(){
+async function aplicarPlantillaConc(){ limpiarCache();
   if(!_pl||!_pl.length) return;
   const box=document.getElementById('pl_prev'); let ok=0; const fallas=[];
   box.innerHTML='Aplicando 0 de '+_pl.length+'...';
@@ -2653,10 +2653,22 @@ async function bajarConc(){
 //  v5.2 · DÍA A DÍA (utilidad acumulada, capital, ¿falta plata?)
 // ══════════════════════════════════════════════════════════
 let _dd=[];
+// ── v8.2 · memoria corta (5 min): las consultas pesadas no se repiten al cambiar de pestaña ──
+const _cacheSB={};
+async function sbCache(clave, minutos, fn){
+  const c=_cacheSB[clave];
+  if(c && (Date.now()-c.t) < minutos*60000) return c.v;
+  const v=await fn(); _cacheSB[clave]={t:Date.now(), v}; return v;
+}
+function limpiarCache(){ for(const k in _cacheSB) delete _cacheSB[k]; }
 const fechaCorta=d=>d?d.slice(8)+'/'+d.slice(5,7):'—';
 const conSigno=v=>v==null?'—':(v<0?'−'+$clp(-v):(v>0?'+':'')+$clp(v));
 const colorFalta=v=>v==null?'var(--mute)':(Math.abs(v)<50000?'var(--green)':(Math.abs(v)<300000?'var(--amber)':'var(--red2)'));
-async function datosDia(){ _dd=(await sbPost('v_diario?select=*&dia=gte.'+sumarDias(hoyChile(),-430)+'&order=dia.asc'))||[]; return _dd; }
+async function datosDia(forzar){
+  if(forzar) delete _cacheSB['v_diario'];
+  _dd=await sbCache('v_diario', 5, async()=>(await sbPost('v_diario?select=*&dia=gte.'+sumarDias(hoyChile(),-430)+'&order=dia.asc'))||[]);
+  return _dd;
+}
 function ultimo(f){ for(let i=_dd.length-1;i>=0;i--) if(f(_dd[i])) return _dd[i]; return null; }
 async function cargarInicioDia(){
   const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v;};
@@ -2669,7 +2681,7 @@ async function cargarInicioDia(){
     set('k_capt','…'); set('k_capt_s','banco + USDT');
     try{ const ap=((await sbPost('robot_config?select=valor&clave=eq.apertura_fecha'))||[{}])[0].valor||'2026-09-01';
          const d0=hoy.slice(0,8)+'01'<ap?ap:hoy.slice(0,8)+'01';
-         const E=await sbPost('rpc/estado_caja','POST',{p_desde:d0,p_hasta:hoy}); const kf=document.getElementById('k_falta'), gp=E&&E.resumen&&!E.sin_banco?(E.resumen.total_dif_ajustado!=null?E.resumen.total_dif_ajustado:E.resumen.total_dif):null;
+         const E=await sbCache('caja:'+d0+':'+hoy, 5, ()=>sbPost('rpc/estado_caja','POST',{p_desde:d0,p_hasta:hoy})); const kf=document.getElementById('k_falta'), gp=E&&E.resumen&&!E.sin_banco?(E.resumen.total_dif_ajustado!=null?E.resumen.total_dif_ajustado:E.resumen.total_dif):null;
          if(E&&E.resumen&&!E.sin_banco){ const R=E.resumen, uc=(+R.usdt_hay||0)*(+E.costo_usdt||0);
            set('k_capt',$clp((+R.banco_hay||0)+uc)); set('k_capt_s','banco '+$clp(R.banco_hay)+' ('+fechaCorta(E.banco_hasta)+') + '+num(R.usdt_hay)+' USDT '+$clp(uc)+((+R.tl_pendiente)>0?' · incluye '+$clp(R.tl_pendiente)+' de TL pendiente':'')); }
          else { const c=ultimo(r=>r.banco_real!=null&&r.usdt_real!=null); set('k_capt',c?$clp(+c.banco_real+c.usdt_real*c.costo_usdt):'—'); set('k_capt_s',c?'banco '+$clp(c.banco_real)+' ('+fechaCorta(c.dia)+') + USDT':'sube la cartola'); }
@@ -2750,7 +2762,7 @@ let _ec=null;
 async function estadoCaja(desde,hasta,boxId){
   const box=document.getElementById(boxId); box.innerHTML='Calculando...';
   try{
-    const E=await sbPost('rpc/estado_caja','POST',{p_desde:desde,p_hasta:hasta}); _ec=E;
+    const E=await sbCache('caja:'+desde+':'+hasta, 5, ()=>sbPost('rpc/estado_caja','POST',{p_desde:desde,p_hasta:hasta})); _ec=E;
     let SD={n0:0,c0:0,n1:0,c1:0}; // sin revisar / aceptados ✅ dentro del período
     try{ const h0=E.parcial&&E.banco_hasta?E.banco_hasta:hasta;
       ((await sbPost('v_ordenes_sin_deposito?select=revision,clp_final&dia=gte.'+desde+'&dia=lte.'+h0+'&limit=1000'))||[]).forEach(o=>{
@@ -2829,7 +2841,7 @@ async function estadoCaja(desde,hasta,boxId){
   }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+(/estado_caja/.test(e.message)?' · Falta correr IREMI_etapa8.sql en Supabase':'')+'</span>'; }
 }
 function nuevoAjuste(fecha,monto){ document.getElementById('aj_fecha').value=fecha; document.getElementById('aj_monto').value=Math.round(monto||0); document.getElementById('aj_motivo').value=''; openModal('modal_aj'); }
-async function guardarAjuste(){
+async function guardarAjuste(){ limpiarCache();
   const f=document.getElementById('aj_fecha').value, m=+document.getElementById('aj_monto').value, mo=document.getElementById('aj_motivo').value.trim();
   if(!f||!m||!mo){ toast('Falta la fecha, el monto o el motivo'); return; }
   try{ await sbPost('caja_ajustes','POST',[{fecha:f,monto_clp:m,motivo:mo}],'return=minimal'); closeModal('modal_aj'); toast('✍️ Ajuste guardado'); if(document.getElementById('pg_dia').classList.contains('on')) pintarDia(); cargarInicioDia(); }
@@ -2957,7 +2969,7 @@ async function cargarSinDeposito(){
       :'<div style="font-size:12px;color:var(--green);padding:8px">🎉 Todas las ventas tienen su depósito o ya están revisadas.</div>';
   }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+(/v_ordenes_sin_deposito/.test(e.message)?' · Falta correr IREMI_etapa5.sql en Supabase':'')+'</span>'; }
 }
-async function revisarOrden(orden,accion){
+async function revisarOrden(orden,accion){ limpiarCache();
   const o=_sd.find(x=>x.order_number===orden)||(_movSel&&_movSel.order_number===orden?_movSel:null);
   if(accion==='gasto'&&o&&!confirm('¿Marcar como ENVÍO A FAMILIA?\n\n'+num(o.usdt)+' USDT pasan a Gastos (≈ '+$clp(o.usdt*o.costo_usdt)+') y este movimiento deja de contar como cambio y de dar ganancia.')) return;
   try{ await sbPost('rpc/revisar_orden','POST',{p_orden:orden,p_accion:accion},'return=minimal');
@@ -2979,7 +2991,7 @@ async function unirOrden(i){
     document.getElementById('mu2_info').innerHTML+='<br><span style="color:var(--mute)">Si eliges una entrada 🤝 TL, el cambio queda marcado como Transf Local.</span>';
   }catch(e){ box.innerHTML='<span style="color:var(--red2)">✗ '+esc(e.message)+'</span>'; }
 }
-async function confirmarUnion(bancoId,ordenes){
+async function confirmarUnion(bancoId,ordenes){ limpiarCache();
   try{ await sbPost('rpc/vincular_deposito','POST',{p_banco_id:bancoId,p_ordenes:ordenes},'return=minimal');
        toast(ordenes.length?'🔗 Unido: el cambio toma el monto real del banco':'✅ Aceptado como cambio');
        closeModal('modal_unir'); closeModal('modal_bk'); cargarSinDeposito(); cargarRevisar(); refrescarConc();
@@ -3014,7 +3026,7 @@ async function cargoAGasto(){ const b=_bkSel; if(!b) return; const cat=document.
   try{ await sbPost('banco_movimientos?id=eq.'+b.id,'PATCH',{categoria:'gasto',nota:nota||cat},'return=minimal');
        await sbPost('robot_gastos','POST',[{fecha:b.fecha,categoria:cat,descripcion:(nota||b.descripcion)+' (banco c.'+b.cartola+')',monto_clp:+b.cargo,con_factura:false}],'return=minimal');
        closeModal('modal_bk'); toast('💸 Pasado a Gastos'); cargarRevisar(); refrescarConc(); }catch(e){ toast('✗ '+e.message); } }
-async function deshacerUnion(id){ try{ await sbPost('rpc/desvincular_deposito','POST',{p_banco_id:id},'return=minimal'); closeModal('modal_bk'); toast('↺ Unión deshecha'); cargarRevisar(); refrescarConc(); }catch(e){ toast('✗ '+e.message); } }
+async function deshacerUnion(id){ limpiarCache(); try{ await sbPost('rpc/desvincular_deposito','POST',{p_banco_id:id},'return=minimal'); closeModal('modal_bk'); toast('↺ Unión deshecha'); cargarRevisar(); refrescarConc(); }catch(e){ toast('✗ '+e.message); } }
 async function guardarBk(){ if(!_bkSel) return;
   try{ await sbPost('banco_movimientos?id=eq.'+_bkSel.id,'PATCH',{categoria:document.getElementById('mb_cat').value,nota:document.getElementById('mb_nota').value.trim()||null},'return=minimal');
        closeModal('modal_bk'); toast('✓ Guardado'); cargarRevisar(); }catch(e){ toast('✗ '+e.message); } }
