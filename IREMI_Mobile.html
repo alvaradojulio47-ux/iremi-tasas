@@ -523,6 +523,8 @@ document.addEventListener('DOMContentLoaded',aplicarTema);
       <button type="button" class="lg-olv" onclick="olvide()">¿Olvidé mi contraseña?</button></div>
     <button type="submit" id="lg_btn">Entrar</button>
     <div id="login_err"></div>
+  <div style="text-align:center;margin-top:10px"><a href="#" onclick="probarConexion();return false" style="font-size:12px;color:var(--silver)">Probar conexión</a></div>
+  <div id="lg_diag" style="font-size:11.5px;line-height:1.7;margin-top:8px;white-space:pre-line"></div>
     <div class="lg-div" id="lg_div">ó</div>
     <div class="lg-2" id="lg_links">
       <button type="button" class="lg-ob" onclick="modoLogin(_lgModo==='crear'?'entrar':'crear')"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M1.5 21c0-4.2 3.4-7 7.5-7s7.5 2.8 7.5 7z"/><path d="M19 8v6M16 11h6" stroke="#f7c325" stroke-width="2.2" stroke-linecap="round"/></svg><span id="lg_toggle">Crear cuenta</span></button>
@@ -1209,6 +1211,33 @@ async function volverDesdeCorreo(){
   if(h.get('type')==='recovery'){ _lgRecTok=d; _lgRecTok.email=email; mostrarLogin(); modoLogin('nueva'); return true; }
   guardarSesionDe(d,email); iniciarApp(); return true;
 }
+async function probarConexion(){
+  const d=document.getElementById('lg_diag'); if(!d) return;
+  d.textContent='Probando...';
+  const linea=[]; const t0=n=>performance.now()-n;
+  const probar=async(nombre,fn)=>{ const t=performance.now();
+    try{ const r=await Promise.race([fn(), new Promise((_,rej)=>setTimeout(()=>rej(new Error('no respondió en 15 s')),15000))]);
+         linea.push('✓ '+nombre+' · '+Math.round(t0(t))+' ms'+(r?' · '+r:'')); return true; }
+    catch(e){ linea.push('✗ '+nombre+' · '+Math.round(t0(t))+' ms · '+e.message); return false; }
+    finally{ d.textContent=linea.join('\n'); } };
+  await probar('Internet', async()=>{ await fetch('https://www.google.com/generate_204',{mode:'no-cors',cache:'no-store'}); return ''; });
+  await probar('Servidor de la base (Supabase)', async()=>{
+    const r=await fetch(SB_URL+'/rest/v1/?apikey='+SB_KEY,{cache:'no-store'});
+    if(r.status>=500) throw new Error('HTTP '+r.status+' — el proyecto puede estar pausado');
+    return 'HTTP '+r.status; });
+  await probar('Ingreso (auth)', async()=>{
+    const r=await fetch(SB_URL+'/auth/v1/health',{headers:{'apikey':SB_KEY},cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status); return 'HTTP '+r.status; });
+  await probar('Precios del robot', async()=>{
+    const r=await fetch(SB_URL+'/rest/v1/v_mercado_actual?select=fecha&limit=1',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status+' (normal si pide sesión)'); const j=await r.json();
+    const f=j&&j[0]&&j[0].fecha; return f?('última hace '+Math.round((Date.now()-new Date(f))/60000)+' min'):'sin datos'; });
+  await probar('Proxy de tasas (Cloudflare)', async()=>{
+    const r=await fetch('https://iremi-p2p.alvaradojulio47.workers.dev',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({asset:'USDT',fiat:'CLP',tradeType:'BUY',page:1,rows:1,payTypes:[],publisherType:null})});
+    if(!r.ok) throw new Error('HTTP '+r.status); return 'HTTP '+r.status; });
+  d.textContent=linea.join('\n')+'\n\nMándale esta lista a Claude si algo sale con ✗.';
+}
 async function entrar(ev){
   if(ev) ev.preventDefault();
   if(_lgModo!=='entrar') return entrarOtro();
@@ -1216,13 +1245,22 @@ async function entrar(ev){
   err.textContent=''; btn.disabled=true; btn.textContent='Entrando...';
   try{ localStorage.setItem('iremi_recordar',document.getElementById('lg_rec').checked?'1':'0'); }catch{}
   try{
-    await authReq('password',{email:document.getElementById('lg_email').value.trim(),
-                              password:document.getElementById('lg_pass').value});
+    const lento=setTimeout(()=>{ err.style.color='var(--amber)'; err.textContent='El servidor está tardando... sigo intentando'; },6000);
+    try{
+      await Promise.race([
+        authReq('password',{email:document.getElementById('lg_email').value.trim(),
+                            password:document.getElementById('lg_pass').value}),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('el servidor no respondió en 25 segundos')),25000))]);
+    } finally { clearTimeout(lento); err.style.color=''; }
     document.getElementById('lg_pass').value='';
     document.getElementById('login').classList.remove('on');
     iniciarApp();
   }catch(e){
-    err.textContent=/invalid/i.test(e.message)?'Correo o contraseña incorrectos':('No se pudo entrar: '+e.message);
+    err.textContent=/invalid|credential/i.test(e.message)?'Correo o contraseña incorrectos'
+      :/failed to fetch|networkerror|load failed/i.test(e.message)?'Sin conexión con el servidor. Revisa tu internet y toca "Probar conexión".'
+      :/no respondió|timeout/i.test(e.message)?'El servidor no respondió. Toca "Probar conexión" para ver qué falla.'
+      :/HTTP 5|service unavailable|unavailable/i.test(e.message)?'El servidor de la base de datos no está disponible ahora mismo (puede estar pausado). Toca "Probar conexión".'
+      :('No se pudo entrar: '+e.message);
   }finally{ btn.disabled=false; btn.textContent='Entrar'; }
 }
 async function entrarOtro(){
@@ -1309,7 +1347,7 @@ async function diagP2PFetch(fiat, side, rows=10, publisherType=null){
     try{
       const res = await Promise.race([
         proxyFn(),
-        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000))
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),4000))
       ]);
       if(!res.ok) continue;
       const text = await res.text();
@@ -1471,7 +1509,7 @@ async function fetchAllRates() {
     (mk||[]).forEach(r=>{ M[r.fiat]=(r.detalle||[]).map(x=>({price:parseFloat(x[0]),classify:x[1]||'normal'}));
                           masNuevo=Math.max(masNuevo,new Date(r.fecha).getTime()); });
     const edadMin=Math.round((Date.now()-masNuevo)/60000);
-    if(Object.keys(M).length && edadMin<=30){
+    if(Object.keys(M).length && edadMin<=180){
       const desc=a=>a.map(x=>x.price).sort((a,b)=>b-a);
       const top10=a=>(a||[]).slice(0,10); // la app original consultaba 10 anuncios (VES: 20)
       const noProm=a=>a.filter(x=>x.classify!=='promoted');
@@ -1501,10 +1539,12 @@ async function fetchAllRates() {
       toast('✓ '+ok+' tasas del robot · hace '+edadMin+' min');
       return;
     }
+    if(txm) txm.textContent='Precios del robot de hace '+edadMin+' min · consultando Binance...';
     console.warn('Precios del robot con '+edadMin+' min: se consulta Binance directo');
   }catch(e){ console.warn('Robot no disponible, se consulta Binance directo:',e.message); }
 
-  try{
+  const tareas=[];
+  tareas.push((async()=>{
     // VES: misma lógica exacta que módulo P2P (diagP2P)
     // SELL side DESC → excluir promoted → tomar [1] (2° más alto)
     const vesAds=await diagP2PFetch('VES','SELL',20);
@@ -1529,27 +1569,27 @@ async function fetchAllRates() {
     if(lp) lp.textContent=Math.round(vp).toLocaleString('es-VE');
     if(lt) lt.textContent=new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
     ok++;
-  }catch(e){
+  })().catch(e=>{
     const det=document.getElementById('ves_detail');
     if(det) det.textContent='⚠ '+e.message+' — presiona Actualizar P2P de nuevo';
     console.warn('VES fetch failed:',e.message);
-  }
-  try{
+  }));
+  tareas.push((async()=>{
     const copAds=await diagP2PFetch('COP','SELL',10);
     const copP=copAds.map(a=>a.price).sort((a,b)=>b-a);
     setV('i_cop',copP[1]||copP[0],'src_cop','rate-src src-auto');ok++;
-  }catch{}
-  try{
+  })().catch(()=>{}));
+  tareas.push((async()=>{
     const arsAds=await diagP2PFetch('ARS','SELL',10);
     const arsP=arsAds.map(a=>a.price).sort((a,b)=>b-a);
     setV('i_ars',arsP[1]||arsP[0],'src_ars','rate-src src-auto');ok++;
-  }catch{}
-  try{
+  })().catch(()=>{}));
+  tareas.push((async()=>{
     const mxnAds=await diagP2PFetch('MXN','SELL',10);
     const mxnP=mxnAds.map(a=>a.price).sort((a,b)=>b-a);
     setV('i_mxn',mxnP[1]||mxnP[0],'src_mxn','rate-src src-auto');ok++;
-  }catch{}
-  try{
+  })().catch(()=>{}));
+  tareas.push((async()=>{
     // CLP usa BUY side (columna ROJA del módulo P2P)
     // BUY = anunciantes comprando USDT pagando CLP = precio que recibes al vender USDT
     // Sort DESC → p[0] = precio más alto = mejor precio para IREMI
@@ -1560,34 +1600,35 @@ async function fetchAllRates() {
     setV('i_clp',clpVal,'src_clp','rate-src src-auto'); cachedCLP=clpVal;
     document.getElementById('rf_dc').value=clpVal;
     document.getElementById('rf_dv').value=clpVal; ok++;
-  }catch{}
-  try{
+  })().catch(()=>{}));
+  tareas.push((async()=>{
     const eurAds=await diagP2PFetch('EUR','SELL',10);
     const eurNorm=eurAds.filter(a=>a.classify!=='promoted');
     const eurVal=(eurNorm[1]||eurNorm[0])?.price;
     if(eurVal){setV('i_eur',eurVal,'src_eur','rate-src src-p2p');ok++;}
-  }catch{}
-  try{
+  })().catch(()=>{}));
+  tareas.push((async()=>{
     const penAds=await diagP2PFetch('PEN','SELL',10);
     const penNorm=penAds.filter(a=>a.classify!=='promoted');
     const penVal=(penNorm[1]||penNorm[0])?.price;
     if(penVal){setV('i_pen',penVal,'src_pen','rate-src src-p2p');ok++;}
-  }catch{}
-  try{
+  })().catch(()=>{}));
+  tareas.push((async()=>{
     const dopAds=await diagP2PFetch('DOP','SELL',10);
     const dopNorm=dopAds.filter(a=>a.classify!=='promoted');
     const dopVal=(dopNorm[1]||dopNorm[0])?.price;
     if(dopVal){setV('i_dop',dopVal,'src_dop','rate-src src-p2p');ok++;}
-  }catch{}
-  try{
+  })().catch(()=>{}));
+  tareas.push((async()=>{
     const bobAds=await diagP2PFetch('BOB','SELL',10);
     if(bobAds&&bobAds.length){
       const bobNorm=bobAds.filter(a=>a.classify!=='promoted');
       const bobVal=(bobNorm[1]||bobNorm[0])?.price;
       if(bobVal) {setV('i_bob',bobVal,'src_bob','rate-src src-p2p');ok++;}
     }
-  }catch{}
+  })().catch(()=>{}));
 
+  await Promise.all(tareas);
   recalc();
   dot.className=ok>=2?'sdot ok':ok>0?'sdot spin':'sdot err';
   if(dotm)dotm.className=dot.className;
