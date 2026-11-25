@@ -1216,7 +1216,7 @@ async function probarConexion(){
   d.textContent='Probando...';
   const linea=[]; const t0=n=>performance.now()-n;
   const probar=async(nombre,fn)=>{ const t=performance.now();
-    try{ const r=await Promise.race([fn(), new Promise((_,rej)=>setTimeout(()=>rej(new Error('no respondió en 15 s')),15000))]);
+    try{ const r=await Promise.race([fn(), new Promise((_,rej)=>setTimeout(()=>rej(new Error('no respondió en 30 s')),30000))]);
          linea.push('✓ '+nombre+' · '+Math.round(t0(t))+' ms'+(r?' · '+r:'')); return true; }
     catch(e){ linea.push('✗ '+nombre+' · '+Math.round(t0(t))+' ms · '+e.message); return false; }
     finally{ d.textContent=linea.join('\n'); } };
@@ -1242,23 +1242,24 @@ async function entrar(ev){
   if(ev) ev.preventDefault();
   if(_lgModo!=='entrar') return entrarOtro();
   const btn=document.getElementById('lg_btn'), err=document.getElementById('login_err');
-  err.textContent=''; btn.disabled=true; btn.textContent='Entrando...';
+  err.textContent=''; btn.disabled=true; btn.textContent='Entrando... (puede tardar)';
   try{ localStorage.setItem('iremi_recordar',document.getElementById('lg_rec').checked?'1':'0'); }catch{}
   try{
-    const lento=setTimeout(()=>{ err.style.color='var(--amber)'; err.textContent='El servidor está tardando... sigo intentando'; },6000);
+    let seg=0; const tic=setInterval(()=>{ seg++; if(seg>=5){ err.style.color='var(--amber)';
+        err.textContent='El servidor está lento ('+seg+' s). Sigo intentando, no cierres la app...'; } },1000);
     try{
       await Promise.race([
         authReq('password',{email:document.getElementById('lg_email').value.trim(),
                             password:document.getElementById('lg_pass').value}),
-        new Promise((_,rej)=>setTimeout(()=>rej(new Error('el servidor no respondió en 25 segundos')),25000))]);
-    } finally { clearTimeout(lento); err.style.color=''; }
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('el servidor no respondió en 90 segundos')),90000))]);
+    } finally { clearInterval(tic); err.style.color=''; }
     document.getElementById('lg_pass').value='';
     document.getElementById('login').classList.remove('on');
     iniciarApp();
   }catch(e){
     err.textContent=/invalid|credential/i.test(e.message)?'Correo o contraseña incorrectos'
       :/failed to fetch|networkerror|load failed/i.test(e.message)?'Sin conexión con el servidor. Revisa tu internet y toca "Probar conexión".'
-      :/no respondió|timeout/i.test(e.message)?'El servidor no respondió. Toca "Probar conexión" para ver qué falla.'
+      :/no respondió|timeout/i.test(e.message)?'El servidor no respondió en 90 s. Está saturado: reinicia el proyecto en Supabase (Settings → General → Restart project) y vuelve a intentar.'
       :/HTTP 5|service unavailable|unavailable/i.test(e.message)?'El servidor de la base de datos no está disponible ahora mismo (puede estar pausado). Toca "Probar conexión".'
       :('No se pudo entrar: '+e.message);
   }finally{ btn.disabled=false; btn.textContent='Entrar'; }
