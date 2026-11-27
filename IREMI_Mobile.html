@@ -2669,7 +2669,16 @@ async function sbCache(clave, minutos, fn){
   if(c && (Date.now()-c.t) < minutos*60000) return c.v;
   const v=await fn(); _cacheSB[clave]={t:Date.now(), v}; return v;
 }
-function limpiarCache(){ for(const k in _cacheSB) delete _cacheSB[k]; }
+function limpiarCache(){ for(const k in _cacheSB) delete _cacheSB[k]; refrescarDiario(false); }
+// v8.6 · pide a la base que rehaga la copia del Día a día (etapa 19).
+// No esperamos la respuesta: si falla o la etapa 19 no está corrida, la app sigue igual.
+let _ultRefresco=0;
+function refrescarDiario(forzar){
+  const t=Date.now();
+  if(!forzar && t-_ultRefresco<5000) return Promise.resolve(null);   // evita repetirlo en ráfaga
+  _ultRefresco=t;
+  return sbPost('rpc/refrescar_diario','POST',{p_minutos:0}).catch(()=>null);
+}
 const fechaCorta=d=>d?d.slice(8)+'/'+d.slice(5,7):'—';
 const conSigno=v=>v==null?'—':(v<0?'−'+$clp(-v):(v>0?'+':'')+$clp(v));
 const colorFalta=v=>v==null?'var(--mute)':(Math.abs(v)<50000?'var(--green)':(Math.abs(v)<300000?'var(--amber)':'var(--red2)'));
@@ -2683,8 +2692,15 @@ function motivoErr(e){
   return '✗ ' + (m || 'error').slice(0,90);
 }
 async function datosDia(forzar){
-  if(forzar) delete _cacheSB['v_diario'];
-  _dd=await sbCache('v_diario', 5, async()=>(await sbPost('v_diario?select=*&dia=gte.'+sumarDias(hoyChile(),-430)+'&order=dia.asc'))||[]);
+  if(forzar){ delete _cacheSB['v_diario']; await refrescarDiario(true); }
+  _dd=await sbCache('v_diario', 5, async()=>{
+    const cola='?select=*&dia=gte.'+sumarDias(hoyChile(),-430)+'&order=dia.asc';
+    // v8.6 · primero la copia ya calculada (etapa 19); si no existe, la vista de siempre
+    try{ return (await sbPost('v_diario_rapido'+cola))||[]; }
+    catch(e){ const m=(e&&e.message||'');
+              if(!/404|does not exist|no existe|not found/i.test(m)) throw e;
+              return (await sbPost('v_diario'+cola))||[]; }
+  });
   return _dd;
 }
 function ultimo(f){ for(let i=_dd.length-1;i>=0;i--) if(f(_dd[i])) return _dd[i]; return null; }
