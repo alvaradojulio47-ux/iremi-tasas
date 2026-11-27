@@ -2673,6 +2673,15 @@ function limpiarCache(){ for(const k in _cacheSB) delete _cacheSB[k]; }
 const fechaCorta=d=>d?d.slice(8)+'/'+d.slice(5,7):'—';
 const conSigno=v=>v==null?'—':(v<0?'−'+$clp(-v):(v>0?'+':'')+$clp(v));
 const colorFalta=v=>v==null?'var(--mute)':(Math.abs(v)<50000?'var(--green)':(Math.abs(v)<300000?'var(--amber)':'var(--red2)'));
+// v8.5 · convierte el error técnico en algo que se entienda de un vistazo
+function motivoErr(e){
+  const m=(e&&e.message||'')+'';
+  if(/57014|canceling statement|statement timeout|timeout|timed out|504/i.test(m)) return '⏱ la base tardó demasiado (reintenta en un momento)';
+  if(/Failed to fetch|NetworkError|network|ERR_/i.test(m)) return '✗ sin conexión con la base';
+  if(/\b40[13]\b|JWT|permission denied/i.test(m)) return '✗ sesión vencida · vuelve a entrar';
+  if(/\b500\b|\b502\b|\b503\b/.test(m)) return '✗ la base respondió con error (' + m.slice(0,60) + ')';
+  return '✗ ' + (m || 'error').slice(0,90);
+}
 async function datosDia(forzar){
   if(forzar) delete _cacheSB['v_diario'];
   _dd=await sbCache('v_diario', 5, async()=>(await sbPost('v_diario?select=*&dia=gte.'+sumarDias(hoyChile(),-430)+'&order=dia.asc'))||[]);
@@ -2696,8 +2705,8 @@ async function cargarInicioDia(){
          else { const c=ultimo(r=>r.banco_real!=null&&r.usdt_real!=null); set('k_capt',c?$clp(+c.banco_real+c.usdt_real*c.costo_usdt):'—'); set('k_capt_s',c?'banco '+$clp(c.banco_real)+' ('+fechaCorta(c.dia)+') + USDT':'sube la cartola'); }
          if(gp==null){ kf.textContent='—'; set('k_falta_s',E&&E.sin_banco?'sube la cartola de este mes':(E&&E.parcial?'sube la cartola para calcular':'faltan saldos del robot')); }
          else { kf.textContent=conSigno(+gp); kf.style.color=colorFalta(+gp); set('k_falta_s',(Math.abs(gp)<50000?'✓ cuadra':(gp<0?'falta':'sobra'))+' · hasta '+fechaCorta(E.banco_hasta<hoy?E.banco_hasta:hoy)); }
-    }catch(e){ set('k_falta','—'); set('k_falta_s',/estado_caja/.test(e.message)?'falta IREMI_etapa8.sql':'✗ error'); set('k_capt','—'); set('k_capt_s','✗ '+(e.message||'error').slice(0,80)); }
-  }catch(e){ set('k_util','—'); set('k_util_s',/v_diario/.test(e.message)?'falta IREMI_etapa7.sql':'✗ error'); }
+    }catch(e){ const m=motivoErr(e); set('k_falta','—'); set('k_falta_s',/estado_caja/.test(m)&&/404|does not exist|no existe/i.test(m)?'falta IREMI_etapa8.sql':m); set('k_capt','—'); set('k_capt_s',m); }
+  }catch(e){ const m=motivoErr(e); set('k_util','—'); set('k_util_s',/v_diario/.test(m)&&/404|does not exist|no existe/i.test(m)?'falta IREMI_etapa7.sql':m); set('k_gas','—'); set('k_gas_s',m); }
   activarAccesos();
 }
 function irDia(){ showPg('pg_dia','nb_mas'); cargarDia(); }
