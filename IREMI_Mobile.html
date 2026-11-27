@@ -1912,11 +1912,19 @@ async function cargarInicio(){
     const E={}; (est||[]).forEach(r=>E[r.clave]=r);
     const ok=E.ultima_sync_ok;
     const mins=ok?Math.round((Date.now()-new Date(ok.actualizado).getTime())/60000):null;
-    const sano=mins!=null&&mins<=25;
+    const sano=mins!=null&&mins<=40;   // v8.4 · el robot corre cada 30 min
+    // v8.4 · estado de los avisos: una falla de envío no debe pasar en silencio
+    const afn=parseInt(((E.aviso_fallas_seguidas||{}).valor)||'0',10)||0;
+    const aok=(E.aviso_ultimo_ok||{}).valor, afa=(E.aviso_ultima_falla||{}).valor;
+    const lineaAv = afn>0
+      ? '<br><span style="color:var(--red2)">● Avisos sin enviar: '+afn+'</span><span style="font-size:11px"> · '+(afa||'sin detalle')+'</span>'
+      : (aok ? '<br><span style="color:var(--green)">● Avisos llegando</span><span style="font-size:11px"> · último enviado '+aok+'</span>'
+             : '<br><span style="color:var(--silver);font-size:11px">○ Avisos: sin envíos registrados todavía</span>');
     document.getElementById('ini_robot').innerHTML=
       (sano?'<span style="color:var(--green)">● Funcionando</span>':'<span style="color:var(--red2)">● Sin actividad reciente</span>')+
       ' · última revisión '+(ok?ok.valor:'—')+(mins!=null?' (hace '+mins+' min)':'')+
-      (E.ultimo_error&&!sano?'<br><span style="color:var(--red2);font-size:11px">Último error: '+E.ultimo_error.valor+'</span>':'');
+      (E.ultimo_error&&!sano?'<br><span style="color:var(--red2);font-size:11px">Último error: '+E.ultimo_error.valor+'</span>':'')+
+      lineaAv;
     const a=(al||[])[0];
     cargarInicioDia(); activarAccesos();
     set('ini_alerta',a?(new Date(a.fecha).toLocaleString('es-CL',{timeZone:'America/Santiago',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})+'\n'+a.mensaje):'Sin alertas todavía');
